@@ -211,11 +211,35 @@
     box-shadow: 0 24px 58px rgba(15, 23, 42, 0.11);
 }
 
+.auth-entry-mobile-brand {
+    display: none;
+    margin: 0 auto 1.15rem;
+    text-align: center;
+}
+
 .auth-entry-mobile-logo {
     width: 72px;
     height: 72px;
     object-fit: contain;
-    margin: 0 auto 1rem;
+    margin: 0 auto 0.65rem;
+}
+
+.auth-entry-mobile-arabic {
+    color: #047857;
+    font-family: "Tahoma", "Arial", sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.auth-entry-mobile-school {
+    margin-top: 0.2rem;
+    color: #0f172a;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1.25;
+    text-transform: uppercase;
 }
 
 .auth-entry-heading {
@@ -749,4 +773,5 @@ input:-webkit-autofill:active {
     .login-info { display: none !important; }
     .login-form { padding: 2rem 1.25rem !important; min-height: 100vh; }
     .mobile-logo { display: block !important; margin: 0 auto 0.875rem !important; }
+    .auth-entry-mobile-brand { display: block; }
 }

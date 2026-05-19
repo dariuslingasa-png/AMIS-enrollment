@@ -201,6 +201,10 @@ table {
         display: none;
     }
 
+    .auth-entry-mobile-brand {
+        display: block;
+    }
+
     .login-grid {
         display: block;
         min-height: 100dvh;
@@ -373,10 +377,23 @@ table {
     }
 
     .auth-logo img,
+    .auth-entry-mobile-logo,
     .success-logo,
     .closed-logo {
         width: 64px;
         height: 64px;
+    }
+
+    .auth-entry-mobile-brand {
+        margin-bottom: 1rem;
+    }
+
+    .auth-entry-mobile-arabic {
+        font-size: 0.9rem;
+    }
+
+    .auth-entry-mobile-school {
+        font-size: 0.7rem;
     }
 
     .login-splash-logo {
