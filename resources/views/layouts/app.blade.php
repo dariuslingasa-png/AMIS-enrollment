@@ -7,7 +7,9 @@
 
     <title>{{ $title ?? config('app.name', 'AMIS Enrollment') }}</title>
 
-    <!-- Fonts -->
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('images/AMIS_Logo.png') }}">
+    <link rel="shortcut icon" href="{{ asset('images/AMIS_Logo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -38,18 +40,33 @@
     }
 ">
     <!-- Initial Loading Screen (only on F5 / first visit) -->
-    <div x-show="!pageLoaded" x-cloak 
-         x-transition:leave="transition ease-in duration-300" 
-         x-transition:leave-start="opacity-100" 
-         x-transition:leave-end="opacity-0" 
-         class="initial-loading-screen">
-        <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="initial-loading-logo">
-        <div class="three-dots-loading">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+    <x-page-loader
+        x-show="!pageLoaded"
+        x-cloak
+        x-transition:leave="transition ease-in duration-300"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+    />
+
+    @php
+        $toastError = session('error') ?: ($errors->any() ? $errors->first() : null);
+    @endphp
+    @if (session('success') || session('info') || session('warning') || $toastError)
+        <div class="toast-stack">
+            @if (session('success'))
+                <x-toast type="success" :message="session('success')" />
+            @endif
+            @if (session('info'))
+                <x-toast type="info" :message="session('info')" />
+            @endif
+            @if (session('warning'))
+                <x-toast type="warning" :message="session('warning')" />
+            @endif
+            @if ($toastError)
+                <x-toast type="error" :message="$toastError" />
+            @endif
         </div>
-    </div>
+    @endif
 
     <!-- Page Content -->
     <div class="page-content min-h-screen bg-gray-100" x-show="pageLoaded" x-cloak 
@@ -67,16 +84,6 @@
                 </div>
             </header>
         @endisset
-
-        @if (session('success'))
-            <x-alert type="success" :message="session('success')" />
-        @endif
-        @if (session('error'))
-            <x-alert type="error" :message="session('error')" />
-        @endif
-        @if (session('info'))
-            <x-alert type="info" :message="session('info')" />
-        @endif
 
         <main>
             {{ $slot }}

@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\MicrosoftAuthController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
 
-// Root route - redirect to enrollment portal
+// Root route
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('enrollment.dashboard');
@@ -16,7 +16,7 @@ Route::get('/', function () {
 
 Route::get('/enrollment-closed', [EnrollmentController::class, 'showClosed'])->name('enrollment.closed');
 
-// Dashboard (redirect to enrollment dashboard)
+// Dashboard redirect
 Route::get('/dashboard', function () {
     return redirect()->route('enrollment.dashboard');
 })->middleware(['auth'])->name('dashboard');
@@ -26,43 +26,50 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::put('/password', [\App\Http\Controllers\Auth\PasswordController::class, 'update'])->name('password.update');
 });
 
-// Microsoft Azure AD SSO
-Route::get('/auth/microsoft', [MicrosoftAuthController::class, 'redirect'])->name('auth.microsoft');
-Route::get('/auth/microsoft/callback', [MicrosoftAuthController::class, 'callback']);
+// Google OAuth
+Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 
-// Authentication routes
+// Auth routes
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:20,1')->name('register.store');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:20,1')->name('login.store');
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-// Email verification routes
-Route::get('/verify-email', [AuthController::class, 'showVerification'])->name('verify.email');
-Route::post('/send-verification', [AuthController::class, 'sendVerificationCode'])->middleware('throttle:10,1')->name('send.verification');
-Route::post('/verify-code', [AuthController::class, 'verifyCode'])->middleware('throttle:20,1')->name('verify.code');
+// Email verification — signed link (replaces OTP)
+Route::get('/verify-email/notice', [AuthController::class, 'showVerificationNotice'])->name('verify.email.notice');
+Route::post('/verify-email/resend', [AuthController::class, 'resendVerificationLink'])->middleware('throttle:6,1')->name('verify.email.resend');
+Route::post('/email/verification-notification', [\App\Http\Controllers\Auth\EmailVerificationNotificationController::class, 'store'])
+    ->middleware(['auth', 'throttle:6,1'])
+    ->name('verification.send');
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
 
-// Dashboard — accessible to both applicants and enrolled students
+// Dashboard — accessible to all authenticated users
 Route::middleware(['auth'])->group(function () {
     Route::get('/enrollment/dashboard', [EnrollmentController::class, 'showDashboard'])->name('enrollment.dashboard');
     Route::get('/enrollment/status', [EnrollmentController::class, 'checkApplicationStatus'])->name('enrollment.status');
 });
 
-// Enrollment routes (protected — applicant role only)
+// Enrollment routes (applicant role only)
 Route::middleware(['auth', 'applicant'])->group(function () {
+    Route::get('/enroll/new', [EnrollmentController::class, 'startNewApplication'])->name('enrollment.new');
+    Route::get('/enroll/{applicant}', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form.child');
     Route::get('/enroll', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form');
     Route::post('/enroll', [EnrollmentController::class, 'submitEnrollment'])->name('enrollment.submit');
     Route::post('/enroll/draft', [EnrollmentController::class, 'saveDraft'])->name('enrollment.draft');
+    Route::get('/enroll/shifts/{grade}', [EnrollmentController::class, 'getShiftsForGrade'])->name('enrollment.shifts');
+    Route::delete('/enroll/draft', [EnrollmentController::class, 'discardDraft'])->name('enrollment.draft.discard');
+    Route::delete('/enroll/draft/document/{document}', [EnrollmentController::class, 'removeDraftDocument'])->name('enrollment.draft.document.remove');
+    Route::get('/enrollment/finalize', [EnrollmentController::class, 'showFinalizePreview'])->name('enrollment.finalize.preview');
+    Route::post('/enrollment/finalize', [EnrollmentController::class, 'confirmFinalize'])->name('enrollment.finalize.confirm');
     Route::get('/enrollment/success', [EnrollmentController::class, 'showSuccess'])->name('enrollment.success');
     Route::get('/enrollment/payment', [EnrollmentController::class, 'showPayment'])->name('enrollment.payment');
     Route::post('/enrollment/payment', [EnrollmentController::class, 'submitPayment'])->name('enrollment.payment.submit');
 
-    Route::get('/demo/loading-states', function () {
-        return view('demo.loading-states');
-    })->name('demo.loading-states');
 });
-
-// Note: Not using Breeze's auth.php since we have custom AuthController
-// require __DIR__.'/auth.php';

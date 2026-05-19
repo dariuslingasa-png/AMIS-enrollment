@@ -3,13 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use App\Notifications\AmisVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -23,7 +27,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'microsoft_id',
         'username',
         'role',
         'account_status',
@@ -58,6 +61,11 @@ class User extends Authenticatable
         return $this->hasOne(EnrollmentApplicant::class);
     }
 
+    public function enrollmentApplicants(): HasMany
+    {
+        return $this->hasMany(EnrollmentApplicant::class);
+    }
+
     public function isVerified(): bool
     {
         return $this->account_status === 'verified';
@@ -66,5 +74,32 @@ class User extends Authenticatable
     public function isApplicant(): bool
     {
         return $this->role === 'applicant';
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new AmisVerifyEmail);
+    }
+
+    public static function makeUniqueUsername(string $email): string
+    {
+        $base = Str::of($email)
+            ->before('@')
+            ->lower()
+            ->replaceMatches('/[^a-z0-9._-]+/', '.')
+            ->trim('.-_')
+            ->limit(40, '')
+            ->value();
+
+        $base = $base !== '' ? $base : 'applicant';
+        $username = $base;
+        $suffix = 2;
+
+        while (self::where('username', $username)->exists()) {
+            $username = Str::limit($base, 35, '') . '-' . $suffix;
+            $suffix++;
+        }
+
+        return $username;
     }
 }

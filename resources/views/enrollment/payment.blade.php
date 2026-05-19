@@ -2,16 +2,13 @@
 <div x-data="{ loaded: false, method: 'gcash' }" x-init="setTimeout(() => loaded = true, 800)" class="enrollment-page">
 
     {{-- Initial loading --}}
-    <div x-show="!loaded" x-cloak
-         x-transition:leave="transition ease-in duration-300"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="initial-loading-screen">
-        <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="initial-loading-logo">
-        <div class="three-dots-loading">
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        </div>
-    </div>
+    <x-page-loader
+        x-show="!loaded"
+        x-cloak
+        x-transition:leave="transition ease-in duration-300"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+    />
 
     <div x-show="loaded" x-cloak
          x-transition:enter="transition ease-out duration-300"
@@ -37,7 +34,7 @@
 
         {{-- Main --}}
         <div class="enrollment-main">
-            <div class="enrollment-form-container" style="max-width:680px;position:relative;">
+            <div class="enrollment-form-container" style="max-width:900px;position:relative;">
 
                 {{-- X close --}}
                 <a href="{{ route('enrollment.dashboard') }}"
@@ -52,6 +49,7 @@
                 <form method="POST" action="{{ route('enrollment.payment.submit') }}" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="method" :value="method">
+                <input type="hidden" name="applicant_id" value="{{ $applicant->id }}">
 
                 <div class="enrollment-form-header">
                     <h2>Payment for Enrollment Fee</h2>
@@ -70,7 +68,7 @@
                             {{ $applicant->last_name }}, {{ $applicant->first_name }} {{ $applicant->middle_name }}
                         </div>
                         <div style="font-size:0.8125rem;color:#6b7280;">
-                            {{ $applicant->grade_level }} &nbsp;·&nbsp; {{ $applicant->student_type }} Student &nbsp;·&nbsp; SY {{ $applicant->school_year }}
+                            {{ $applicant->grade_level }} &nbsp;·&nbsp; {{ strtoupper($applicant->student_type) }} Student &nbsp;·&nbsp; SY {{ $applicant->school_year }}
                         </div>
                     </div>
                 </div>

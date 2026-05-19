@@ -10,10 +10,7 @@
 ])
 
 <div class="form-group {{ $col > 1 ? 'col-' . $col : '' }}">
-    <label for="{{ $name }}">
-        {{ $label }}
-        @if($required) <span class="required">*</span> @endif
-    </label>
+    <x-form-field-label :for="$name" :required="$required">{{ $label }}</x-form-field-label>
     <input
         type="{{ $type }}"
         id="{{ $name }}"
@@ -22,13 +19,12 @@
         placeholder="{{ $placeholder ?: $label }}"
         value="{{ old($name, $value) }}"
         autocomplete="off"
-        {{ $required ? 'required' : '' }}
         {{ $attributes }}
     >
     @if($hint)
-        <span class="text-xs text-gray-500 mt-0.5">{{ $hint }}</span>
+        <span class="field-hint">{{ $hint }}</span>
     @endif
     @error($name)
-        <span class="text-xs text-red-600 mt-0.5">{{ $message }}</span>
+        <span class="field-error">{{ $message }}</span>
     @enderror
 </div>

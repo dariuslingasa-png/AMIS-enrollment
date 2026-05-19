@@ -44,8 +44,8 @@
 }
 
 .enrollment-header-logo {
-    width: 60px;
-    height: 60px;
+    width: 74px;
+    height: 74px;
     object-fit: contain;
     filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
 }
@@ -82,18 +82,18 @@
 }
 
 .enrollment-header-text .arabic {
-    font-size: 0.875rem;
-    font-weight: 600;
-    opacity: 0.9;
+    font-size: 1.125rem;
+    font-weight: 800;
+    opacity: 0.95;
     direction: rtl;
     margin-bottom: 0.125rem;
     text-align: left;
 }
 
 .enrollment-header-text .school {
-    font-size: 0.875rem;
-    font-weight: 500;
-    opacity: 0.85;
+    font-size: 1.45rem;
+    font-weight: 800;
+    opacity: 1;
     text-align: left;
 }
 
@@ -117,8 +117,8 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    opacity: 0.4;
-    transition: opacity 0.2s;
+    opacity: 1;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
     cursor: pointer;
 }
 
@@ -128,8 +128,8 @@
 }
 
 .enrollment-step-item.disabled { 
-    cursor: not-allowed !important; 
-    opacity: 0.3; 
+    cursor: pointer;
+    opacity: 1;
 }
 
 .enrollment-step-circle {
@@ -160,6 +160,25 @@
     border-color: var(--primary);
 }
 
+.enrollment-step-item.warning {
+    opacity: 1;
+}
+
+.enrollment-step-item.warning .enrollment-step-circle {
+    background: #f59e0b;
+    color: #ffffff;
+    border-color: #f59e0b;
+}
+
+.enrollment-step-item.warning .enrollment-step-label {
+    color: #92400e;
+    font-weight: 700;
+}
+
+.enrollment-step-item.warning.active {
+    background: #fffbeb;
+}
+
 .enrollment-step-label {
     font-size: 0.875rem;
     font-weight: 500;
@@ -171,22 +190,64 @@
     font-weight: 600;
 }
 
+.enrollment-step-item.warning .enrollment-step-label,
+.enrollment-step-item.warning.active .enrollment-step-label {
+    color: #92400e;
+    font-weight: 700;
+}
+
+.returning-coming-soon {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 12px;
+    color: #9a3412;
+    padding: 1rem;
+}
+
+.returning-coming-soon span {
+    background: #ffedd5;
+    border: 1px solid #fdba74;
+    border-radius: 999px;
+    color: #9a3412;
+    display: inline-flex;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.55rem;
+    padding: 0.25rem 0.6rem;
+    text-transform: uppercase;
+}
+
+.returning-coming-soon strong {
+    color: #7c2d12;
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.returning-coming-soon p {
+    font-size: 0.86rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin: 0;
+}
+
 /* ── Main Content ──────────────────────────────────────────────────── */
 .enrollment-main {
     flex: 1;
     display: flex;
     justify-content: center;
-    padding: 2rem;
+    padding: 1.25rem;
     min-height: calc(100vh - 200px);
 }
 
 .enrollment-form-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 900px;
     background: white;
     border-radius: 16px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 2.5rem;
+    padding: 2rem;
     align-self: flex-start;
     margin-top: 1rem;
 }
@@ -401,6 +462,7 @@
     .enrollment-steps-container {
         gap: 1.5rem;
     }
+
 }
 
 /* Small Tablet / Large Phone (481px - 768px) */
@@ -421,13 +483,17 @@
     }
     
     .enrollment-header-logo {
-        width: 48px;
-        height: 48px;
+        width: 64px;
+        height: 64px;
     }
     
-    .enrollment-header-text .arabic,
-    .enrollment-header-text .school {
+    .enrollment-header-text .arabic {
         font-size: 0.8125rem;
+        text-align: center;
+    }
+
+    .enrollment-header-text .school {
+        font-size: 1.12rem;
         text-align: center;
     }
     
@@ -495,7 +561,7 @@
         grid-template-columns: 1fr !important; 
         gap: 1rem;
     }
-    
+
     .form-grid-3 .col-1, 
     .form-grid-3 .col-2, 
     .form-grid-3 .col-3 { 
@@ -564,13 +630,16 @@
     }
     
     .enrollment-header-logo {
-        width: 36px;
-        height: 36px;
+        width: 52px;
+        height: 52px;
     }
     
-    .enrollment-header-text .arabic,
-    .enrollment-header-text .school {
+    .enrollment-header-text .arabic {
         font-size: 0.6875rem;
+    }
+
+    .enrollment-header-text .school {
+        font-size: 0.95rem;
     }
     
     .enrollment-header-right h1 {
@@ -738,5 +807,500 @@
     .enrollment-form-header {
         margin-bottom: 1rem;
         padding-bottom: 0.75rem;
+    }
+}
+
+/* Enrollment UX polish */
+.enrollment-page,
+.dashboard-page {
+    background:
+        linear-gradient(180deg, rgba(240, 253, 244, 0.78) 0%, rgba(248, 250, 252, 0) 360px),
+        #f8fafc;
+}
+
+.enrollment-header {
+    background:
+        radial-gradient(circle at 20% 0%, rgba(250, 204, 21, 0.18), transparent 32%),
+        linear-gradient(135deg, #065f46 0%, #047857 58%, #0f766e 100%);
+    box-shadow: 0 16px 40px rgba(6, 95, 70, 0.16);
+}
+
+.enrollment-header-content {
+    gap: 1.5rem;
+}
+
+.dashboard-logo img {
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 14px;
+    padding: 6px;
+}
+
+.enrollment-header-right h1 {
+    letter-spacing: 0;
+}
+
+.enrollment-steps-bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
+.enrollment-step-item {
+    min-height: 40px;
+    border-radius: 999px;
+    padding: 0.25rem 0.45rem 0.25rem 0.25rem;
+}
+
+.enrollment-step-item.active {
+    background: #ecfdf5;
+}
+
+.enrollment-step-item.warning.active {
+    background: #fffbeb;
+}
+
+.enrollment-step-item:hover {
+    opacity: 1;
+    background: #f0fdf4;
+}
+
+.enrollment-step-circle {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.enrollment-main {
+    align-items: flex-start;
+}
+
+.enrollment-form-container,
+.dashboard-info,
+.dashboard-card,
+.success-card {
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.07);
+}
+
+.enrollment-form-container {
+    --enrollment-form-pad: clamp(1rem, 1.8vw, 1.7rem);
+    border-radius: 14px;
+    padding: var(--enrollment-form-pad);
+    max-width: 900px;
+}
+
+.enrollment-form-header {
+    text-align: left;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+}
+
+.enrollment-form-header h2 {
+    font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+    letter-spacing: 0;
+}
+
+.enrollment-form-header p {
+    font-size: 0.9rem;
+}
+
+.form-group {
+    gap: 0.45rem;
+}
+
+.form-group label {
+    color: #1f2937;
+    font-weight: 650;
+}
+
+.plain-input,
+.select-input,
+.textarea-input,
+.date-input {
+    min-height: 44px;
+    border-color: #d8dee8;
+    border-radius: 8px;
+}
+
+.textarea-input {
+    line-height: 1.55;
+}
+
+.plain-input:hover,
+.select-input:hover,
+.textarea-input:hover,
+.date-input:hover,
+.doc-upload-area:hover {
+    border-color: #86efac;
+}
+
+.plain-input:focus,
+.select-input:focus,
+.textarea-input:focus,
+.date-input:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.12);
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-next,
+.btn-submit,
+.btn-back,
+.btn-back-home,
+.logout-btn {
+    min-height: 44px;
+    border-radius: 8px;
+    letter-spacing: 0;
+}
+
+.btn-primary,
+.btn-next,
+.btn-submit,
+.btn-back-home {
+    background: linear-gradient(135deg, #059669, #047857);
+    box-shadow: 0 10px 20px rgba(5, 150, 105, 0.18);
+}
+
+.btn-primary:hover,
+.btn-next:hover,
+.btn-submit:hover,
+.btn-back-home:hover {
+    transform: translateY(-1px);
+}
+
+.btn-secondary:hover,
+.logout-btn:hover {
+    color: #065f46;
+    border-color: #a7f3d0;
+    background: #f0fdf4;
+}
+
+.doc-upload-area {
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.doc-preview {
+    border-radius: 8px;
+}
+
+.form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin-inline: calc(var(--enrollment-form-pad, clamp(1rem, 1.8vw, 1.7rem)) * -1);
+    margin-bottom: calc(var(--enrollment-form-pad, clamp(1rem, 1.8vw, 1.7rem)) * -1);
+    padding: 0.85rem var(--enrollment-form-pad, clamp(1rem, 1.8vw, 1.7rem));
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
+    border-top: 1px solid #e5e7eb;
+    border-radius: 0 0 14px 14px;
+}
+
+.dashboard-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: none;
+}
+
+.dashboard-content {
+    max-width: 920px;
+}
+
+.dashboard-welcome,
+.dashboard-card,
+.dashboard-info {
+    border-radius: 12px;
+}
+
+.dashboard-card {
+    border-left: 4px solid transparent;
+}
+
+.dashboard-card:not(.disabled):hover {
+    border-left-color: #059669;
+}
+
+.card-icon,
+.welcome-icon {
+    border-radius: 10px;
+}
+
+.coming-soon,
+.status-badge {
+    border-radius: 999px;
+}
+
+.enrollment-footer {
+    background: transparent;
+    border-top: 0;
+}
+
+@media (max-width: 768px) {
+    .enrollment-header-content {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .enrollment-header-left {
+        justify-content: flex-start;
+    }
+
+    .enrollment-header-text .arabic,
+    .enrollment-header-text .school {
+        text-align: left;
+    }
+
+    .enrollment-header-right {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .enrollment-step-item {
+        padding: 0.2rem;
+    }
+
+    .enrollment-form-header {
+        padding-right: 2.75rem;
+    }
+
+    .dashboard-header {
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        flex-direction: column;
+    }
+
+    .dashboard-header form,
+    .logout-btn {
+        width: 100%;
+    }
+
+    .dashboard-content {
+        padding: 1.25rem 1rem 2rem;
+    }
+
+    .dashboard-welcome,
+    .dashboard-card {
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 560px) {
+    .enrollment-steps-bar {
+        top: 0;
+    }
+
+    .enrollment-form-container {
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+    }
+
+    .form-actions {
+        align-items: stretch !important;
+        border-radius: 0;
+    }
+
+    .form-actions > div {
+        width: 100%;
+        flex-direction: column-reverse;
+    }
+
+    .form-actions button {
+        width: 100%;
+    }
+
+    .dashboard-card {
+        padding: 1rem;
+        gap: 0.85rem;
+    }
+
+    .card-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    div[style*="grid-template-columns:1fr 1fr 1fr"],
+    div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(4px);
+}
+
+.confirm-dialog {
+    position: relative;
+    width: min(100%, 32rem);
+    padding: 1.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 28px 60px rgba(15, 23, 42, 0.18);
+}
+
+.confirm-close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #64748b;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.confirm-close-button:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.confirm-close-button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.18);
+}
+
+.confirm-dialog-copy h3 {
+    margin: 0;
+    padding-right: 2.5rem;
+    color: #0f172a;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.confirm-dialog-copy p {
+    margin: 0.75rem 0 0;
+    color: #475569;
+    font-size: 0.96rem;
+    line-height: 1.7;
+}
+
+.confirm-dialog-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1.4rem;
+}
+
+.confirm-dialog-actions button {
+    min-height: 46px;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.confirm-dialog-actions form {
+    display: flex;
+    margin: 0;
+    width: 100%;
+}
+
+.confirm-dialog-actions .danger-text-button,
+.confirm-dialog-actions .btn-primary {
+    width: 100%;
+}
+
+.danger-text-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 46px;
+    border: 0;
+    border-radius: 12px;
+    background: #dc2626;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+    justify-content: center;
+    white-space: nowrap;
+    box-shadow: 0 10px 20px rgba(220, 38, 38, 0.18);
+}
+
+.danger-text-button:hover {
+    background: #b91c1c;
+    color: #ffffff;
+}
+
+.danger-text-button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18);
+}
+/* Draft recovery */
+.draft-discard-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+    background: #fff7ed;
+}
+
+.draft-discard-bar strong {
+    display: block;
+    color: #9a3412;
+    font-size: 0.9rem;
+    font-weight: 850;
+}
+
+.draft-discard-bar span {
+    display: block;
+    margin-top: 0.15rem;
+    color: #7c2d12;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.draft-discard-bar button {
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #ea580c;
+    color: #ffffff;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.draft-discard-bar button:hover {
+    background: #c2410c;
+}
+
+@media (max-width: 560px) {
+    .confirm-dialog {
+        border-radius: 16px;
+        padding: 1.1rem;
+    }
+
+    .confirm-dialog-actions {
+        flex-direction: column-reverse;
+        grid-template-columns: 1fr;
+    }
+
+    .confirm-dialog-actions button {
+        width: 100%;
     }
 }

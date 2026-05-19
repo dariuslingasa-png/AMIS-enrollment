@@ -5,9 +5,9 @@
                 <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS Logo" class="success-logo">
             </div>
 
-            <h1>Application Submitted!</h1>
+            <h1>Enrollment Submitted!</h1>
             <p class="success-subtitle">
-                Jazakallahu Khayran! Your enrollment application has been received.
+                Your enrollment application has been submitted successfully. Please wait for the school/admin review. You will be notified once your application has been checked.
             </p>
 
             <div class="success-info-box">
@@ -17,6 +17,22 @@
                     </svg>
                     <span>Your application is now <span class="badge-pending">Pending Review</span></span>
                 </div>
+                @if ($applicant)
+                    <div class="success-info-row">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary); flex-shrink: 0;">
+                            <path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                        </svg>
+                        @if ((float) $applicant->discount_percentage > 0)
+                            <span>
+                                Sibling Discount Eligible:
+                                <strong>{{ $applicant->sibling_order }}{{ $applicant->sibling_order == 2 ? 'nd' : ($applicant->sibling_order == 3 ? 'rd' : 'th') }} Child</strong>,
+                                <strong>{{ rtrim(rtrim(number_format((float) $applicant->discount_percentage, 2), '0'), '.') }}% Discount Applied</strong>
+                            </span>
+                        @else
+                            <span>Sibling discount eligibility will be reviewed and finalized by the registrar.</span>
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <!-- Processing Time Notice -->
@@ -66,12 +82,11 @@
                 </ol>
             </div>
 
-            <a href="{{ route('enrollment.dashboard') }}" class="btn-primary" style="text-decoration: none;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
-                </svg>
-                Back to Dashboard
-            </a>
+            <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+                <a href="{{ route('enrollment.dashboard', ['applicant' => $applicant?->id]) }}" class="btn-secondary" style="text-decoration: none;display:inline-flex;align-items:center;gap:0.5rem;">
+                    Back to Dashboard
+                </a>
+            </div>
         </div>
     </div>
 </x-guest-layout>

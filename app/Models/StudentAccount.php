@@ -11,6 +11,7 @@ class StudentAccount extends Model
     protected $fillable = [
         'student_id', 'enrollment_applicant_id', 'school_year', 'grade_level',
         'tuition_fee', 'monthly_tuition', 'miscellaneous_fee', 'books_fee',
+        'sibling_order', 'discount_type', 'discount_percentage', 'discount_amount',
         'gross_total', 'enrollment_fee_paid', 'total_balance',
         'amount_paid', 'remaining_balance', 'status',
     ];
@@ -20,6 +21,8 @@ class StudentAccount extends Model
         'monthly_tuition'     => 'decimal:2',
         'miscellaneous_fee'   => 'decimal:2',
         'books_fee'           => 'decimal:2',
+        'discount_percentage' => 'decimal:2',
+        'discount_amount'     => 'decimal:2',
         'gross_total'         => 'decimal:2',
         'enrollment_fee_paid' => 'decimal:2',
         'total_balance'       => 'decimal:2',

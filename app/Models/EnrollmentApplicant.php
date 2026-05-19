@@ -11,7 +11,9 @@ class EnrollmentApplicant extends Model
         'user_id',
         // Student Info
         'student_type',
+        'amis_student_id',
         'learning_mode',
+        'timezone',
         'lrn',
         'grade_level',
         'first_name',
@@ -21,9 +23,15 @@ class EnrollmentApplicant extends Model
         'date_of_birth',
         'place_of_birth',
         'religion',
+        'ethnicity',
         'country',
+        'state_province',
+        'city',
+        'street_address',
+        'postal_code',
         'address',
         'email',
+        'mobile_country_code',
         'mobile_number',
         // Parent Info
         'father_last_name',
@@ -35,11 +43,23 @@ class EnrollmentApplicant extends Model
         'mother_middle_name',
         'mother_occupation',
         'home_address',
+        'home_state_province',
+        'home_city',
+        'home_street_address',
+        'home_postal_code',
+        'parent_country_code',
         'parent_mobile',
         'parent_email',
+        'referral_source',
         // Medical & Emergency
         'psych_testing',
         'prescription_med',
+        'medical_has_concern',
+        'allergies',
+        'current_medications',
+        'health_conditions',
+        'emergency_instructions',
+        'medical_history',
         'med_explanation',
         'family_physician',
         'physician_phone',
@@ -52,17 +72,26 @@ class EnrollmentApplicant extends Model
         'report_card_url',
         'marriage_contract_url',
         'medical_record_url',
+        'affidavit_url',
         'document_statuses',
+        'review_remarks',
         // Meta
         'school_year',
         'status',
         'last_step',
+        'sibling_order',
+        'discount_type',
+        'discount_percentage',
+        'discount_amount',
     ];
 
     protected $casts = [
         'date_of_birth'      => 'date',
         'last_step'          => 'integer',
         'document_statuses'  => 'array',
+        'sibling_order'      => 'integer',
+        'discount_percentage'=> 'decimal:2',
+        'discount_amount'    => 'decimal:2',
     ];
 
     public function user(): BelongsTo
@@ -100,8 +129,9 @@ class EnrollmentApplicant extends Model
             !empty($this->date_of_birth),
             !empty($this->place_of_birth),
             !empty($this->religion),
+            !empty($this->ethnicity),
             !empty($this->country),
-            !empty($this->address),
+            !empty($this->street_address),
             !empty($this->mobile_number),
             // Step 2
             !empty($this->parent_mobile),
@@ -111,7 +141,6 @@ class EnrollmentApplicant extends Model
             !empty($this->emergency_phone),
             // Step 5 - documents
             !empty($this->photo_2x2_url),
-            !empty($this->birth_cert_url),
             !empty($this->report_card_url),
         ];
 

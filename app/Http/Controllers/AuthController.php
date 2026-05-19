@@ -4,210 +4,177 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\VerificationCode;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
     public function showRegister()
     {
-        return view('auth.register');
+        return redirect()->route('login');
     }
 
     public function register(Request $request)
     {
+        if (Auth::check()) {
+            return redirect()->route('enrollment.dashboard');
+        }
+
         $validated = $request->validate([
-            'username' => 'required|string|max:255|unique:users',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'email' => ['required', 'string', 'email', 'max:255'],
         ]);
 
+        $email = Str::lower(trim($validated['email']));
+
+        $user = User::where('email', $email)->first();
+
+        if ($user) {
+            if (in_array($user->account_status, ['blocked', 'suspended'], true)) {
+                return back()
+                    ->withInput($request->only('email'))
+                    ->withErrors(['email' => 'This account is not available. Please contact AMIS support.']);
+            }
+
+            $user->sendEmailVerificationNotification();
+
+            return redirect()->route('verify.email.notice')
+                ->with('email', $email)
+                ->with('success', 'We sent a secure sign-in link to your email.');
+        }
+
         $user = User::create([
-            'name' => $validated['username'],
-            'username' => $validated['username'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'name' => Str::before($email, '@'),
+            'username' => User::makeUniqueUsername($email),
+            'email' => $email,
+            'password' => Hash::make(Str::random(48)),
             'role' => 'applicant',
             'account_status' => 'pending',
         ]);
 
-        // Generate and store verification code
-        $code = str_pad(random_int(1000, 9999), 4, '0', STR_PAD_LEFT);
-        VerificationCode::create([
-            'email' => $validated['email'],
-            'code' => $code,
-            'expires_at' => now()->addMinutes(10),
-        ]);
+        // Sends a signed activation link; clicking it verifies and logs the user in.
+        event(new Registered($user));
 
-        // Send verification email
-        $emailSent = $this->sendCode($validated['email'], $code);
-
-        $msg = $emailSent
-            ? 'Registration successful! Check your email for the verification code.'
-            : "Registration successful! Your verification code is: {$code}";
-
-        return redirect()->route('verify.email')
-            ->with('email', $validated['email'])
-            ->with('success', $msg);
+        return redirect()->route('verify.email.notice')
+            ->with('email', $email)
+            ->with('success', 'We sent a verification link to your email.');
     }
 
     public function showLogin()
     {
+        if (Auth::check()) {
+            return redirect()->route('enrollment.dashboard');
+        }
+
         return view('auth.login');
     }
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+        if (Auth::check()) {
+            return redirect()->route('enrollment.dashboard');
+        }
+
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string'],
         ]);
+
+        $credentials = [
+            'email' => Str::lower(trim($validated['email'])),
+            'password' => $validated['password'],
+        ];
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
 
-            if ($user->account_status !== 'verified') {
+            if ($user->account_status !== 'verified' || !$user->hasVerifiedEmail()) {
                 Auth::logout();
+
                 return back()->withErrors([
-                    'email' => 'Please verify your email first before logging in.',
-                ]);
+                    'email' => 'Please verify your email first. Check your inbox for the verification link.',
+                ])->withInput($request->only('email', 'auth_mode'));
             }
 
             $request->session()->regenerate();
 
-            return redirect()->intended('/dashboard');
+            return redirect()
+                ->route('enrollment.dashboard')
+                ->with('show_beta_notice', true);
         }
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
-        ]);
+        ])->withInput($request->only('email', 'auth_mode'));
     }
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect('/');
     }
 
-    public function showVerification()
+    public function showVerificationNotice()
     {
         return view('auth.verify-email');
     }
 
-    public function sendVerificationCode(Request $request)
+    public function verifyEmail(Request $request, int $id, string $hash)
     {
-        $validated = $request->validate([
-            'email' => 'required|email|exists:users,email',
-        ]);
+        $user = User::findOrFail($id);
 
-        $code = str_pad(random_int(1000, 9999), 4, '0', STR_PAD_LEFT);
+        abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403);
+        abort_if(in_array($user->account_status, ['blocked', 'suspended'], true), 403);
 
-        VerificationCode::create([
-            'email' => $validated['email'],
-            'code' => $code,
-            'expires_at' => now()->addMinutes(10),
-        ]);
-
-        $emailSent = $this->sendCode($validated['email'], $code);
-
-        $msg = $emailSent
-            ? 'Verification code sent to your email!'
-            : "Verification code: {$code}";
-
-        return back()
-            ->with('email', $validated['email'])
-            ->with('success', $msg);
-    }
-
-    public function verifyCode(Request $request)
-    {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'code' => 'required|string|size:4',
-        ]);
-
-        $verificationCode = VerificationCode::where('email', $validated['email'])
-            ->where('code', $validated['code'])
-            ->where('expires_at', '>', now())
-            ->where('used', false)
+        $verificationCode = VerificationCode::where('email', $user->getEmailForVerification())
+            ->where('code', (string) $request->query('code'))
+            ->latest()
             ->first();
 
-        if (!$verificationCode) {
-            return back()
-                ->with('email', $validated['email'])
-                ->withErrors(['code' => 'Invalid or expired verification code.']);
+        if (!$verificationCode || !$verificationCode->isValid()) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => 'This email link has already been used or expired. Please request a new secure link.']);
         }
 
-        // Mark code as used
         $verificationCode->update(['used' => true]);
 
-        // Update user account status
-        $user = User::where('email', $validated['email'])->first();
-        if ($user) {
-            $user->update([
-                'account_status' => 'verified',
+        if (!$user->hasVerifiedEmail()) {
+            $user->forceFill([
                 'email_verified_at' => now(),
-            ]);
+                'account_status' => 'verified',
+            ])->save();
+
+            event(new Verified($user));
+        } elseif ($user->account_status !== 'verified') {
+            $user->update(['account_status' => 'verified']);
         }
 
-        return redirect()->route('login')
-            ->with('success', 'Email verified successfully! You can now log in.');
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()
+            ->route('enrollment.dashboard')
+            ->with('success', 'Email verified! Welcome to AMIS.')
+            ->with('show_beta_notice', true);
     }
 
-    /**
-     * Send verification code via email.
-     * Returns true if sent, false if failed.
-     */
-    private function sendCode(string $email, string $code): bool
+    public function resendVerificationLink(Request $request)
     {
-        try {
-            $html = '
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:Inter,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 20px;">
-<tr><td align="center">
-<table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-    <tr><td style="background:linear-gradient(135deg,#059669,#047857);padding:32px;text-align:center;">
-        <img src="' . asset('images/AMIS_Logo.png') . '" alt="AMIS" width="60" height="60" style="margin-bottom:12px;">
-        <h1 style="color:#fff;font-size:20px;margin:0;">AMIS Enrollment</h1>
-        <p style="color:rgba(255,255,255,0.85);font-size:13px;margin:4px 0 0;">Al Munawwara Islamic School</p>
-    </td></tr>
-    <tr><td style="padding:32px 40px;">
-        <h2 style="color:#111827;font-size:22px;margin:0 0 8px;text-align:center;">Email Verification</h2>
-        <p style="color:#6b7280;font-size:14px;text-align:center;margin:0 0 24px;">Enter this code to verify your email address</p>
-        <div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
-            <p style="color:#6b7280;font-size:12px;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px;">Your Verification Code</p>
-            <p style="color:#059669;font-size:36px;font-weight:700;letter-spacing:8px;margin:0;">' . $code . '</p>
-        </div>
-        <p style="color:#6b7280;font-size:13px;text-align:center;margin:0 0 8px;">This code expires in <strong>10 minutes</strong>.</p>
-        <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0;">If you did not request this, please ignore this email.</p>
-    </td></tr>
-    <tr><td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
-        <p style="color:#9ca3af;font-size:11px;margin:0;">&copy; ' . date('Y') . ' Al Munawwara Islamic School. All rights reserved.</p>
-    </td></tr>
-</table>
-</td></tr>
-</table>
-</body>
-</html>';
+        $request->validate(['email' => 'required|email|exists:users,email']);
 
-            Mail::html($html, function ($message) use ($email) {
-                $message->to($email)
-                    ->subject('AMIS Enrollment - Email Verification');
-            });
-            return true;
-        } catch (\Exception $e) {
-            \Log::error("Failed to send verification email to {$email}: " . $e->getMessage());
-            return false;
+        $user = User::where('email', $request->email)->first();
+
+        if ($user && !in_array($user->account_status, ['blocked', 'suspended'], true)) {
+            $user->sendEmailVerificationNotification();
         }
+
+        return back()->with('success', 'Verification link resent! Please check your inbox.');
     }
 }

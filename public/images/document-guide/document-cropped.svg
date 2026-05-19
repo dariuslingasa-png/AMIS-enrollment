@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" role="img" aria-labelledby="title desc">
+  <title id="title">Cropped document example</title>
+  <desc id="desc">A red warning sample showing a document with missing edges.</desc>
+  <linearGradient id="warn" x1="0" x2="1" y1="0" y2="1">
+    <stop stop-color="#fff7ed"/><stop offset="1" stop-color="#fff1f2"/>
+  </linearGradient>
+  <rect width="900" height="900" rx="36" fill="#fff"/>
+  <rect x="26" y="26" width="848" height="848" rx="28" fill="url(#warn)" stroke="#fdba74" stroke-width="2"/>
+  <g transform="translate(68 64)">
+    <circle cx="48" cy="48" r="32" fill="#f97316"/>
+    <path d="M48 28v26" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="48" cy="68" r="5" fill="#fff"/>
+    <text x="118" y="63" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="800" fill="#ea580c">Cropped</text>
+  </g>
+  <rect x="92" y="188" width="716" height="626" rx="24" fill="#fff" stroke="#fed7aa"/>
+  <clipPath id="crop"><rect x="170" y="238" width="520" height="518" rx="10"/></clipPath>
+  <g clip-path="url(#crop)">
+    <rect x="104" y="238" width="616" height="518" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/>
+    <text x="412" y="306" text-anchor="middle" font-family="Arial,sans-serif" font-size="30" font-weight="800" fill="#111827">SCHOOL DOCUMENT</text>
+    <g stroke="#334155" stroke-width="4">
+      <path d="M144 366h540M144 430h540M144 494h540M144 558h540M144 622h540M144 686h540"/>
+      <path d="M300 366v320M506 430v256"/>
+    </g>
+    <g fill="#334155" font-family="Arial,sans-serif" font-size="24">
+      <text x="164" y="410">Student Name</text><text x="326" y="410">Sample Name</text>
+      <text x="164" y="474">Grade</text><text x="326" y="474">Grade 1</text>
+      <text x="164" y="538">School Year</text><text x="326" y="538">2026-2027</text>
+      <text x="164" y="602">Remarks</text><text x="326" y="602">Missing edge</text>
+    </g>
+  </g>
+  <path d="M170 238h520v518H170z" fill="none" stroke="#fb923c" stroke-width="5" stroke-dasharray="18 14"/>
+</svg>

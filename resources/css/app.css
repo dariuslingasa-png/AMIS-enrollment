@@ -1,8 +1,17 @@
 @import './global.css';
 @import './auth.css';
 @import './dashboard.css';
+@import './dashboard-family.css';
 @import './enrollment.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:where(a, button, input, select, textarea, summary, [role="button"], [tabindex]):focus,
+:where(a, button, input, select, textarea, summary, [role="button"], [tabindex]):focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+}

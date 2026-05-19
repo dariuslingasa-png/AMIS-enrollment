@@ -2,192 +2,294 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EnrollmentApplicant;
-use App\Models\Payment;
+use App\Http\Requests\Enrollment\SaveDraftRequest;
+use App\Http\Requests\Enrollment\SubmitEnrollmentRequest;
+use App\Services\Enrollment\EnrollmentApplicationService;
+use App\Services\Enrollment\EnrollmentNotificationService;
 use Illuminate\Http\Request;
+use App\Services\Enrollment\GradeShiftService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class EnrollmentController extends Controller
 {
-    private array $gradeLevels = [
-        'Kinder 1', 'Kinder 2',
-        'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
-        'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
-        'Grade 11', 'Grade 12',
-    ];
+    public function __construct(
+        private EnrollmentApplicationService $applications,
+        private GradeShiftService $gradeShifts,
+    ) {
+    }
 
-    public function showEnrollmentForm()
+    public function showEnrollmentForm(Request $request)
     {
         $user = Auth::user();
-        $applicant = $user->enrollmentApplicant;
+        $startFresh = $request->boolean('fresh')
+            && !$request->route('applicant')
+            && !$request->query('applicant')
+            && !$request->input('applicant_id');
 
-        // If already submitted (not a draft), redirect to dashboard
-        if ($applicant && !in_array($applicant->status, ['draft', 'rejected'])) {
-            return redirect()->route('enrollment.dashboard')
-                ->with('info', 'Your application has already been submitted.');
+        if ($startFresh) {
+            session()->forget('current_enrollment_applicant_id');
+            $applicant = null;
+        } else {
+            $applicant = $this->applications->resolveForUser($user, $request, editableFirst: true);
         }
 
-        $hasErrors    = session()->has('errors') && session('errors')->any();
-        $initialStep  = $hasErrors ? 5 : ($applicant ? ($applicant->last_step ?? 1) : 1);
+        if ($applicant && !in_array($applicant->status, EnrollmentApplicationService::EDITABLE_STATUSES, true)) {
+            return redirect()->route('enrollment.dashboard')
+                ->with('info', 'This application has already been finalized and is locked for review.');
+        }
+
+        $hasErrors = session()->has('errors') && session('errors')->any();
+        $rejectionFixSteps = $this->rejectionFixSteps($applicant);
+        $initialStep = $hasErrors
+            ? 7
+            : ($rejectionFixSteps ? min(array_keys($rejectionFixSteps)) : ($applicant ? min((int) ($applicant->last_step ?? 1), 7) : 1));
         $completedSteps = $hasErrors
-            ? range(1, 4)
-            : ($applicant ? range(1, min((int)($applicant->last_step ?? 1), 5)) : []);
+            ? range(1, 6)
+            : ($applicant ? range(1, min((int) ($applicant->last_step ?? 1), 7)) : []);
 
         return view('enrollment.form', [
-            'gradeLevels'    => $this->gradeLevels,
-            'applicant'      => $applicant,
-            'initialStep'    => $initialStep,
+            'gradeLevels' => $this->gradeShifts->getGradeLevels(),
+            'shifts' => $this->gradeShifts->getShifts(),
+            'applicant' => $applicant,
+            'initialStep' => $initialStep,
             'completedSteps' => $completedSteps,
+            'rejectionFixSteps' => $rejectionFixSteps,
+            'startFresh' => $startFresh,
+            'siblingData' => $this->applications->getSiblingReusableData($user, $applicant),
         ]);
     }
 
-    /**
-     * Save current step as draft (AJAX-friendly, returns JSON).
-     */
-    public function saveDraft(Request $request)
+    private function rejectionFixSteps($applicant): array
     {
-        $user = Auth::user();
-
-        $data = $request->only([
-            'student_type', 'learning_mode', 'lrn', 'grade_level',
-            'last_name', 'first_name', 'middle_name', 'gender',
-            'date_of_birth', 'place_of_birth', 'religion', 'country',
-            'address', 'email', 'mobile_number',
-            'father_last_name', 'father_first_name', 'father_middle_name', 'father_occupation',
-            'mother_last_name', 'mother_first_name', 'mother_middle_name', 'mother_occupation',
-            'home_address', 'parent_mobile', 'parent_email',
-            'psych_testing', 'prescription_med', 'med_explanation',
-            'family_physician', 'physician_phone',
-            'emergency_name', 'emergency_relationship', 'emergency_phone',
-            'school_year', 'last_step',
-        ]);
-
-        // Strip empty strings to null so DB stays clean
-        $data = array_map(fn($v) => $v === '' ? null : $v, $data);
-        $data['user_id'] = $user->id;
-        $data['status']  = 'draft';
-        $data['lrn']     = $data['lrn'] ?: null;
-
-        $applicant = $user->enrollmentApplicant;
-
-        if ($applicant) {
-            $applicant->update($data);
-        } else {
-            $applicant = EnrollmentApplicant::create($data);
+        if (!$applicant || $applicant->status !== 'rejected') {
+            return [];
         }
 
-        // Handle file uploads if any were sent with this draft save
-        $this->handleFileUploads($applicant, $request);
+        $stepLabels = [
+            'registration_form' => [2, 'Registration form'],
+            'student_information' => [2, 'Student information'],
+            'address' => [3, 'Address or contact details'],
+            'parent_information' => [4, 'Parent or guardian details'],
+            'medical_information' => [5, 'Medical or emergency details'],
+            'documents' => [6, 'Documents'],
+            'photo_2x2' => [6, '2x2 picture'],
+            'birth_cert' => [6, 'Birth certificate'],
+            'report_card' => [6, 'Report card'],
+            'marriage_contract' => [6, 'Marriage contract'],
+            'medical_record' => [6, 'Medical record'],
+            'affidavit' => [6, 'Affidavit'],
+            'payment_proof' => [6, 'Payment proof'],
+        ];
+
+        $fixSteps = [];
+
+        foreach (($applicant->document_statuses ?? []) as $key => $status) {
+            if ($status !== 'rejected' || !isset($stepLabels[$key])) {
+                continue;
+            }
+
+            [$step, $label] = $stepLabels[$key];
+            $fixSteps[$step][] = $label;
+        }
+
+        if (!$fixSteps && filled($applicant->review_remarks)) {
+            $fixSteps[2][] = 'Application details';
+        }
+
+        ksort($fixSteps);
+
+        return collect($fixSteps)
+            ->map(fn (array $labels) => array_values(array_unique($labels)))
+            ->all();
+    }
+
+    public function startNewApplication()
+    {
+        $applicant = $this->applications->startNewFor(Auth::user());
+
+        if (!$applicant) {
+            return redirect()->route('enrollment.dashboard')
+                ->with('info', 'Please complete your current child application first before adding another child.');
+        }
+
+        return redirect()->route('enrollment.form.child', $applicant)
+            ->with('success', 'New child enrollment draft started. This stays grouped with your parent account.');
+    }
+
+    public function getShiftsForGrade(string $grade)
+    {
+        $shifts = $this->gradeShifts->getShiftsForGrade($grade);
+        return response()->json($shifts);
+    }
+
+    public function saveDraft(SaveDraftRequest $request)
+    {
+        $applicant = $this->applications->saveDraft(
+            $request->user(),
+            $request,
+            $request->draftData()
+        );
 
         return response()->json([
-            'success'    => true,
+            'success' => true,
+            'applicant_id' => $applicant->id,
             'percentage' => $applicant->completion_percentage,
-            'last_step'  => $applicant->last_step,
+            'last_step' => $applicant->last_step,
         ]);
     }
 
-    /**
-     * Final submit — validates everything and marks as pending.
-     */
-    public function submitEnrollment(Request $request)
+    public function discardDraft(Request $request)
     {
-        $user = Auth::user();
+        $discardedApplicant = $this->applications->discardDraft($request->user(), $request);
 
-        $validated = $request->validate([
-            'student_type'            => 'required|in:New,Old',
-            'learning_mode'           => 'required|string',
-            'lrn'                     => 'nullable|digits:12',
-            'grade_level'             => 'required|string',
-            'last_name'               => 'required|string|max:255',
-            'first_name'              => 'required|string|max:255',
-            'middle_name'             => 'required|string|max:255',
-            'gender'                  => 'required|in:Male,Female',
-            'date_of_birth'           => 'required|date|before:today',
-            'place_of_birth'          => 'required|string|max:255',
-            'religion'                => 'required|string|max:255',
-            'country'                 => 'required|string|max:255',
-            'address'                 => 'required|string|max:500',
-            'email'                   => 'nullable|email|max:255',
-            'mobile_number'           => 'required|string|min:7|max:20',
-            'father_last_name'        => 'nullable|string|max:255',
-            'father_first_name'       => 'nullable|string|max:255',
-            'father_middle_name'      => 'nullable|string|max:255',
-            'father_occupation'       => 'nullable|string|max:255',
-            'mother_last_name'        => 'nullable|string|max:255',
-            'mother_first_name'       => 'nullable|string|max:255',
-            'mother_middle_name'      => 'nullable|string|max:255',
-            'mother_occupation'       => 'nullable|string|max:255',
-            'home_address'            => 'nullable|string|max:500',
-            'parent_mobile'           => 'required|string|min:7|max:20',
-            'parent_email'            => 'nullable|email|max:255',
-            'psych_testing'           => 'nullable|string|max:255',
-            'prescription_med'        => 'nullable|string|max:255',
-            'med_explanation'         => 'nullable|string|max:1000',
-            'family_physician'        => 'nullable|string|max:255',
-            'physician_phone'         => 'nullable|string|max:20',
-            'emergency_name'          => 'required|string|max:255',
-            'emergency_relationship'  => 'required|string|max:255',
-            'emergency_phone'         => 'required|string|max:20',
-            'agreed_to_terms'         => 'accepted',
-            'agreed_to_data_privacy'  => 'accepted',
-            'school_year'             => 'required|string',
-        ]);
-
-        // File validation — only required if not already uploaded in a draft
-        $applicant = $user->enrollmentApplicant;
-        $request->validate([
-            'photo_2x2'        => ($applicant?->photo_2x2_url   ? 'nullable' : 'required') . '|image|max:5120',
-            'birth_cert'       => ($applicant?->birth_cert_url   ? 'nullable' : 'required') . '|image|max:5120',
-            'report_card'      => ($applicant?->report_card_url  ? 'nullable' : 'required') . '|image|max:5120',
-            'marriage_contract'=> 'nullable|image|max:5120',
-            'medical_record'   => 'nullable|image|max:5120',
-        ]);
-
-        $validated['lrn']   = $validated['lrn'] ?: 'NA';
-        $validated['email'] = $validated['email'] ?? null;
-
-        $submitData = array_merge($validated, [
-            'user_id'   => $user->id,
-            'status'    => 'pending',
-            'last_step' => 5,
-        ]);
-
-        unset($submitData['agreed_to_terms'], $submitData['agreed_to_data_privacy']);
-
-        if ($applicant) {
-            $applicant->update($submitData);
-        } else {
-            $applicant = EnrollmentApplicant::create($submitData);
+        if (!$discardedApplicant) {
+            return redirect()->route('enrollment.dashboard')
+                ->with('error', 'We could not find that child draft. Please refresh and try again.');
         }
 
-        $this->handleFileUploads($applicant, $request);
+        return redirect()->route('enrollment.dashboard')
+            ->with('success', 'Draft cleared. You can start a fresh enrollment form.')
+            ->with('clear_draft_cache', true)
+            ->with('discarded_draft_applicant_id', $discardedApplicant->id);
+    }
+
+    public function removeDraftDocument(Request $request, string $document)
+    {
+        $removed = $this->applications->removeDraftDocument($request->user(), $request, $document);
+
+        if (!$removed) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This document can no longer be removed.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Document removed.',
+        ]);
+    }
+
+    public function submitEnrollment(
+        SubmitEnrollmentRequest $request
+    ) {
+        $user = $request->user();
+        $applicant = $this->applications->submit($user, $request, $request->enrollmentData());
+
+        return redirect()->route('enrollment.dashboard', ['applicant' => $applicant->id])
+            ->with('success', 'Child application is ready for submission. You may add another child or finalize enrollment.');
+    }
+
+    public function showFinalizePreview(Request $request)
+    {
+        $user = $request->user();
+        $readyApplications = $this->applications->readyApplications($user);
+        $draftApplications = $this->applications->draftApplications($user);
+        $incompleteApplications = $this->applications->incompleteApplications($readyApplications);
+
+        if ($readyApplications->isEmpty()) {
+            return redirect()->route('enrollment.dashboard')
+                ->with('info', 'Complete at least one child application before finalizing enrollment.');
+        }
+
+        if ($draftApplications->isNotEmpty()) {
+            return redirect()->route('enrollment.dashboard')
+                ->with('info', 'Please complete all child drafts before finalizing enrollment.');
+        }
+
+        return view('enrollment.finalize', [
+            'user' => $user,
+            'readyApplications' => $readyApplications,
+            'draftApplications' => $draftApplications,
+            'incompleteApplications' => $incompleteApplications,
+        ]);
+    }
+
+    public function confirmFinalize(
+        Request $request,
+        EnrollmentNotificationService $notifications
+    ) {
+        $user = $request->user();
+        $readyApplications = $this->applications->readyApplications($user);
+        $incompleteApplications = $this->applications->incompleteApplications($readyApplications);
+
+        if ($readyApplications->isEmpty()) {
+            return redirect()->route('enrollment.dashboard')
+                ->with('info', 'No ready child applications found for final submission.');
+        }
+
+        if ($this->applications->draftApplications($user)->isNotEmpty()) {
+            return redirect()->route('enrollment.dashboard')
+                ->with('info', 'Please complete all child drafts before finalizing enrollment.');
+        }
+
+        if ($incompleteApplications->isNotEmpty()) {
+            return redirect()->route('enrollment.finalize.preview')
+                ->with('error', 'Please complete all required child application fields before final submission.');
+        }
+
+        $submittedApplications = $this->applications->finalizeReadyApplications($user);
+
+        foreach ($submittedApplications as $submittedApplication) {
+            $notifications->sendSubmissionConfirmation($user->email, $submittedApplication);
+
+            if (!empty($submittedApplication->parent_email) && $submittedApplication->parent_email !== $user->email) {
+                $notifications->sendSubmissionConfirmation($submittedApplication->parent_email, $submittedApplication);
+            }
+        }
 
         return redirect()->route('enrollment.dashboard')
-            ->with('success', 'Enrollment application submitted successfully!');
+            ->with('success', 'Your enrollment application has been submitted successfully. You may upload your payment proof from the dashboard.');
     }
 
-    public function showSuccess()
+    public function showSuccess(Request $request)
     {
-        return view('enrollment.success');
+        $user = Auth::user();
+        $applicant = $this->applications->resolveForUser($user, $request);
+
+        if (!$applicant || !in_array($applicant->status, EnrollmentApplicationService::FINAL_STATUSES, true)) {
+            $applicant = $user->enrollmentApplicants()
+                ->whereIn('status', EnrollmentApplicationService::FINAL_STATUSES)
+                ->latest()
+                ->first();
+        }
+
+        return view('enrollment.success', compact('applicant'));
     }
 
-    public function showDashboard()
+    public function showDashboard(Request $request)
     {
-        $user      = Auth::user();
-        $applicant = $user->enrollmentApplicant;
-        $payment   = $applicant?->payment;
-        $student   = $applicant?->student;
+        $user = Auth::user();
+        $applicants = $user->enrollmentApplicants()
+            ->with(['payment', 'student'])
+            ->oldest()
+            ->get();
+        $applicant = $this->applications->resolveForUser($user, $request) ?? $applicants->first();
+        $payment = $applicant?->payment;
+        $student = $applicant?->student;
+        $canAddAnotherChild = $this->applications->canAddAnotherChild($user);
+        $readyApplications = $this->applications->readyApplications($user);
+        $draftApplications = $this->applications->draftApplications($user);
 
-        return view('enrollment.dashboard', compact('user', 'applicant', 'payment', 'student'));
+        return view('enrollment.dashboard', compact(
+            'user',
+            'applicant',
+            'applicants',
+            'payment',
+            'student',
+            'canAddAnotherChild',
+            'readyApplications',
+            'draftApplications'
+        ));
     }
 
-    public function showPayment()
+    public function showPayment(Request $request)
     {
-        $user      = Auth::user();
-        $applicant = $user->enrollmentApplicant;
+        $user = Auth::user();
+        $applicant = $this->applications->resolveForUser($user, $request)
+            ?? $user->enrollmentApplicants()->latest()->first();
 
-        if (!$applicant || !in_array($applicant->status, ['pending', 'submitted', 'under_review', 'approved'])) {
+        if (!$this->applications->canAccessPayment($applicant)) {
             return redirect()->route('enrollment.dashboard')
                 ->with('info', 'Please complete your enrollment application first.');
         }
@@ -197,36 +299,36 @@ class EnrollmentController extends Controller
 
     public function submitPayment(Request $request)
     {
-        $user      = Auth::user();
-        $applicant = $user->enrollmentApplicant;
+        $user = Auth::user();
+        $applicant = $this->applications->resolveForUser($user, $request)
+            ?? $user->enrollmentApplicants()->latest()->first();
 
-        if (!$applicant) {
-            return redirect()->route('enrollment.dashboard');
+        if (!$this->applications->canAccessPayment($applicant)) {
+            return redirect()->route('enrollment.dashboard')
+                ->with('info', 'Please complete your enrollment application first.');
         }
 
         $request->validate([
-            'method'  => 'required|in:gcash,maya,bdo',
+            'method' => 'required|in:gcash,maya,bdo',
             'receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
-        // Store receipt
         $path = $request->file('receipt')->store('receipts/' . $applicant->id, 'public');
 
-        // Create or update payment record
         $applicant->payment()->updateOrCreate(
             ['enrollment_applicant_id' => $applicant->id],
             [
-                'user_id'                  => $user->id,
-                'method'                   => $request->method,
-                'amount'                   => 4000.00,
-                'receipt_url'              => $path,
-                'status'                   => 'pending',
-                'paid_at'                  => now(),
+                'user_id' => $user->id,
+                'method' => $request->method,
+                'amount' => 4000.00,
+                'receipt_url' => $path,
+                'status' => 'pending',
+                'paid_at' => now(),
             ]
         );
 
         return redirect()->route('enrollment.dashboard')
-            ->with('success', 'Payment submitted! The Finance Office will verify it within 1–2 business days.');
+            ->with('success', 'Payment submitted! The Finance Office will verify it within 1-2 business days.');
     }
 
     public function showClosed()
@@ -234,32 +336,18 @@ class EnrollmentController extends Controller
         return view('enrollment.closed');
     }
 
-    private function handleFileUploads($applicant, Request $request): void
+    public function checkApplicationStatus(Request $request)
     {
-        foreach (['photo_2x2', 'birth_cert', 'report_card', 'marriage_contract', 'medical_record'] as $key) {
-            if ($request->hasFile($key)) {
-                // Delete old file if replacing
-                $oldPath = $applicant->{$key . '_url'};
-                if ($oldPath) {
-                    Storage::disk('public')->delete($oldPath);
-                }
-                $path = $request->file($key)->store('documents/' . $applicant->id, 'public');
-                $applicant->update([$key . '_url' => $path]);
-            }
-        }
-    }
-
-    public function checkApplicationStatus()
-    {
-        $user      = Auth::user();
-        $applicant = $user->enrollmentApplicant;
+        $user = Auth::user();
+        $applicant = $this->applications->resolveForUser($user, $request)
+            ?? $user->enrollmentApplicants()->latest()->first();
 
         return response()->json([
-            'status'       => $applicant->status ?? 'not_found',
+            'status' => $applicant->status ?? 'not_found',
             'submitted_at' => $applicant->created_at ?? null,
-            'percentage'   => $applicant?->completion_percentage ?? 0,
-            'last_step'    => $applicant?->last_step ?? 1,
-            'last_saved'   => $applicant?->updated_at?->diffForHumans() ?? null,
+            'percentage' => $applicant?->completion_percentage ?? 0,
+            'last_step' => $applicant?->last_step ?? 1,
+            'last_saved' => $applicant?->updated_at?->diffForHumans() ?? null,
         ]);
     }
 }

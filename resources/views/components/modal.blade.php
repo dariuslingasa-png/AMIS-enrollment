@@ -17,6 +17,7 @@ $maxWidth = [
 <div
     x-data="{
         show: @js($show),
+        bodyOverflow: null,
         focusables() {
             // All focusable element types...
             let selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])'
@@ -33,10 +34,15 @@ $maxWidth = [
     }"
     x-init="$watch('show', value => {
         if (value) {
+            if (bodyOverflow === null) bodyOverflow = document.body.style.overflow;
             document.body.classList.add('overflow-y-hidden');
+            document.body.style.overflow = 'hidden';
             {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
         } else {
             document.body.classList.remove('overflow-y-hidden');
+            document.body.style.overflow = bodyOverflow || '';
+            bodyOverflow = null;
+            window.dispatchEvent(new CustomEvent('modal-closed', { detail: '{{ $name }}' }));
         }
     })"
     x-on:open-modal.window="$event.detail == '{{ $name }}' ? show = true : null"
@@ -60,12 +66,15 @@ $maxWidth = [
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
     >
-        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        <div class="absolute inset-0 shared-modal-backdrop"></div>
     </div>
 
     <div
         x-show="show"
-        class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto"
+        class="shared-modal-panel mb-6 transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto"
+        role="dialog"
+        aria-modal="true"
+        {{ $attributes->except('focusable') }}
         x-transition:enter="ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"

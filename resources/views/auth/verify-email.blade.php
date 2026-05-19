@@ -1,114 +1,40 @@
 <x-guest-layout>
     <div class="auth-page">
-        <div class="auth-card" style="max-width: 400px;">
-            <!-- Back link -->
-            <a href="{{ route('login') }}" style="display: inline-flex; align-items: center; gap: 6px; color: #6b7280; font-size: 14px; text-decoration: none; margin-bottom: 20px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
-                </svg>
-                Back to Login
-            </a>
-
-            <!-- Icon -->
-            <div class="verify-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="auth-card" style="max-width: 420px; text-align: center;">
+            <div style="width:64px;height:64px;border-radius:50%;background:#f0fdf4;border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                     <polyline points="22,6 12,13 2,6"/>
                 </svg>
             </div>
 
-            <div class="auth-logo" style="margin-bottom: 16px;">
-                <h1>Verify Your Email</h1>
-                <p>Enter the 4-digit code sent to your email</p>
+            <h1 style="font-size:1.375rem;font-weight:800;color:#111827;margin:0 0 0.5rem;">Check Your Email</h1>
+            <p style="font-size:0.9375rem;color:#6b7280;margin:0 0 1.5rem;line-height:1.6;">
+                We sent a verification link to<br>
+                <strong style="color:#111827;">{{ session('email', 'your email address') }}</strong>
+            </p>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;text-align:left;">
+                <div style="font-size:0.8125rem;font-weight:700;color:#374151;margin-bottom:0.75rem;">What to do:</div>
+                <ol style="font-size:0.875rem;color:#6b7280;margin:0;padding-left:1.25rem;line-height:2;">
+                    <li>Open your email inbox</li>
+                    <li>Find the email from AMIS</li>
+                    <li>Click the <strong style="color:#059669;">Verify My Email</strong> button</li>
+                    <li>You'll be redirected to your dashboard</li>
+                </ol>
             </div>
 
-            @if (session('success'))
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #065f46; padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 16px;">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="auth-error" style="margin-bottom: 16px;">{{ $errors->first() }}</div>
-            @endif
-
-            <!-- Verify Code Form -->
-            <form method="POST" action="{{ route('verify.code') }}" class="auth-form" x-data="verifyForm()">
+            <form method="POST" action="{{ route('verify.email.resend') }}" data-loading-form>
                 @csrf
-
-                <input type="hidden" name="email" value="{{ session('email', old('email')) }}">
-
-                <!-- Email display -->
-                <div style="text-align: center; margin-bottom: 8px;">
-                    <span style="font-size: 13px; color: #6b7280;">Code sent to:</span>
-                    <strong style="font-size: 14px; color: #111827; display: block;">{{ session('email', old('email', 'your email')) }}</strong>
-                </div>
-
-                <!-- Code inputs -->
-                <div class="code-inputs">
-                    <template x-for="(digit, index) in digits" :key="index">
-                        <input
-                            type="text"
-                            maxlength="1"
-                            class="code-input"
-                            :x-ref="'digit' + index"
-                            x-model="digits[index]"
-                            @input="handleInput(index, $event)"
-                            @keydown.backspace="handleBackspace(index, $event)"
-                            @paste.prevent="handlePaste($event)"
-                            inputmode="numeric"
-                        >
-                    </template>
-                </div>
-
-                <input type="hidden" name="code" :value="digits.join('')">
-
-                <button type="submit" class="auth-button" :disabled="digits.join('').length < 4">
-                    Verify Email
-                </button>
+                <input type="hidden" name="email" value="{{ session('email') }}">
+                <x-loading-button class="auth-button auth-button-outline" style="margin-bottom:1rem;" loading="Sending email...">
+                    Resend Verification Email
+                </x-loading-button>
             </form>
 
-            <!-- Resend Code -->
-            <div class="resend-section">
-                <p>Didn't receive the code?</p>
-                <form method="POST" action="{{ route('send.verification') }}" style="display: inline;">
-                    @csrf
-                    <input type="hidden" name="email" value="{{ session('email', old('email')) }}">
-                    <button type="submit" class="resend-link">Resend Code</button>
-                </form>
-            </div>
+            <a href="{{ route('login') }}" style="font-size:0.875rem;color:#6b7280;text-decoration:none;">
+                Back to Login
+            </a>
         </div>
     </div>
-
-    @push('scripts')
-    <script>
-    function verifyForm() {
-        return {
-            digits: ['', '', '', ''],
-            handleInput(index, event) {
-                const value = event.target.value.replace(/\D/g, '');
-                this.digits[index] = value;
-                if (value && index < 3) {
-                    this.$nextTick(() => {
-                        const next = this.$root.querySelectorAll('.code-input')[index + 1];
-                        if (next) next.focus();
-                    });
-                }
-            },
-            handleBackspace(index, event) {
-                if (!this.digits[index] && index > 0) {
-                    const prev = this.$root.querySelectorAll('.code-input')[index - 1];
-                    if (prev) prev.focus();
-                }
-            },
-            handlePaste(event) {
-                const paste = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
-                for (let i = 0; i < 4; i++) {
-                    this.digits[i] = paste[i] || '';
-                }
-            }
-        }
-    }
-    </script>
-    @endpush
 </x-guest-layout>

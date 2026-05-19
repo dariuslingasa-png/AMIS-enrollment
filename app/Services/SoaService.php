@@ -21,11 +21,20 @@ class SoaService
             throw new \Exception("No school fees found for {$applicant->grade_level} SY {$applicant->school_year}");
         }
 
-        $tuition        = (float) $fee->tuition_fee;
-        $misc           = (float) $fee->misc_fee;
-        $books          = (float) $fee->books_fee;
-        $monthlyTuition = round($tuition / 10, 2);
-        $gross          = $tuition + $misc + $books;
+        $tuition            = (float) $fee->tuition_fee;
+        $misc               = (float) $fee->misc_fee;
+        $books              = (float) $fee->books_fee;
+        $discountPercentage = (float) ($applicant->discount_percentage ?? 0);
+        $discountAmount     = (float) ($applicant->discount_amount ?? 0);
+
+        if ($discountPercentage > 0 && $discountAmount <= 0) {
+            $discountAmount = round($tuition * ($discountPercentage / 100), 2);
+            $applicant->update(['discount_amount' => $discountAmount]);
+        }
+
+        $discountedTuition = max(0, $tuition - $discountAmount);
+        $monthlyTuition    = round($discountedTuition / 10, 2);
+        $gross             = $discountedTuition + $misc + $books;
         $enrollPaid     = 4000.00;
         $totalBalance   = $gross - $enrollPaid;
 
@@ -38,6 +47,10 @@ class SoaService
             'monthly_tuition'         => $monthlyTuition,
             'miscellaneous_fee'       => $misc,
             'books_fee'               => $books,
+            'sibling_order'           => $applicant->sibling_order,
+            'discount_type'           => $discountPercentage > 0 ? ($applicant->discount_type ?: 'sibling') : null,
+            'discount_percentage'     => $discountPercentage,
+            'discount_amount'         => $discountAmount,
             'gross_total'             => $gross,
             'enrollment_fee_paid'     => $enrollPaid,
             'total_balance'           => $totalBalance,

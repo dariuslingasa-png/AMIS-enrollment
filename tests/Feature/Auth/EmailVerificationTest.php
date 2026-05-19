@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Models\VerificationCode;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -17,7 +18,7 @@ class EmailVerificationTest extends TestCase
     {
         $user = User::factory()->unverified()->create();
 
-        $response = $this->actingAs($user)->get('/verify-email');
+        $response = $this->actingAs($user)->get('/verify-email/notice');
 
         $response->assertStatus(200);
     }
@@ -31,14 +32,50 @@ class EmailVerificationTest extends TestCase
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1($user->email)]
+            ['id' => $user->id, 'hash' => sha1($user->email), 'code' => '123456']
         );
 
-        $response = $this->actingAs($user)->get($verificationUrl);
+        VerificationCode::create([
+            'email' => $user->email,
+            'code' => '123456',
+            'expires_at' => now()->addMinutes(60),
+        ]);
+
+        $response = $this->get($verificationUrl);
 
         Event::assertDispatched(Verified::class);
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
-        $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame('verified', $user->fresh()->account_status);
+        $response->assertRedirect(route('enrollment.dashboard', absolute: false));
+        $response->assertSessionHas('show_beta_notice', true);
+        $this->assertTrue(VerificationCode::where('email', $user->email)->first()->used);
+    }
+
+    public function test_email_verification_link_can_not_be_reused_after_logout(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => sha1($user->email), 'code' => '654321']
+        );
+
+        VerificationCode::create([
+            'email' => $user->email,
+            'code' => '654321',
+            'expires_at' => now()->addMinutes(60),
+        ]);
+
+        $this->get($verificationUrl)->assertRedirect(route('enrollment.dashboard', absolute: false));
+        $this->post('/logout');
+
+        $this->get($verificationUrl)
+            ->assertRedirect(route('login', absolute: false))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
     }
 
     public function test_email_is_not_verified_with_invalid_hash(): void
@@ -51,7 +88,7 @@ class EmailVerificationTest extends TestCase
             ['id' => $user->id, 'hash' => sha1('wrong-email')]
         );
 
-        $this->actingAs($user)->get($verificationUrl);
+        $this->get($verificationUrl);
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }

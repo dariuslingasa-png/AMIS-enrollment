@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" role="img" aria-labelledby="title desc">
+  <title id="title">Correct birth certificate example</title>
+  <desc id="desc">A green approved sample showing a clear readable birth certificate scan.</desc>
+  <defs>
+    <linearGradient id="success" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#ecfdf5"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="900" rx="36" fill="#fff"/>
+  <rect x="26" y="26" width="848" height="848" rx="28" fill="url(#success)" stroke="#86efac" stroke-width="2"/>
+  <g transform="translate(68 64)">
+    <circle cx="48" cy="48" r="32" fill="#10b981"/>
+    <path d="M32 49l13 13 27-31" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <text x="118" y="63" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="800" fill="#059669">Correct</text>
+  </g>
+  <rect x="74" y="176" width="752" height="640" rx="22" fill="#fff" stroke="#d1d5db"/>
+  <rect x="128" y="216" width="644" height="548" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <circle cx="190" cy="278" r="42" fill="#7dd3fc" stroke="#0284c7" stroke-width="4"/>
+  <text x="450" y="282" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="700" fill="#111827">REPUBLIC OF THE PHILIPPINES</text>
+  <text x="450" y="314" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#111827">OFFICE OF THE CIVIL REGISTRAR GENERAL</text>
+  <text x="450" y="352" text-anchor="middle" font-family="Arial,sans-serif" font-size="30" font-weight="800" fill="#111827">CERTIFICATE OF LIVE BIRTH</text>
+  <g stroke="#0f172a" stroke-width="2">
+    <path d="M158 392h584M158 442h584M158 492h584M158 542h584M158 592h584M158 642h584M158 692h584"/>
+    <path d="M320 392v300M500 442v250M650 492v200"/>
+  </g>
+  <g fill="#111827" font-family="Arial,sans-serif">
+    <text x="176" y="424" font-size="15">1. Province</text><text x="336" y="424" font-size="18" font-weight="700">NCR - National Capital Region</text>
+    <text x="176" y="474" font-size="15">3. Registry No.</text><text x="336" y="474" font-size="18" font-weight="700">2024-12345</text>
+    <text x="176" y="524" font-size="15">5. Child's Name</text><text x="336" y="524" font-size="18" font-weight="700">JUAN DELA CRUZ SANTOS</text>
+    <text x="176" y="574" font-size="15">7. Date of Birth</text><text x="336" y="574" font-size="18" font-weight="700">01 January 2024</text>
+    <text x="176" y="624" font-size="15">10. Mother's Name</text><text x="336" y="624" font-size="18" font-weight="700">MARIA DELA CRUZ</text>
+    <text x="176" y="674" font-size="15">15. Father's Name</text><text x="336" y="674" font-size="18" font-weight="700">PEDRO SANTOS</text>
+  </g>
+  <rect x="612" y="700" width="72" height="72" fill="#111827"/>
+  <rect x="622" y="710" width="16" height="16" fill="#fff"/>
+  <rect x="656" y="710" width="16" height="16" fill="#fff"/>
+  <rect x="622" y="744" width="16" height="16" fill="#fff"/>
+  <path d="M430 734c58-42 96-8 142-28" stroke="#111827" stroke-width="4" fill="none"/>
+</svg>
