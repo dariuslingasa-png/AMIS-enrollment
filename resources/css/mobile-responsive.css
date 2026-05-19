@@ -393,7 +393,8 @@ table {
     }
 
     .auth-entry-mobile-school {
-        font-size: 0.7rem;
+        font-size: 0.86rem;
+        letter-spacing: 0.01em;
     }
 
     .login-splash-logo {
