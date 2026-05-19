@@ -294,7 +294,7 @@ class EnrollmentController extends Controller
                 ->with('info', 'Please complete your enrollment application first.');
         }
 
-        return view('enrollment.payment', compact('applicant'));
+        return view('enrollment.payment-coming-soon', compact('applicant'));
     }
 
     public function submitPayment(Request $request)
@@ -308,27 +308,8 @@ class EnrollmentController extends Controller
                 ->with('info', 'Please complete your enrollment application first.');
         }
 
-        $request->validate([
-            'method' => 'required|in:gcash,maya,bdo',
-            'receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
-
-        $path = $request->file('receipt')->store('receipts/' . $applicant->id, 'public');
-
-        $applicant->payment()->updateOrCreate(
-            ['enrollment_applicant_id' => $applicant->id],
-            [
-                'user_id' => $user->id,
-                'method' => $request->method,
-                'amount' => 4000.00,
-                'receipt_url' => $path,
-                'status' => 'pending',
-                'paid_at' => now(),
-            ]
-        );
-
         return redirect()->route('enrollment.dashboard')
-            ->with('success', 'Payment submitted! The Finance Office will verify it within 1-2 business days.');
+            ->with('info', 'Payment proof upload is coming soon. Please wait for the Finance Office announcement.');
     }
 
     public function showClosed()
