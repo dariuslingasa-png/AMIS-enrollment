@@ -3,6 +3,7 @@
 @import './dashboard.css';
 @import './dashboard-family.css';
 @import './enrollment.css';
+@import './mobile-responsive.css';
 
 @tailwind base;
 @tailwind components;

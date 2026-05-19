@@ -1,0 +1,776 @@
+/* Mobile responsiveness overrides for AMIS Enrollment.
+   Keep this file last in app.css so it can safely tame older inline-heavy views. */
+
+html,
+body,
+.page-content,
+.enrollment-page,
+.dashboard-page,
+.auth-page,
+.login-grid {
+    max-width: 100%;
+}
+
+body {
+    overflow-wrap: anywhere;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+    max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+    max-width: 100%;
+}
+
+button,
+[role="button"],
+.btn-primary,
+.btn-secondary,
+.btn-next,
+.btn-submit,
+.btn-back,
+.btn-back-home,
+.auth-button,
+.logout-btn,
+.draft-action-primary,
+.draft-action-danger,
+.draft-action-payment,
+.resend-link {
+    min-height: 44px;
+}
+
+.enrollment-page *,
+.dashboard-page *,
+.auth-page * {
+    min-width: 0;
+}
+
+.enrollment-page a,
+.dashboard-page a,
+.auth-page a,
+.toast-message,
+.card-content,
+.dashboard-logo,
+.auth-entry-heading,
+.auth-coming-soon-option,
+.field-hint,
+.field-error {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.enrollment-form-container,
+.dashboard-content,
+.auth-card,
+.auth-entry-card,
+.success-card,
+.enrollment-closed-card,
+.shared-modal-panel {
+    max-width: 100%;
+}
+
+.plain-input,
+.select-input,
+.textarea-input,
+.date-input,
+.input-with-icon input,
+.code-input,
+.auth-button,
+.btn-primary,
+.btn-secondary,
+.btn-next,
+.btn-submit,
+.btn-back,
+.btn-back-home {
+    font-size: max(16px, 1rem);
+}
+
+.select-input,
+select {
+    min-height: 46px;
+}
+
+table {
+    max-width: 100%;
+}
+
+.enrollment-page table,
+.dashboard-page table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.shared-modal-panel {
+    width: min(100%, 42rem);
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+}
+
+.documents-grid,
+.choice-card-grid,
+.shift-card-grid,
+.student-info-grid,
+.student-name-grid,
+.student-origin-grid,
+.student-identity-grid,
+.address-contact-grid,
+.student-two-column-fields,
+.permanent-address-grid,
+.parent-name-grid,
+.parent-contact-grid,
+.medical-gate-card,
+.medical-question-grid,
+.medical-text-grid,
+.physician-grid,
+.emergency-contact-grid,
+.document-upload-split,
+.document-card-featured .document-upload-split,
+.photo-guide-card,
+.schedule-summary-grid,
+.same-address-grid,
+.sibling-schedule-grid,
+.support-card-grid,
+.dashboard-action-grid,
+.form-grid,
+.form-grid-2,
+.form-grid-3,
+.paired-fields,
+.skeleton-grid-2 {
+    min-width: 0;
+}
+
+.doc-upload-area,
+.document-upload-pane .doc-upload-area,
+.document-card-featured .document-upload-pane .doc-upload-area {
+    width: 100%;
+    max-width: 100%;
+}
+
+.doc-preview,
+.document-card,
+.document-guide-card,
+.photo-guide-card,
+.dashboard-card,
+.support-card,
+.family-card,
+.family-child-card,
+.review-child-card {
+    min-width: 0;
+}
+
+.doc-preview > *,
+.document-card > *,
+.dashboard-card > *,
+.support-card > * {
+    min-width: 0;
+}
+
+.skeleton,
+.skeleton-light,
+.skeleton-card-lines,
+.skeleton-help-title,
+.skeleton-help-copy,
+.skeleton-help-line-long,
+.skeleton-help-line-short,
+.skeleton-card-title-line,
+.skeleton-card-copy-line,
+.skeleton-card-copy-line.is-long,
+.skeleton-card-copy-line.is-medium,
+.skeleton-banner-title,
+.skeleton-banner-copy,
+.skeleton-line-brand,
+.skeleton-line-school,
+.skeleton-line-title,
+.skeleton-line-short,
+.skeleton-footer-line {
+    max-width: 100%;
+}
+
+@media (max-width: 900px) {
+    .auth-hero-panel {
+        display: none;
+    }
+
+    .login-grid {
+        display: block;
+        min-height: 100dvh;
+    }
+
+    .login-form {
+        min-height: 100dvh;
+    }
+
+    .enrollment-header-content {
+        gap: 1rem;
+    }
+
+    .document-card-featured .document-guide-card {
+        max-width: none;
+        justify-self: stretch;
+    }
+}
+
+@media (max-width: 760px) {
+    .choice-row,
+    .toggle-btn-group,
+    .draft-action-group,
+    .beta-notice-footer,
+    .form-actions-row,
+    .form-actions-group {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .choice-card-grid,
+    .shift-card-grid,
+    .student-info-grid,
+    .student-name-grid,
+    .student-origin-grid,
+    .student-identity-grid,
+    .address-contact-grid,
+    .student-two-column-fields,
+    .permanent-address-grid,
+    .parent-name-grid,
+    .parent-contact-grid,
+    .medical-gate-card,
+    .medical-question-grid,
+    .medical-text-grid,
+    .physician-grid,
+    .emergency-contact-grid,
+    .documents-grid,
+    .document-upload-split,
+    .document-card-featured .document-upload-split,
+    .photo-guide-card,
+    .schedule-summary-grid,
+    .same-address-grid,
+    .sibling-schedule-grid,
+    .support-card-grid,
+    .dashboard-action-grid,
+    .form-grid,
+    .form-grid-2,
+    .form-grid-3,
+    .paired-fields,
+    .skeleton-grid-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .student-grid-full,
+    .student-grid-date,
+    .address-country-field,
+    .address-postal-field,
+    .address-full-field,
+    .parent-referral-field {
+        grid-column: 1 / -1 !important;
+        width: 100%;
+    }
+
+    .medical-choice-row,
+    .parent-email-field {
+        min-width: 0;
+    }
+
+    .enrollment-header-content,
+    .dashboard-header {
+        width: 100%;
+    }
+
+    .dashboard-logo {
+        align-items: flex-start;
+    }
+
+    .dashboard-logo h1,
+    .dashboard-logo p {
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-welcome,
+    .dashboard-card,
+    .support-card,
+    .success-notice,
+    .success-info-row {
+        align-items: flex-start;
+    }
+
+    .dashboard-card {
+        flex-wrap: wrap;
+    }
+
+    .card-content {
+        flex-basis: calc(100% - 64px);
+    }
+
+    .card-arrow,
+    .coming-soon {
+        margin-left: 0;
+    }
+
+    .beta-notice-header {
+        padding-right: 2.25rem;
+    }
+
+    .auth-card,
+    .auth-entry-card,
+    .success-card,
+    .enrollment-closed-card {
+        padding: 1.35rem;
+        border-radius: 14px;
+    }
+
+    .auth-coming-soon-option {
+        grid-template-columns: 38px minmax(0, 1fr);
+    }
+
+    .auth-coming-soon-option em {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
+
+    .code-inputs {
+        gap: 0.45rem;
+    }
+
+    .code-input {
+        width: 2.55rem;
+        height: 3.1rem;
+    }
+
+    .shared-modal-panel {
+        margin: 0 auto 1rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .auth-page,
+    .login-form,
+    .success-page,
+    .enrollment-closed-page {
+        align-items: stretch;
+        padding: 0.75rem;
+    }
+
+    .auth-entry-card,
+    .auth-card,
+    .success-card,
+    .enrollment-closed-card {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .auth-entry-heading h2,
+    .success-card h1,
+    .enrollment-closed-card h1 {
+        font-size: 1.35rem;
+    }
+
+    .auth-logo img,
+    .success-logo,
+    .closed-logo {
+        width: 64px;
+        height: 64px;
+    }
+
+    .login-splash-logo {
+        width: 76px;
+        height: 76px;
+    }
+
+    .login-splash-ring {
+        width: 260px;
+        height: 260px;
+    }
+
+    .enrollment-header {
+        padding: 0.85rem;
+    }
+
+    .enrollment-header-content {
+        align-items: flex-start;
+    }
+
+    .enrollment-header-left {
+        width: 100%;
+    }
+
+    .enrollment-header-logo {
+        width: 46px;
+        height: 46px;
+    }
+
+    .enrollment-header-text .school {
+        font-size: 0.98rem;
+        line-height: 1.15;
+    }
+
+    .enrollment-header-text .arabic {
+        font-size: 0.74rem;
+    }
+
+    .enrollment-header-right h1 {
+        font-size: 1.15rem;
+    }
+
+    .enrollment-steps-bar {
+        padding: 0.55rem 0.5rem;
+    }
+
+    .enrollment-steps-container {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.35rem;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .enrollment-step-item {
+        min-width: 0;
+        min-height: 36px;
+        justify-content: center;
+        padding: 0.2rem;
+    }
+
+    .enrollment-step-label {
+        display: none;
+    }
+
+    .enrollment-step-circle {
+        width: 28px;
+        height: 28px;
+        font-size: 0.78rem;
+    }
+
+    .enrollment-main {
+        padding: 0.65rem 0;
+    }
+
+    .enrollment-form-container {
+        --enrollment-form-pad: 0.9rem;
+        width: 100%;
+        padding: var(--enrollment-form-pad);
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+    }
+
+    .enrollment-form-header {
+        padding-right: 0;
+    }
+
+    .enrollment-form-header h2 {
+        font-size: 1.18rem;
+    }
+
+    .form-divider {
+        align-items: flex-start;
+        gap: 0.45rem;
+    }
+
+    .form-divider::before,
+    .form-divider::after {
+        margin-top: 0.55rem;
+    }
+
+    .choice-card,
+    .shift-card,
+    .agreement-check,
+    .document-card,
+    .document-guide-card,
+    .photo-guide-card,
+    .dashboard-card,
+    .support-card,
+    .dashboard-info,
+    .beta-notice-section {
+        border-radius: 10px;
+        padding: 0.85rem;
+    }
+
+    .choice-card {
+        min-height: 78px;
+    }
+
+    .choice-card-icon,
+    .support-card-icon,
+    .card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 9px;
+    }
+
+    .doc-upload-area,
+    .document-upload-pane .doc-upload-area,
+    .document-card-featured .document-upload-pane .doc-upload-area {
+        aspect-ratio: 4 / 3;
+        min-height: 150px;
+        padding: 0.85rem;
+    }
+
+    .document-upload-pane .relative,
+    .document-upload-pane .doc-upload-area {
+        height: auto;
+    }
+
+    .doc-preview {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .doc-preview-img {
+        width: 100%;
+        height: auto;
+        max-height: 220px;
+        object-fit: contain;
+    }
+
+    .doc-remove-btn {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        margin-left: 0;
+    }
+
+    .form-actions {
+        position: static;
+        margin: 1.5rem 0 0;
+        padding: 1rem 0 0;
+        border-radius: 0;
+        background: transparent;
+        backdrop-filter: none;
+    }
+
+    .form-actions,
+    .form-actions > div {
+        align-items: stretch !important;
+        flex-direction: column-reverse !important;
+    }
+
+    .form-actions button,
+    .form-actions a,
+    .draft-action-primary,
+    .draft-action-danger,
+    .draft-action-payment,
+    .beta-notice-primary,
+    .beta-notice-secondary,
+    .logout-btn,
+    .auth-button {
+        width: 100%;
+        justify-content: center;
+        white-space: normal;
+    }
+
+    .dashboard-header {
+        padding: 0.85rem;
+    }
+
+    .dashboard-content {
+        padding: 1rem 0.75rem 2rem;
+    }
+
+    .dashboard-logo {
+        gap: 0.75rem;
+    }
+
+    .dashboard-logo img {
+        width: 42px;
+        height: 42px;
+    }
+
+    .dashboard-logo h1 {
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+
+    .dashboard-logo p {
+        font-size: 0.78rem;
+    }
+
+    .dashboard-welcome {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .dashboard-card {
+        gap: 0.75rem;
+    }
+
+    .card-content {
+        flex-basis: 100%;
+    }
+
+    .success-info-box,
+    .success-notice,
+    .closed-message {
+        padding: 0.85rem;
+    }
+
+    .confirm-overlay {
+        align-items: flex-end;
+        padding: 0.75rem;
+    }
+
+    .confirm-dialog,
+    .shared-modal-panel {
+        max-height: calc(100dvh - 1.5rem);
+        border-radius: 14px;
+    }
+
+    .toast-stack {
+        top: 0.5rem;
+        right: 0.5rem;
+        left: 0.5rem;
+    }
+
+    .dashboard-skeleton-banner,
+    .dashboard-skeleton-card {
+        align-items: flex-start;
+        gap: 0.85rem;
+        padding: 1rem;
+    }
+
+    .dashboard-skeleton-banner {
+        flex-direction: column;
+    }
+
+    .skeleton-banner-title,
+    .skeleton-banner-copy,
+    .skeleton-card-title-line,
+    .skeleton-card-copy-line,
+    .skeleton-card-copy-line.is-long,
+    .skeleton-card-copy-line.is-medium,
+    .skeleton-help-copy,
+    .skeleton-help-line-long,
+    .skeleton-help-line-short {
+        width: 100%;
+    }
+
+    .skeleton-dashboard-button {
+        width: 100%;
+        max-width: 9rem;
+    }
+}
+
+@media (max-width: 414px) {
+    .enrollment-form-container,
+    .dashboard-content,
+    .auth-entry-card,
+    .auth-card {
+        font-size: 0.95rem;
+    }
+
+    .field-label,
+    .form-group label:not(.field-label) {
+        font-size: 0.78rem;
+    }
+
+    .field-hint,
+    .field-error {
+        font-size: 0.76rem;
+    }
+
+    .plain-input,
+    .select-input,
+    .textarea-input,
+    .date-input,
+    .input-with-icon input {
+        padding: 0.72rem 0.78rem;
+    }
+
+    .select-input {
+        padding-right: 2.25rem;
+    }
+
+    .code-input {
+        width: 2.35rem;
+        height: 3rem;
+        font-size: 1.25rem;
+    }
+
+    .support-card,
+    .dashboard-card {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr);
+    }
+
+    .support-card em,
+    .card-arrow,
+    .coming-soon {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 375px) {
+    .enrollment-header-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .enrollment-header-text .school {
+        font-size: 0.9rem;
+    }
+
+    .enrollment-form-container {
+        --enrollment-form-pad: 0.75rem;
+    }
+
+    .choice-card,
+    .shift-card,
+    .document-card,
+    .dashboard-card,
+    .support-card {
+        padding: 0.75rem;
+    }
+
+    .auth-entry-heading h2,
+    .enrollment-form-header h2,
+    .success-card h1 {
+        font-size: 1.15rem;
+    }
+}
+
+@media (max-width: 340px) {
+    .enrollment-header {
+        padding: 0.7rem 0.55rem;
+    }
+
+    .enrollment-header-left {
+        gap: 0.45rem;
+    }
+
+    .enrollment-header-logo {
+        width: 36px;
+        height: 36px;
+    }
+
+    .enrollment-header-text .school {
+        font-size: 0.82rem;
+    }
+
+    .school-year,
+    .enrollment-header-text .arabic {
+        font-size: 0.68rem;
+    }
+
+    .enrollment-step-circle {
+        width: 26px;
+        height: 26px;
+        font-size: 0.72rem;
+    }
+
+    .code-inputs {
+        gap: 0.32rem;
+    }
+
+    .code-input {
+        width: 2.1rem;
+        height: 2.8rem;
+    }
+}
