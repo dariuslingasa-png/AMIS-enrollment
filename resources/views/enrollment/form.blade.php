@@ -1,5 +1,5 @@
 <x-guest-layout>
-<div x-data="enrollmentForm()" class="enrollment-page">
+<div x-data="enrollmentForm()" @open-affidavit-builder.window="openAffidavitBuilder()" class="enrollment-page">
     <!-- Full Page Loading Skeleton -->
     <div x-show="initialLoading" x-cloak>
         <x-skeleton-enrollment />
@@ -333,8 +333,9 @@
                             </div>
 
                             <div class="form-group">
-                                <x-form-field-label required>Ethnicity</x-form-field-label>
-                                <input type="text" name="ethnicity" class="plain-input" placeholder="e.g. Filipino, Saudi, Emirati" x-model="form.ethnicity">
+                                <x-form-field-label optional>Ethnicity / Ethnolinguistic Group</x-form-field-label>
+                                <input type="text" name="ethnicity" class="plain-input" placeholder="e.g. Tagalog, Bisaya, Cebuano, Ilocano" x-model="form.ethnicity">
+                                <span class="field-hint">Optional. This may refer to tribe, Indigenous group, Moro community, or ethnolinguistic group.</span>
                             </div>
                         </div>
                     </section>
@@ -758,7 +759,7 @@
                         <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:gap-6">
                             <x-upload-requirement-card
                                 title="Recent or Annual 1:1 Ratio"
-                                description="Please provide a clear student photo for admissions review."
+                                description="Please provide a recent clear student photo for admissions review."
                                 name="photo_2x2"
                                 :required="true"
                                 :uploaded="$applicant?->photo_2x2_url"
@@ -767,26 +768,26 @@
                                 :guide="[
                                     'Recent or annual student picture.',
                                     'Plain white background, front-facing, clear face.',
-                                    'No filters, heavy shadows, hats, or face covering.',
+                                    'Hijab color: white for elementary students; black for high school students.',
+                                    'No filters, heavy shadows, or hats.',
                                 ]"
-                                :guide-image-groups="[
+                                guide-notice="For niqab-wearing students, please wear hijab for the photo and follow the hijab photo guide. A female staff member or female admin will review it respectfully when privacy is needed."
+                                guide-notice-gender="Female"
+                                :support-panel-groups="[
                                     'Female' => [
-                                        ['src' => 'images/2x2-guide/female-standard.png', 'label' => 'Female', 'alt' => 'Female student 2x2 photo example'],
-                                        ['src' => 'images/2x2-guide/female-hijab.png', 'label' => 'Hijab', 'alt' => 'Female student with hijab 2x2 photo example'],
-                                        ['src' => 'images/2x2-guide/female-niqab.png', 'label' => 'Niqab', 'alt' => 'Female student with niqab 2x2 photo example'],
+                                        ['src' => 'images/2x2-guide/non-hijab-guidelines.png', 'label' => 'Non-hijab guidelines', 'alt' => 'Non-hijab photo guidelines for elementary and high school students'],
+                                        ['src' => 'images/2x2-guide/hijab-guidelines.png', 'label' => 'Hijab guidelines', 'alt' => 'Hijab photo guidelines for elementary and high school students'],
                                     ],
                                     'Male' => [
-                                        ['src' => 'images/2x2-guide/male-child.png', 'label' => 'Young boy', 'alt' => 'Male student 2x2 photo example'],
-                                        ['src' => 'images/2x2-guide/male-teen.png', 'label' => 'Teen', 'alt' => 'Male teen 2x2 photo example'],
-                                        ['src' => 'images/2x2-guide/male-adolescent.png', 'label' => 'Student', 'alt' => 'Male student front-facing 2x2 photo example'],
+                                        ['src' => 'images/2x2-guide/boys-guidelines.png', 'label' => 'Boys guidelines', 'alt' => 'Boys photo guidelines for elementary and high school students'],
                                     ],
                                 ]"
                                 :show-photo-sample="true"
                             />
 
                             <x-upload-requirement-card
-                                title="Photocopy of Birth Certificate"
-                                description="Upload a readable copy of the student birth certificate."
+                                title="Photocopy Birth Certificate"
+                                description="Upload a readable photocopy of the student birth certificate."
                                 name="birth_cert"
                                 :required="false"
                                 :uploaded="$applicant?->birth_cert_url"
@@ -803,24 +804,173 @@
                                 ]"
                             />
 
-                            <x-upload-requirement-card
-                                title="Official Transcript / Report Card"
-                                description="Share the latest school record for academic review."
-                                name="report_card"
-                                :required="true"
-                                :uploaded="$applicant?->report_card_url"
-                                guide-title="Preparation note"
-                                :guide="[
-                                    'Latest report card or transcript copy.',
-                                    'Make sure grades and school name are visible.',
-                                    'Upload a flat, uncropped image for faster review.',
-                                ]"
-                                :guide-images="[
-                                    ['src' => 'images/document-guide/document-blurry.svg', 'label' => 'Blurry', 'tone' => 'danger', 'alt' => 'Blurry report card upload example'],
-                                    ['src' => 'images/document-guide/document-cropped.svg', 'label' => 'Cropped', 'tone' => 'danger', 'alt' => 'Cropped report card upload example'],
-                                    ['src' => 'images/document-guide/document-correct.svg', 'label' => 'Correct', 'tone' => 'success', 'alt' => 'Correct readable report card upload example'],
-                                ]"
-                            />
+                            <div x-show="form.student_type !== 'Old'" x-cloak>
+                                <x-upload-requirement-card
+                                    title="Official Transcript / Report Card"
+                                    description="Choose the option that applies to the student."
+                                    name="report_card"
+                                    :required="true"
+                                    :uploaded="$applicant?->report_card_url"
+                                    guide-title="Preparation note"
+                                    :guide="[
+                                        'Latest report card or transcript copy.',
+                                        'Make sure grades and school name are visible.',
+                                        'Do not have a report card yet? Use the affidavit option in this card.',
+                                        'Temporary proof must be fully filled out and signed.',
+                                        'Upload a flat, uncropped image for faster review.',
+                                    ]"
+                                    :guide-images="[
+                                        ['src' => 'images/document-guide/document-blurry.svg', 'label' => 'Blurry', 'tone' => 'danger', 'alt' => 'Blurry report card upload example'],
+                                        ['src' => 'images/document-guide/document-cropped.svg', 'label' => 'Cropped', 'tone' => 'danger', 'alt' => 'Cropped report card upload example'],
+                                        ['src' => 'images/document-guide/document-correct.svg', 'label' => 'Correct', 'tone' => 'success', 'alt' => 'Correct readable report card upload example'],
+                                    ]"
+                                    :defer-upload="true"
+                                >
+                                <div
+                                    class="report-card-options"
+                                    x-data="{
+                                        hasAffidavit: {{ $applicant?->affidavit_url ? 'true' : 'false' }},
+                                        affidavitMode: {{ $applicant?->affidavit_url ? 'true' : 'false' }},
+                                        removingAffidavit: false,
+                                        async removeAffidavit() {
+                                            if (!this.hasAffidavit || this.removingAffidavit) return;
+
+                                            this.removingAffidavit = true;
+
+                                            try {
+                                                const applicantQuery = window.AMIS_CURRENT_APPLICANT_ID ? '?applicant=' + encodeURIComponent(window.AMIS_CURRENT_APPLICANT_ID) : '';
+                                                const response = await fetch('{{ route('enrollment.draft.document.remove', ['document' => 'affidavit']) }}' + applicantQuery, {
+                                                    method: 'DELETE',
+                                                    headers: {
+                                                        'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').content,
+                                                        'Accept': 'application/json',
+                                                    },
+                                                });
+
+                                                if (!response.ok) throw new Error('Unable to remove affidavit');
+
+                                                if (window.AMIS_CURRENT_APPLICANT_ID) {
+                                                    localStorage.removeItem('enrollment_affidavit_draft_' + window.AMIS_CURRENT_APPLICANT_ID);
+                                                }
+
+                                                this.hasAffidavit = false;
+                                                this.affidavitMode = false;
+                                                window.dispatchEvent(new CustomEvent('enrollment:file-removed', {
+                                                    detail: { name: 'affidavit' }
+                                                }));
+                                            } catch (_) {
+                                                window.dispatchEvent(new CustomEvent('enrollment:file-remove-failed', {
+                                                    detail: { name: 'affidavit' }
+                                                }));
+                                            } finally {
+                                                this.removingAffidavit = false;
+                                            }
+                                        },
+                                    }"
+                                >
+                                    <div x-show="!affidavitMode && !showUpload">
+                                        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                                            <button type="button" class="report-card-option" @click="revealUpload(false)">
+                                                <div class="report-card-option-icon">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                                </div>
+                                                <div class="report-card-option-text">
+                                                    <span>Do you have a report card?</span>
+                                                    <small>Upload the student's report card, transcript, or school record.</small>
+                                                </div>
+                                            </button>
+                                            <button type="button" class="report-card-option report-card-option-alt" @click="affidavitMode = true">
+                                                <div class="report-card-option-icon">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                </div>
+                                                <div class="report-card-option-text">
+                                                    <span>Do not have a report card?</span>
+                                                    <small>Upload the signed affidavit instead.</small>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {{-- Affidavit upload area --}}
+                                    <div x-show="affidavitMode" x-cloak>
+                                        <button x-show="!hasAffidavit" x-cloak type="button" class="upload-choice-back" @click="affidavitMode = false" aria-label="Back to options">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6"/></svg>
+                                            <span>Back</span>
+                                        </button>
+
+                                        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.75rem;">
+                                            <a x-show="!hasAffidavit" x-cloak href="{{ route('enrollment.affidavit', ['applicant' => $applicant?->id ?? '__APPLICANT__']) }}" class="report-card-option" style="text-decoration:none;" @click.prevent="window.dispatchEvent(new CustomEvent('open-affidavit-builder'))">
+                                                <div class="report-card-option-icon">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                </div>
+                                                <div class="report-card-option-text">
+                                                    <span>Create Affidavit</span>
+                                                    <small>Fill out and sign the affidavit form online.</small>
+                                                </div>
+                                            </a>
+
+                                            @if ($applicant?->affidavit_url)
+                                                <div x-show="hasAffidavit" x-cloak class="report-card-option report-card-affidavit-file">
+                                                    <div class="report-card-affidavit-main">
+                                                        <div class="report-card-option-icon">
+                                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                                        </div>
+                                                        <div class="report-card-option-text">
+                                                            <span>Signed affidavit saved</span>
+                                                            <small>Temporary proof is ready for review.</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="report-card-affidavit-actions">
+                                                        <a
+                                                            href="{{ route('enrollment.affidavit', ['applicant' => $applicant?->id ?? '__APPLICANT__']) }}"
+                                                            class="report-card-affidavit-edit"
+                                                            @click.prevent="window.dispatchEvent(new CustomEvent('open-affidavit-builder'))"
+                                                        >
+                                                            Edit
+                                                        </a>
+                                                        <button
+                                                            type="button"
+                                                            class="report-card-affidavit-delete"
+                                                            @click="removeAffidavit()"
+                                                            :disabled="removingAffidavit"
+                                                        >
+                                                            <span x-text="removingAffidavit ? 'Deleting...' : 'Delete'"></span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        <div class="!mt-4 !rounded-xl !bg-slate-50 !p-4">
+                                            <p class="!m-0 !text-sm !font-semibold !leading-6 !text-slate-800">How to submit</p>
+                                            <ul x-show="!hasAffidavit" class="!mt-2 !m-0 !list-disc !space-y-1.5 !pl-5 !text-sm !leading-6 !text-slate-600">
+                                                <li>Click "Create Affidavit" to fill out the form online.</li>
+                                                <li>Fill all fields and sign with parent/guardian signature.</li>
+                                                <li>Save the signed affidavit.</li>
+                                                <li>Or download the <a href="{{ asset('docs/Affidavit_enrollee.pdf') }}" target="_blank" class="!text-emerald-700 !font-semibold !underline">blank affidavit PDF</a> to print and fill manually.</li>
+                                            </ul>
+                                            <ul x-show="hasAffidavit" x-cloak class="!mt-2 !m-0 !list-disc !space-y-1.5 !pl-5 !text-sm !leading-6 !text-slate-600">
+                                                <li>The signed affidavit has been saved as temporary academic proof.</li>
+                                                <li>Use Edit if you need to update the affidavit details or signature.</li>
+                                                <li>Use Delete only if you want to remove the saved affidavit and create a new one later.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="!mt-4 !rounded-xl !bg-slate-50 !p-4">
+                                    <p class="!m-0 !text-sm !font-semibold !leading-6 !text-slate-800">Required Academic Document</p>
+                                    <div class="!mt-2 !space-y-1.5">
+                                        <ul class="!m-0 !list-disc !space-y-1.5 !pl-5 !text-sm !leading-6 !text-slate-600">
+                                            <li>If the report card is available, please upload it here.</li>
+                                            <li>If it is not yet available at the time of admission, complete the affidavit page with all required information and the parent or guardian signature.</li>
+                                            <li>The original report card or credential must still be submitted when the school requests it.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                </x-upload-requirement-card>
+                            </div>
 
                             <x-upload-requirement-card
                                 title="Marriage Contract (Parents)"
@@ -858,24 +1008,6 @@
                                 ]"
                             />
 
-                            <x-upload-requirement-card
-                                title="Affidavit / Temporary Proof"
-                                description="Optional temporary proof when an original document is not yet available."
-                                name="affidavit"
-                                :uploaded="$applicant?->affidavit_url"
-                                hint="Use this if a required original document is not yet available"
-                                guide-title="When to use this"
-                                :guide="[
-                                    'Use this when the original birth certificate, report card, or other proof is still unavailable.',
-                                    'Upload any affidavit or temporary proof for admissions review.',
-                                    'Prepare the original document later when the school requests it.',
-                                ]"
-                                :guide-images="[
-                                    ['src' => 'images/document-guide/document-blurry.svg', 'label' => 'Blurry', 'tone' => 'danger', 'alt' => 'Blurry affidavit upload example'],
-                                    ['src' => 'images/document-guide/document-cropped.svg', 'label' => 'Cropped', 'tone' => 'danger', 'alt' => 'Cropped affidavit upload example'],
-                                    ['src' => 'images/document-guide/document-correct.svg', 'label' => 'Correct', 'tone' => 'success', 'alt' => 'Correct readable affidavit upload example'],
-                                ]"
-                            />
                         </div>
                     </section>
 
@@ -1017,6 +1149,7 @@ const SIBLING_DATA = @json($siblingData);
 const REJECTION_FIX_STEPS = @json($rejectionFixSteps ?? []);
 const REJECTION_REMARKS = @json($applicant?->review_remarks ?? '');
 const INITIAL_PHOTO_GUIDE_GENDER = @js(old('gender', $applicant?->gender) ?: '');
+const AFFIDAVIT_URL_TEMPLATE = @js(route('enrollment.affidavit', ['applicant' => '__APPLICANT__']));
 
 document.addEventListener('alpine:init', () => {
     Alpine.store('enrollmentGuide', {
@@ -1460,6 +1593,19 @@ function enrollmentForm() {
             return null;
         },
 
+        async openAffidavitBuilder() {
+            this.error = '';
+            const data = await this.saveDraft({ force: true });
+            const applicantId = data?.applicant_id || this.savedApplicantId || CURRENT_APPLICANT_ID;
+
+            if (!applicantId) {
+                this.error = 'Please fill and save the student details first before preparing the affidavit.';
+                return;
+            }
+
+            window.location.href = AFFIDAVIT_URL_TEMPLATE.replace('__APPLICANT__', encodeURIComponent(applicantId));
+        },
+
         // ── Debounced auto-save (fires 2s after user stops typing) ────
         scheduleDraft() {
             if (this.isDiscarding || this.draftDiscarded) return;
@@ -1508,7 +1654,6 @@ function enrollmentForm() {
                 if (!this.form.date_of_birth) return 'Date of birth is required.';
                 if (!this.form.place_of_birth.trim()) return 'Place of birth is required.';
                 if (!this.form.religion.trim()) return 'Religion is required.';
-                if (!this.form.ethnicity) return 'Ethnicity is required.';
                 if (this.form.lrn && this.form.lrn.length !== 12) return 'LRN must be exactly 12 digits.';
             }
             if (this.step === 3) {
@@ -1543,12 +1688,18 @@ function enrollmentForm() {
                 if (!this.form.emergency_phone.trim()) return 'Emergency contact phone is required.';
             }
             if (this.step === 6) {
-                const labels = { photo_2x2: '1:1 Ratio Picture', report_card: 'Report Card' };
-                for (let fname of ['photo_2x2', 'report_card']) {
-                    if (!this.uploadedFiles[fname]) {
-                        const input = document.querySelector('input[name="' + fname + '"]');
-                        if (input && !input.files.length) return labels[fname] + ' is required.';
-                    }
+                const hasDocument = (name) => {
+                    if (this.uploadedFiles[name]) return true;
+                    const input = document.querySelector('input[name="' + name + '"]');
+                    return !!(input && input.files.length);
+                };
+
+                if (!hasDocument('photo_2x2')) {
+                    return '1:1 Ratio Picture is required.';
+                }
+
+                if (this.form.student_type !== 'Old' && !hasDocument('report_card') && !hasDocument('affidavit')) {
+                    return 'Upload the Report Card, or use the signed Affidavit / Temporary Proof option if it is not yet available.';
                 }
             }
             if (this.step === 7) {
@@ -1577,7 +1728,6 @@ function enrollmentForm() {
                     && !!this.form.date_of_birth
                     && !!this.form.place_of_birth.trim()
                     && !!this.form.religion.trim()
-                    && !!this.form.ethnicity
                     && (!this.form.lrn || this.form.lrn.length === 12);
             }
             if (num === 3) {
@@ -1609,11 +1759,14 @@ function enrollmentForm() {
                     && !!this.form.emergency_phone.trim();
             }
             if (num === 6) {
-                return ['photo_2x2', 'report_card'].every(name => {
+                const hasDocument = (name) => {
                     if (this.uploadedFiles[name]) return true;
                     const input = document.querySelector('input[name="' + name + '"]');
                     return !!(input && input.files.length);
-                });
+                };
+
+                return hasDocument('photo_2x2')
+                    && (this.form.student_type === 'Old' || hasDocument('report_card') || hasDocument('affidavit'));
             }
             if (num === 7) {
                 return !!this.form.agreed_to_data_privacy

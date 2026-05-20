@@ -4,17 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Enrollment\SaveDraftRequest;
 use App\Http\Requests\Enrollment\SubmitEnrollmentRequest;
+use App\Services\Enrollment\AffidavitPdfService;
 use App\Services\Enrollment\EnrollmentApplicationService;
 use App\Services\Enrollment\EnrollmentNotificationService;
 use Illuminate\Http\Request;
 use App\Services\Enrollment\GradeShiftService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class EnrollmentController extends Controller
 {
     public function __construct(
         private EnrollmentApplicationService $applications,
         private GradeShiftService $gradeShifts,
+        private AffidavitPdfService $affidavitPdf,
     ) {
     }
 
@@ -120,6 +123,188 @@ class EnrollmentController extends Controller
     {
         $shifts = $this->gradeShifts->getShiftsForGrade($grade);
         return response()->json($shifts);
+    }
+
+    public function showAffidavit(Request $request)
+    {
+        $user = Auth::user();
+        $applicant = $this->applications->resolveForUser($user, $request, editableFirst: true);
+
+        if (!$applicant || !in_array($applicant->status, EnrollmentApplicationService::EDITABLE_STATUSES, true)) {
+            return redirect()->route('enrollment.form')
+                ->with('info', 'Please save the student details first before preparing the affidavit.');
+        }
+
+        return view('enrollment.affidavit', [
+            'applicant' => $applicant,
+            'user' => $user,
+            'storedAffidavitData' => $applicant->affidavit_data ?? [],
+            'affidavitFields' => $this->affidavitPdf->fields(),
+            'signatureField' => $this->affidavitPdf->signatureField(),
+            'signatureNameField' => $this->affidavitPdf->signatureNameField(),
+        ]);
+    }
+
+    public function saveAffidavitDraft(Request $request)
+    {
+        $user = $request->user();
+        $applicant = $this->applications->resolveForUser($user, $request, editableFirst: true);
+
+        if (!$applicant || !in_array($applicant->status, EnrollmentApplicationService::EDITABLE_STATUSES, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This affidavit draft can no longer be edited.',
+            ], 422);
+        }
+
+        $validated = $request->validate($this->affidavitRules(requireSignature: false));
+        $normalized = $this->normalizeAffidavitData($validated);
+
+        if (!empty($normalized['signature_data'])) {
+            $signatureError = $this->signatureValidationError($normalized['signature_data']);
+
+            if ($signatureError) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $signatureError,
+                ], 422);
+            }
+        }
+
+        $applicant->update([
+            'affidavit_data' => $this->affidavitDraftData($normalized),
+            'last_step' => max((int) ($applicant->last_step ?? 1), 6),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'last_saved' => $applicant->fresh()->updated_at?->diffForHumans(),
+        ]);
+    }
+
+    public function storeAffidavit(Request $request)
+    {
+        $user = $request->user();
+        $applicant = $this->applications->resolveForUser($user, $request, editableFirst: true);
+
+        if (!$applicant || !in_array($applicant->status, EnrollmentApplicationService::EDITABLE_STATUSES, true)) {
+            return redirect()->route('enrollment.form')
+                ->with('info', 'Please save the student details first before preparing the affidavit.');
+        }
+
+        $validated = $this->normalizeAffidavitData($request->validate($this->affidavitRules(requireSignature: true)));
+        $signatureError = $this->signatureValidationError($validated['signature_data']);
+
+        if ($signatureError) {
+            return back()
+                ->withInput()
+                ->withErrors(['signature_data' => $signatureError]);
+        }
+
+        $oldPath = $applicant->affidavit_url;
+        $path = 'documents/' . $applicant->id . '/affidavit-undertaking-' . now()->format('YmdHis') . '.pdf';
+
+        Storage::disk('public')->put($path, $this->affidavitPdf->build($validated));
+
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        $applicant->update([
+            'affidavit_url' => $path,
+            'affidavit_data' => $this->affidavitDraftData($validated),
+            'last_step' => max((int) ($applicant->last_step ?? 1), 6),
+        ]);
+
+        return redirect()
+            ->route('enrollment.form.child', ['applicant' => $applicant->id])
+            ->with('success', 'Signed affidavit saved. You can continue the enrollment documents step.');
+    }
+
+    private function affidavitRules(bool $requireSignature): array
+    {
+        $required = $requireSignature ? 'required' : 'nullable';
+
+        return [
+            'guardian_name' => $required . '|string|max:255',
+            'guardian_relationship' => $required . '|string|max:100',
+            'guardian_address' => $required . '|string|max:500',
+            'student_name' => $required . '|string|max:255',
+            'grade_level' => $required . '|string|max:100',
+            'school_year' => $required . '|string|max:20',
+            'missing_credential' => $required . '|string|max:120',
+            'other_missing_credential' => 'nullable|string|max:120',
+            'reason' => $required . '|string|max:600',
+            'commitment_date' => 'nullable|string|max:120',
+            'attested_day' => 'nullable|string|max:10',
+            'attested_month' => 'nullable|string|max:30',
+            'attested_place' => 'nullable|string|max:120',
+            'govt_id_presented' => 'nullable|string|max:120',
+            'id_number' => 'nullable|string|max:120',
+            'date_issued' => 'nullable|string|max:120',
+            'govt_id_type' => 'nullable|string|max:120',
+            'govt_id_number' => 'nullable|string|max:120',
+            'govt_id_date' => 'nullable|string|max:120',
+            'signature_data' => $required . '|string',
+            'agreement' => $requireSignature ? 'accepted' : 'nullable',
+        ];
+    }
+
+    private function normalizeAffidavitData(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                $data[$key] = trim($value);
+            }
+        }
+
+        if (($data['missing_credential'] ?? '') === 'Other') {
+            $data['missing_credential'] = $data['other_missing_credential'] ?: 'Other required admission document';
+        }
+
+        return $data;
+    }
+
+    private function signatureValidationError(?string $signatureData): ?string
+    {
+        if (!is_string($signatureData) || !preg_match('/^data:image\/png;base64,[A-Za-z0-9+\/=]+$/', $signatureData)) {
+            return 'Please sign inside the signature box before saving.';
+        }
+
+        if (strlen($signatureData) > 2_000_000) {
+            return 'The signature image is too large. Please clear and sign again.';
+        }
+
+        return null;
+    }
+
+    private function affidavitDraftData(array $data): array
+    {
+        return collect($data)
+            ->only([
+                'guardian_name',
+                'guardian_relationship',
+                'guardian_address',
+                'student_name',
+                'grade_level',
+                'school_year',
+                'missing_credential',
+                'other_missing_credential',
+                'reason',
+                'commitment_date',
+                'attested_day',
+                'attested_month',
+                'attested_place',
+                'govt_id_presented',
+                'id_number',
+                'date_issued',
+                'govt_id_type',
+                'govt_id_number',
+                'govt_id_date',
+                'signature_data',
+            ])
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->all();
     }
 
     public function saveDraft(SaveDraftRequest $request)
@@ -331,4 +516,5 @@ class EnrollmentController extends Controller
             'last_saved' => $applicant?->updated_at?->diffForHumans() ?? null,
         ]);
     }
+
 }
