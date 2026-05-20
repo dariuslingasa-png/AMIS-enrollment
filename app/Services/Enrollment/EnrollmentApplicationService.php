@@ -205,7 +205,6 @@ class EnrollmentApplicationService
             'Date of birth' => $applicant->date_of_birth,
             'Place of birth' => $applicant->place_of_birth,
             'Religion' => $applicant->religion,
-            'Ethnicity' => $applicant->ethnicity,
             'Country' => $applicant->country,
             'Street address' => $applicant->street_address,
             'Mobile country code' => $applicant->mobile_country_code,
@@ -218,8 +217,11 @@ class EnrollmentApplicationService
             'Emergency phone' => $applicant->emergency_phone,
             'School year' => $applicant->school_year,
             '2x2 photo' => $applicant->photo_2x2_url,
-            'Report card' => $applicant->report_card_url,
         ];
+
+        if ($applicant->student_type !== 'Old') {
+            $requirements['Report card or signed temporary proof'] = $applicant->report_card_url ?: $applicant->affidavit_url;
+        }
 
         if (str_starts_with((string) $applicant->learning_mode, 'Flexible Online Learning')) {
             $requirements['Timezone'] = $applicant->timezone;
@@ -281,9 +283,9 @@ class EnrollmentApplicationService
         }
 
         $applicant = $this->resolveForUser($user, $request)
-            ?? $user->enrollmentApplicants()->whereIn('status', [self::STATUS_DRAFT, 'rejected'])->latest()->first();
+            ?? $user->enrollmentApplicants()->whereIn('status', self::EDITABLE_STATUSES)->latest()->first();
 
-        if (!$applicant || !in_array($applicant->status, [self::STATUS_DRAFT, 'rejected'], true)) {
+        if (!$applicant || !in_array($applicant->status, self::EDITABLE_STATUSES, true)) {
             return false;
         }
 

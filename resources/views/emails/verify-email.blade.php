@@ -19,7 +19,7 @@
                             <div style="display:inline-block;width:96px;height:96px;margin:0 auto 14px;text-align:center;">
                                 <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS Logo" width="96" height="96" style="display:block;width:96px;height:96px;object-fit:contain;border:0;outline:none;text-decoration:none;filter:drop-shadow(0 12px 20px rgba(0,0,0,0.16));">
                             </div>
-                            <div dir="rtl" style="font-size:18px;line-height:1.6;font-weight:700;color:#d1fae5;margin-bottom:4px;">
+                            <div dir="rtl" style="font-family:'Traditional Arabic','Times New Roman',Tahoma,Arial,sans-serif;font-size:18px;line-height:1.6;font-weight:700;color:#d1fae5;margin-bottom:4px;">
                                 المدرسة المنورة الإسلامية
                             </div>
                             <div style="font-size:26px;line-height:1.25;font-weight:900;color:#ffffff;">

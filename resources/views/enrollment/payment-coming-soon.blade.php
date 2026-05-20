@@ -17,7 +17,7 @@
     </div>
 
     <div class="enrollment-main">
-        <div class="enrollment-form-container" style="max-width:760px;position:relative;">
+        <div class="enrollment-form-container" style="position:relative;">
             <a href="{{ route('enrollment.dashboard') }}"
                style="position:absolute;top:1.5rem;right:1.5rem;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#f3f4f6;color:#6b7280;text-decoration:none;border:1px solid #e5e7eb;"
                aria-label="Back to dashboard">

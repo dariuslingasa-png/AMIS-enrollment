@@ -44,12 +44,6 @@
     <section class="login-form">
         <div class="login-form-panel">
             <div class="auth-entry-card">
-                <div class="auth-entry-mobile-brand">
-                    <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="auth-entry-mobile-logo">
-                    <div class="auth-entry-mobile-arabic" lang="ar" dir="rtl">المدرسة المنورة الإسلامية</div>
-                    <div class="auth-entry-mobile-school">AL MUNAWWARA ISLAMIC SCHOOL</div>
-                </div>
-
                 <div class="auth-entry-heading">
                     <span class="auth-entry-kicker">AMIS Enrollment</span>
                     <h2>Continue to enrollment</h2>

@@ -58,10 +58,16 @@ class EnrollmentUploadService
         $documentStatuses = $applicant->document_statuses ?? [];
         unset($documentStatuses[$document]);
 
-        $applicant->update([
+        $updates = [
             $column => null,
             'document_statuses' => empty($documentStatuses) ? null : $documentStatuses,
-        ]);
+        ];
+
+        if ($document === 'affidavit') {
+            $updates['affidavit_data'] = null;
+        }
+
+        $applicant->update($updates);
     }
 
     public function isEnrollmentDocument(string $document): bool

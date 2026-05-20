@@ -34,7 +34,7 @@
 
         {{-- Main --}}
         <div class="enrollment-main">
-            <div class="enrollment-form-container" style="max-width:900px;position:relative;">
+            <div class="enrollment-form-container" style="position:relative;">
 
                 {{-- X close --}}
                 <a href="{{ route('enrollment.dashboard') }}"

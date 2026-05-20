@@ -45,16 +45,16 @@
                     ])->filter(fn($l, $k) => ($docStatuses[$k] ?? '') === 'rejected');
                     $requiredGuide = [
                         ['label' => 'Student profile', 'done' => $applicant && $applicant->first_name && $applicant->last_name && $applicant->grade_level],
-                        ['label' => 'Religion, ethnicity, country, and contact number', 'done' => $applicant && $applicant->religion && $applicant->ethnicity && $applicant->country && $applicant->mobile_number],
+                        ['label' => 'Religion, country, and contact number', 'done' => $applicant && $applicant->religion && $applicant->country && $applicant->mobile_number],
                         ['label' => 'Parent or guardian contact', 'done' => $applicant && $applicant->parent_mobile],
                         ['label' => 'Emergency contact', 'done' => $applicant && $applicant->emergency_name && $applicant->emergency_phone],
-                        ['label' => 'Recent 2x2 or annual photo', 'done' => $applicant && $applicant->photo_2x2_url],
-                        ['label' => 'Birth certificate and report card', 'done' => $applicant && $applicant->birth_cert_url && $applicant->report_card_url],
+                        ['label' => 'Recent 1:1 or annual photo', 'done' => $applicant && $applicant->photo_2x2_url],
+                        ['label' => 'Report card or signed temporary proof', 'done' => $applicant && ($applicant->report_card_url || $applicant->affidavit_url)],
                     ];
                     $optionalGuide = [
+                        ['label' => 'Birth certificate copy, if available', 'done' => $applicant && $applicant->birth_cert_url],
                         ['label' => 'Medical record or health history', 'done' => $applicant && ($applicant->medical_record_url || $applicant->psych_testing || $applicant->prescription_med)],
                         ['label' => 'Marriage contract, if applicable', 'done' => $applicant && $applicant->marriage_contract_url],
-                        ['label' => 'Affidavit or temporary proof, if original is unavailable', 'done' => $applicant && $applicant->affidavit_url],
                         ['label' => 'Physician details, if available', 'done' => $applicant && ($applicant->family_physician || $applicant->physician_phone)],
                     ];
                     $canAddAnotherChild = $canAddAnotherChild ?? false;

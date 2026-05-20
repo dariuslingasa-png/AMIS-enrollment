@@ -18,6 +18,7 @@
                 <div style="font-size:0.8125rem;font-weight:700;color:#374151;margin-bottom:0.75rem;">What to do:</div>
                 <ol style="font-size:0.875rem;color:#6b7280;margin:0;padding-left:1.25rem;line-height:2;">
                     <li>Open your email inbox</li>
+                    <li>If it is not there, check your Spam or Junk folder</li>
                     <li>Find the email from AMIS</li>
                     <li>Click the <strong style="color:#059669;">Verify My Email</strong> button</li>
                     <li>You'll be redirected to your dashboard</li>

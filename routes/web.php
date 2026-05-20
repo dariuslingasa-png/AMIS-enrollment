@@ -59,6 +59,9 @@ Route::middleware(['auth'])->group(function () {
 // Enrollment routes (applicant role only)
 Route::middleware(['auth', 'applicant'])->group(function () {
     Route::get('/enroll/new', [EnrollmentController::class, 'startNewApplication'])->name('enrollment.new');
+    Route::get('/enroll/affidavit', [EnrollmentController::class, 'showAffidavit'])->name('enrollment.affidavit');
+    Route::post('/enroll/affidavit/draft', [EnrollmentController::class, 'saveAffidavitDraft'])->name('enrollment.affidavit.draft');
+    Route::post('/enroll/affidavit', [EnrollmentController::class, 'storeAffidavit'])->name('enrollment.affidavit.store');
     Route::get('/enroll/{applicant}', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form.child');
     Route::get('/enroll', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form');
     Route::post('/enroll', [EnrollmentController::class, 'submitEnrollment'])->name('enrollment.submit');

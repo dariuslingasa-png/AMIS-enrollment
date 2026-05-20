@@ -73,6 +73,7 @@ class EnrollmentApplicant extends Model
         'marriage_contract_url',
         'medical_record_url',
         'affidavit_url',
+        'affidavit_data',
         'document_statuses',
         'review_remarks',
         // Meta
@@ -88,6 +89,7 @@ class EnrollmentApplicant extends Model
     protected $casts = [
         'date_of_birth'      => 'date',
         'last_step'          => 'integer',
+        'affidavit_data'     => 'array',
         'document_statuses'  => 'array',
         'sibling_order'      => 'integer',
         'discount_percentage'=> 'decimal:2',
@@ -119,6 +121,10 @@ class EnrollmentApplicant extends Model
      */
     public function getCompletionPercentageAttribute(): int
     {
+        $hasAcademicProof = $this->student_type === 'Old'
+            || !empty($this->report_card_url)
+            || !empty($this->affidavit_url);
+
         $checks = [
             // Step 1 (weight: 5 fields)
             !empty($this->student_type),
@@ -129,7 +135,6 @@ class EnrollmentApplicant extends Model
             !empty($this->date_of_birth),
             !empty($this->place_of_birth),
             !empty($this->religion),
-            !empty($this->ethnicity),
             !empty($this->country),
             !empty($this->street_address),
             !empty($this->mobile_number),
@@ -141,7 +146,7 @@ class EnrollmentApplicant extends Model
             !empty($this->emergency_phone),
             // Step 5 - documents
             !empty($this->photo_2x2_url),
-            !empty($this->report_card_url),
+            $hasAcademicProof,
         ];
 
         $filled = count(array_filter($checks));

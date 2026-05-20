@@ -37,7 +37,7 @@ class SubmitEnrollmentRequest extends FormRequest
             'date_of_birth'           => 'required|date|before:today',
             'place_of_birth'          => 'required|string|max:255',
             'religion'                => 'required|string|max:255',
-            'ethnicity'               => 'required|string|max:255',
+            'ethnicity'               => 'nullable|string|max:255',
             'country'                 => 'required|string|max:255',
             'state_province'          => 'nullable|string|max:255',
             'city'                    => 'nullable|string|max:255',
@@ -84,7 +84,7 @@ class SubmitEnrollmentRequest extends FormRequest
             'school_year'             => 'required|string',
             'photo_2x2'               => ($applicant?->photo_2x2_url ? 'nullable' : 'required') . '|mimes:jpg,jpeg,png|max:5120',
             'birth_cert'              => 'nullable|mimes:jpg,jpeg,png|max:5120',
-            'report_card'             => ($applicant?->report_card_url ? 'nullable' : 'required') . '|mimes:jpg,jpeg,png|max:5120',
+            'report_card'             => 'nullable|mimes:jpg,jpeg,png|max:5120',
             'marriage_contract'       => 'nullable|mimes:jpg,jpeg,png|max:5120',
             'medical_record'          => 'nullable|mimes:jpg,jpeg,png|max:5120',
             'affidavit'               => 'nullable|mimes:jpg,jpeg,png|max:5120',
@@ -95,6 +95,7 @@ class SubmitEnrollmentRequest extends FormRequest
     {
         $validator->after(function (Validator $validator) {
             $mode = $this->input('learning_mode');
+            $applicant = $this->editableApplicant();
 
             if ($mode && !in_array($mode, self::LEARNING_MODES, true)) {
                 $validator->errors()->add(
@@ -105,6 +106,16 @@ class SubmitEnrollmentRequest extends FormRequest
 
             if (str_starts_with((string) $mode, 'Flexible Online Learning') && !$this->filled('timezone')) {
                 $validator->errors()->add('timezone', 'Please select your timezone.');
+            }
+
+            $hasReportCard = $this->hasFile('report_card') || filled($applicant?->report_card_url);
+            $hasTemporaryProof = $this->hasFile('affidavit') || filled($applicant?->affidavit_url);
+
+            if ($this->input('student_type') !== 'Old' && !$hasReportCard && !$hasTemporaryProof) {
+                $validator->errors()->add(
+                    'report_card',
+                    'Upload the report card, or upload a fully filled out and signed temporary proof if the report card is not yet available.'
+                );
             }
         });
     }

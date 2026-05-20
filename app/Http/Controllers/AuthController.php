@@ -95,7 +95,7 @@ class AuthController extends Controller
                 Auth::logout();
 
                 return back()->withErrors([
-                    'email' => 'Please verify your email first. Check your inbox for the verification link.',
+                    'email' => 'Please verify your email first. Check your inbox or Spam/Junk folder for the verification link.',
                 ])->withInput($request->only('email', 'auth_mode'));
             }
 
@@ -175,6 +175,6 @@ class AuthController extends Controller
             $user->sendEmailVerificationNotification();
         }
 
-        return back()->with('success', 'Verification link resent! Please check your inbox.');
+        return back()->with('success', 'Verification link resent! Please check your inbox or Spam/Junk folder.');
     }
 }
