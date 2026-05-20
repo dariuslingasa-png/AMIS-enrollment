@@ -2177,3 +2177,683 @@
         width: 100%;
     }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Payment Page Styles
+   ══════════════════════════════════════════════════════════════════════ */
+
+.payment-container {
+    position: relative;
+}
+
+.payment-close-btn {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #6b7280;
+    text-decoration: none;
+    border: 1px solid #e5e7eb;
+    transition: background 0.15s, color 0.15s;
+    z-index: 2;
+}
+
+.payment-close-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.payment-section {
+    margin-bottom: 1.75rem;
+}
+
+.payment-section-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+}
+
+/* Applicant card */
+.payment-applicant-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: #f0fdf4;
+    border: 1px solid #d1fae5;
+    border-radius: 10px;
+    margin-bottom: 1.75rem;
+}
+
+.payment-applicant-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #d1fae5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.payment-applicant-name {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: #111827;
+}
+
+.payment-applicant-meta {
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+/* Fee card */
+.payment-fee-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.payment-fee-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: #f0fdf4;
+    border-bottom: 2px solid #d1fae5;
+}
+
+.payment-fee-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #065f46;
+}
+
+.payment-fee-subtitle {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin-top: 0.2rem;
+}
+
+.payment-fee-amount {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #059669;
+}
+
+.payment-fee-notice {
+    padding: 0.75rem 1.25rem;
+    background: #fffbeb;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: #92400e;
+}
+
+/* Payment channels */
+.payment-reminder-notice {
+    margin-bottom: 1.25rem;
+    padding: 1.25rem;
+    border: 1px solid #d1fae5;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+}
+
+.payment-reminder-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.payment-reminder-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.payment-reminder-title {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #065f46;
+}
+
+.payment-reminder-greeting {
+    font-size: 0.85rem;
+    color: #475569;
+    font-style: italic;
+}
+
+.payment-reminder-body {
+    margin: 0 0 0.65rem;
+    font-size: 0.9rem;
+    color: #1e293b;
+    line-height: 1.6;
+    font-weight: 600;
+    text-align: center;
+}
+
+.payment-reminder-small {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #475569;
+    text-align: center;
+}
+
+.payment-reminder-disregard {
+    margin: 0.75rem 0 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1d4ed8;
+    font-style: italic;
+    text-align: center;
+}
+
+.payment-channels-header {
+    padding: 1rem 1.25rem;
+    background: #0f766e;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 12px 12px 0 0;
+}
+
+.payment-channels-logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    background: white;
+    border-radius: 50%;
+    padding: 3px;
+    flex-shrink: 0;
+}
+
+.payment-channels-title {
+    font-size: 1.05rem;
+    font-weight: 900;
+    line-height: 1.15;
+}
+
+.payment-channels-subtitle {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.payment-channels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #d1fae5;
+    border-top: 0;
+    border-radius: 0 0 12px 12px;
+    background: #ffffff;
+}
+
+.payment-channel-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.95rem;
+    background: #f8fafc;
+}
+
+.payment-channel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+}
+
+.payment-channel-head strong {
+    font-size: 0.9rem;
+    color: #0f172a;
+}
+
+.payment-channel-img {
+    height: 28px;
+    object-fit: contain;
+}
+
+.payment-account-list {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.payment-account-item {
+    padding: 0.65rem 0.75rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.payment-account-type {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.payment-account-number {
+    font-size: 0.92rem;
+    color: #047857;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+}
+
+.payment-account-name {
+    font-size: 0.78rem;
+    color: #334155;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.payment-channel-meta {
+    margin-top: 0.75rem;
+    font-size: 0.78rem;
+    color: #475569;
+    line-height: 1.45;
+}
+
+.payment-channel-reminder {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    color: #92400e;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.payment-channel-reminder span {
+    color: #1d4ed8;
+}
+
+.payment-important-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    background: #fef2f2;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    color: #9f1239;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.payment-important-notice svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Method selector */
+.payment-method-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.payment-method-btn {
+    padding: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    transition: all 0.15s;
+    border: 2px solid #e5e7eb;
+    background: white;
+}
+
+.payment-method-btn.is-active {
+    border-color: #059669;
+    background: #f0fdf4;
+}
+
+.payment-method-btn:hover:not(.is-active) {
+    border-color: #86efac;
+}
+
+.payment-method-img-wrap {
+    width: 100%;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    background: white;
+}
+
+.payment-method-img-wrap img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.payment-method-btn span {
+    width: 100%;
+    padding: 0.5rem;
+    text-align: center;
+    border-top: 1px solid #f3f4f6;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* Info banner */
+.payment-info-banner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    padding: 1rem 1.25rem;
+    background: #f0fdf4;
+    border: 1px solid #d1fae5;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.payment-info-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 0.2rem;
+}
+
+.payment-info-number {
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: #059669;
+    letter-spacing: 0.02em;
+}
+
+.payment-info-number-alt {
+    font-size: 0.92rem;
+}
+
+.payment-info-name {
+    font-size: 0.8125rem;
+    color: #374151;
+    font-weight: 600;
+}
+
+.payment-info-logo {
+    height: 36px;
+    object-fit: contain;
+    opacity: 0.85;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.payment-bdo-accounts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.payment-bdo-item {
+    padding: 0.5rem 0.65rem;
+    background: white;
+    border: 1px solid #d1fae5;
+    border-radius: 8px;
+}
+
+/* Steps */
+.payment-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.payment-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 0.875rem 1rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.payment-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #059669;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.payment-step-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #111827;
+    margin-bottom: 0.2rem;
+}
+
+.payment-step-desc {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* Field label */
+.payment-field-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+/* Upload area */
+.payment-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    background: #fafafa;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.payment-upload-area:hover {
+    border-color: #059669;
+    background: #f0fdf4;
+}
+
+.payment-upload-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #059669;
+}
+
+.payment-upload-hint {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* Preview */
+.payment-preview-card {
+    border: 1.5px solid #d1fae5;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f0fdf4;
+}
+
+.payment-preview-img {
+    width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+    background: white;
+    display: block;
+}
+
+.payment-preview-pdf {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: white;
+}
+
+.payment-preview-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+}
+
+.payment-preview-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #065f46;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.payment-preview-size {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.payment-preview-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    background: white;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+.payment-preview-remove:hover {
+    background: #fef2f2;
+}
+
+/* Submit */
+.payment-submit-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.875rem;
+}
+
+.payment-submit-note {
+    text-align: center;
+    font-size: 0.8125rem;
+    color: #9ca3af;
+    margin-top: 0.75rem;
+}
+
+/* ── Payment Responsive ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .payment-channels-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-bdo-accounts {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-info-banner {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-info-logo {
+        justify-self: end;
+    }
+}
+
+@media (max-width: 480px) {
+    .payment-method-img-wrap {
+        height: 56px;
+    }
+
+    .payment-fee-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .payment-fee-amount {
+        font-size: 1.125rem;
+    }
+
+    .payment-channels-header {
+        padding: 0.85rem 1rem;
+    }
+
+    .payment-channels-title {
+        font-size: 0.92rem;
+    }
+
+    .payment-step {
+        padding: 0.75rem;
+        gap: 0.65rem;
+    }
+
+    .payment-step-num {
+        width: 24px;
+        height: 24px;
+        font-size: 0.75rem;
+    }
+
+    .payment-step-title {
+        font-size: 0.8125rem;
+    }
+
+    .payment-step-desc {
+        font-size: 0.75rem;
+    }
+
+    .payment-applicant-card {
+        padding: 0.85rem;
+    }
+
+    .payment-reminder-notice {
+        padding: 1rem;
+    }
+
+    .payment-reminder-title {
+        font-size: 0.95rem;
+    }
+
+    .payment-reminder-body {
+        font-size: 0.82rem;
+    }
+}
