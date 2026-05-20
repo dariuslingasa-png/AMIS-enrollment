@@ -3,7 +3,7 @@
         <div class="enrollment-header-left">
             <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS Logo" class="enrollment-header-logo">
             <div class="enrollment-header-text">
-                <div class="arabic">المدرسة المنورة الإسلامية</div>
+                <div class="arabic" lang="ar" dir="rtl">المدرسة المنورة الإسلامية</div>
                 <div class="school">Al Munawwara Islamic School</div>
             </div>
         </div>

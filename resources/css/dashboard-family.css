@@ -113,7 +113,6 @@
 
 .sibling-card-header {
     align-items: center;
-    cursor: pointer;
     display: flex;
     gap: 1rem;
     list-style: none;
@@ -124,12 +123,12 @@
     display: none;
 }
 
-.family-child-card[open] {
+.family-child-card.is-open {
     min-height: 8.75rem;
     position: relative;
 }
 
-.family-child-card[open] .sibling-card-header {
+.family-child-card.is-open .sibling-card-header {
     padding-left: 9.75rem;
 }
 
@@ -148,7 +147,7 @@
     width: 96px;
 }
 
-.family-child-card[open] .sibling-card-avatar {
+.family-child-card.is-open .sibling-card-avatar {
     aspect-ratio: 1 / 1;
     border: 0;
     border-radius: 12px 0 0 12px;
@@ -215,16 +214,6 @@
 .sibling-card-badge.is-review { background: #fef3c7; color: #92400e; }
 .sibling-card-badge.is-rejected { background: #fee2e2; color: #991b1b; }
 .sibling-card-badge.is-neutral { background: #f3f4f6; color: #374151; }
-.sibling-card-chevron {
-    color: #9ca3af;
-    flex-shrink: 0;
-    transition: transform 0.2s;
-}
-
-details[open] > .sibling-card-header .sibling-card-chevron {
-    transform: rotate(180deg);
-}
-
 .sibling-card-body {
     display: flex;
     flex-direction: column;
@@ -276,6 +265,7 @@ details[open] > .sibling-card-header .sibling-card-chevron {
 .family-finalize,
 .family-add-disabled,
 .family-child-open,
+.sibling-btn-edit,
 .sibling-btn-primary,
 .sibling-btn-danger,
 .sibling-btn-payment {
@@ -326,6 +316,17 @@ details[open] > .sibling-card-header .sibling-card-chevron {
     background: #fff;
     border: 1px solid #cbd5e1;
     color: #334155;
+}
+
+.sibling-btn-edit {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+}
+
+.sibling-btn-edit:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
 }
 
 .sibling-btn-danger {
@@ -457,16 +458,16 @@ details[open] > .sibling-card-header .sibling-card-chevron {
         padding: 0.75rem;
     }
 
-    .family-child-card[open] {
+    .family-child-card.is-open {
         min-height: 6rem;
     }
 
-    .family-child-card[open] .sibling-card-header {
+    .family-child-card.is-open .sibling-card-header {
         padding-left: 6.75rem;
     }
 
     .sibling-card-avatar,
-    .family-child-card[open] .sibling-card-avatar {
+    .family-child-card.is-open .sibling-card-avatar {
         border-radius: 12px 0 0 12px;
         height: 6rem;
         min-width: 6rem;
@@ -494,5 +495,156 @@ details[open] > .sibling-card-header .sibling-card-chevron {
     .sibling-progress-meta {
         align-items: stretch;
         flex-direction: column;
+    }
+}
+
+@media (max-width: 560px) {
+    .family-group-card {
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        padding: 0.9rem;
+    }
+
+    .family-section-kicker {
+        font-size: 0.64rem;
+        margin-bottom: 0.45rem;
+    }
+
+    .family-group-header h3 {
+        font-size: 1rem;
+    }
+
+    .family-group-header h3 span {
+        display: inline-block;
+        margin-left: 0.3rem;
+    }
+
+    .family-group-header p {
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .family-group-actions {
+        gap: 0.5rem;
+    }
+
+    .family-child-card,
+    .family-child-card.is-open {
+        border-radius: 12px;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .sibling-card-header,
+    .family-child-card.is-open .sibling-card-header {
+        align-items: center;
+        display: grid;
+        gap: 0.6rem 0.7rem;
+        grid-template-columns: 64px minmax(0, 1fr) auto;
+        padding: 0.8rem;
+    }
+
+    .sibling-card-avatar,
+    .family-child-card.is-open .sibling-card-avatar {
+        aspect-ratio: 1 / 1;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        height: 64px;
+        inset: auto;
+        min-width: 64px;
+        position: static;
+        width: 64px;
+    }
+
+    .sibling-card-info {
+        gap: 0.2rem;
+        min-width: 0;
+    }
+
+    .sibling-card-name {
+        font-size: 0.86rem;
+        line-height: 1.2;
+        white-space: normal;
+    }
+
+    .sibling-card-meta,
+    .sibling-card-year {
+        font-size: 0.73rem;
+        line-height: 1.35;
+    }
+
+    .sibling-card-right {
+        align-items: flex-start;
+        grid-column: 3;
+        grid-row: 1;
+        justify-content: flex-end;
+        min-width: 0;
+    }
+
+    .sibling-card-badge {
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .sibling-card-body {
+        padding: 0 0.8rem 0.9rem;
+    }
+
+    .sibling-progress-meta {
+        align-items: center;
+        gap: 0.35rem;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .sibling-progress-meta::before {
+        border-top: 1px solid #e2e8f0;
+        content: "";
+        flex: 1 1 auto;
+        order: 2;
+    }
+
+    .sibling-progress-meta span:first-child {
+        order: 1;
+    }
+
+    .sibling-progress-meta span:last-child {
+        order: 3;
+        text-align: right;
+    }
+
+    .sibling-card-actions {
+        display: grid;
+        gap: 0.55rem;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .sibling-card-actions form,
+    .sibling-card-actions .sibling-btn-edit,
+    .sibling-card-actions .sibling-btn-primary,
+    .sibling-card-actions .sibling-btn-danger,
+    .sibling-card-actions .sibling-btn-payment {
+        width: 100%;
+    }
+
+    .sibling-card-actions.has-three-actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .sibling-card-actions.has-three-actions form {
+        min-width: 0;
+    }
+
+    .sibling-card-actions.has-three-actions .sibling-btn-danger,
+    .sibling-card-actions.has-three-actions .sibling-btn-edit,
+    .sibling-card-actions.has-three-actions .sibling-btn-primary {
+        min-height: 42px;
+        padding-left: 0.4rem;
+        padding-right: 0.4rem;
+    }
+
+    .sibling-card-actions .sibling-btn-danger {
+        min-height: 42px;
     }
 }

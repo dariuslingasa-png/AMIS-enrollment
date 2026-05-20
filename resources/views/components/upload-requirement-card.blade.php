@@ -288,6 +288,7 @@
                                         alt="{{ $image['alt'] ?? 'Upload guide example' }}"
                                         class="!aspect-square !h-auto !w-full !object-cover"
                                         loading="lazy"
+                                        decoding="async"
                                     >
                                     @if (!empty($image['label']))
                                         <figcaption class="!px-2 !py-1.5 !text-center !text-[11px] !font-semibold !leading-4 {{ ($image['tone'] ?? '') === 'danger' ? '!text-rose-700' : (($image['tone'] ?? '') === 'success' ? '!text-emerald-700' : '!text-slate-600') }}">
@@ -307,6 +308,7 @@
                                     alt="{{ $image['alt'] ?? 'Upload guide example' }}"
                                     class="!aspect-square !h-auto !w-full !object-cover"
                                     loading="lazy"
+                                    decoding="async"
                                 >
                                 @if (!empty($image['label']))
                                     <figcaption class="!px-2 !py-1.5 !text-center !text-[11px] !font-semibold !leading-4 {{ ($image['tone'] ?? '') === 'danger' ? '!text-rose-700' : (($image['tone'] ?? '') === 'success' ? '!text-emerald-700' : '!text-slate-600') }}">
@@ -336,6 +338,7 @@
                                     src="{{ asset($support['src']) }}"
                                     alt="{{ $support['alt'] ?? ($support['label'] ?? 'Photo guideline support') }}"
                                     loading="lazy"
+                                    decoding="async"
                                 >
                                 @if (!empty($support['label']))
                                     <span>{{ $support['label'] }}</span>
@@ -363,6 +366,7 @@
                                         src="{{ asset($support['src']) }}"
                                         alt="{{ $support['alt'] ?? ($support['label'] ?? 'Photo guideline support') }}"
                                         loading="lazy"
+                                        decoding="async"
                                     >
                                     @if (!empty($support['label']))
                                         <span>{{ $support['label'] }}</span>
@@ -445,7 +449,7 @@
                 </button>
             </div>
             <div class="upload-support-modal__body">
-                <img :src="supportModal?.src" :alt="supportModal?.alt || supportModal?.label || 'Photo guide support'">
+                <img :src="supportModal?.src" :alt="supportModal?.alt || supportModal?.label || 'Photo guide support'" loading="lazy" decoding="async">
             </div>
         </div>
     </div>

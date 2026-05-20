@@ -21,6 +21,11 @@
     box-shadow: var(--shadow-xl);
 }
 
+.verify-email-card {
+    height: auto;
+    min-height: 0;
+}
+
 .auth-logo {
     text-align: center;
     margin-bottom: 32px;

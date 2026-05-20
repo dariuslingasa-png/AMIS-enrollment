@@ -442,12 +442,24 @@ table {
 }
 
 @media (max-width: 560px) {
-    .auth-page,
     .login-form,
     .success-page,
     .enrollment-closed-page {
         align-items: stretch;
         padding: 0.75rem !important;
+    }
+
+    .auth-page {
+        align-items: center;
+        min-height: 100dvh;
+        padding: 0.75rem !important;
+    }
+
+    .auth-card.verify-email-card {
+        align-self: center;
+        flex: 0 1 auto;
+        min-height: 0;
+        padding: 1.35rem 1rem;
     }
 
     .login-form-panel {
@@ -508,48 +520,88 @@ table {
     }
 
     .enrollment-header-content {
-        align-items: flex-start;
-    }
-
-    .enrollment-header-left {
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 0.75rem;
         width: 100%;
     }
 
+    .enrollment-header-left {
+        width: auto;
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: flex-start;
+        gap: 0.55rem;
+    }
+
     .enrollment-header-logo {
-        width: 46px;
-        height: 46px;
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+    }
+
+    .enrollment-header-text {
+        min-width: 0;
     }
 
     .enrollment-header-text .school {
-        font-size: 0.98rem;
-        line-height: 1.15;
+        font-size: 0.88rem;
+        line-height: 1.12;
+        overflow-wrap: anywhere;
     }
 
     .enrollment-header-text .arabic {
-        font-size: 0.74rem;
+        font-size: 0.68rem;
+        line-height: 1.2;
     }
 
     .enrollment-header-right h1 {
-        font-size: 1.15rem;
+        font-size: 1rem;
+        line-height: 1.15;
+        margin-bottom: 0.15rem;
+        max-width: 9rem;
+    }
+
+    .enrollment-header-right {
+        width: auto;
+        flex: 0 0 auto;
+        align-items: flex-end;
+        text-align: right;
+    }
+
+    .school-year {
+        font-size: 0.7rem;
+        white-space: nowrap;
     }
 
     .enrollment-steps-bar {
-        padding: 0.55rem 0.5rem;
+        padding: 0.75rem 0.85rem;
+    }
+
+    .enrollment-progress-summary {
+        display: flex;
+        margin-bottom: 0.55rem;
+    }
+
+    .enrollment-progress-summary span,
+    .enrollment-progress-summary strong {
+        font-size: 0.78rem;
     }
 
     .enrollment-steps-container {
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-columns: repeat(7, minmax(0, 1fr));
         gap: 0.35rem;
-        min-width: 0;
+        margin-top: 0.65rem;
         width: 100%;
     }
 
     .enrollment-step-item {
         min-width: 0;
-        min-height: 36px;
+        min-height: 40px;
         justify-content: center;
-        padding: 0.2rem;
+        padding: 0;
     }
 
     .enrollment-step-label {
@@ -557,9 +609,10 @@ table {
     }
 
     .enrollment-step-circle {
-        width: 28px;
-        height: 28px;
-        font-size: 0.78rem;
+        width: 34px;
+        height: 34px;
+        border-width: 2px;
+        font-size: 0.85rem;
     }
 
     .enrollment-main {
@@ -673,7 +726,6 @@ table {
     .draft-action-payment,
     .beta-notice-primary,
     .beta-notice-secondary,
-    .logout-btn,
     .auth-button {
         width: 100%;
         justify-content: center;
@@ -681,7 +733,27 @@ table {
     }
 
     .dashboard-header {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        gap: 0.75rem;
+        justify-content: space-between;
         padding: 0.85rem;
+    }
+
+    .dashboard-header form {
+        flex: 0 0 auto;
+        margin: 0;
+        width: auto;
+    }
+
+    .logout-btn {
+        border-radius: 999px;
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding: 0.55rem 0.75rem;
+        width: auto;
+        white-space: nowrap;
     }
 
     .dashboard-content {
@@ -689,21 +761,34 @@ table {
     }
 
     .dashboard-logo {
+        flex: 1 1 auto;
         gap: 0.75rem;
+        min-width: 0;
     }
 
     .dashboard-logo img {
-        width: 42px;
-        height: 42px;
+        flex-shrink: 0;
+        width: 38px;
+        height: 38px;
+    }
+
+    .dashboard-logo > div {
+        min-width: 0;
     }
 
     .dashboard-logo h1 {
         font-size: 1rem;
         line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .dashboard-logo p {
         font-size: 0.78rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .dashboard-welcome {

@@ -111,12 +111,35 @@
                 <div class="signature-panel" style="margin-top:1.5rem;">
                     <div>
                         <h2>Signature Over Printed Name of Parent/Guardian</h2>
-                        <p>Sign inside the box using mouse, trackpad, or touch.</p>
+                        <p>Click the box to open the full signature area.</p>
                     </div>
-                    <canvas data-signature-canvas class="signature-canvas"></canvas>
+                    <button type="button" class="signature-preview-trigger" data-open-signature>
+                        <canvas data-signature-canvas class="signature-canvas"></canvas>
+                        <span data-signature-placeholder class="signature-placeholder">Click to sign</span>
+                    </button>
                     <div class="signature-actions">
+                        <button type="button" class="btn-primary" data-open-signature>Open signature pad</button>
                         <button type="button" class="affidavit-secondary-btn" data-clear-signature>Clear signature</button>
                         <span data-signature-error class="signature-error" hidden>Please sign before saving.</span>
+                    </div>
+                </div>
+
+                <div class="signature-modal" data-signature-modal hidden>
+                    <div class="signature-modal-panel" role="dialog" aria-modal="true" aria-labelledby="signatureModalTitle">
+                        <div class="signature-modal-header">
+                            <div>
+                                <h2 id="signatureModalTitle">Signature Over Printed Name</h2>
+                                <p>Use the full area for your signature, then save it to the affidavit.</p>
+                            </div>
+                            <button type="button" class="signature-modal-close" data-signature-modal-close aria-label="Close signature pad">&times;</button>
+                        </div>
+                        <canvas data-signature-full-canvas class="signature-full-canvas" tabindex="0"></canvas>
+                        <div class="signature-modal-actions">
+                            <button type="button" class="affidavit-secondary-btn" data-signature-modal-clear>Clear</button>
+                            <button type="button" class="affidavit-secondary-btn" data-signature-modal-reset>Reset</button>
+                            <span data-signature-modal-error class="signature-error" hidden>Please sign before saving.</span>
+                            <button type="button" class="btn-primary" data-signature-modal-save>Save signature</button>
+                        </div>
                     </div>
                 </div>
 
@@ -143,7 +166,7 @@
 
                 <div class="affidavit-actions" style="margin-top:1rem;">
                     <a href="{{ route('enrollment.form.child', $applicant) }}" class="affidavit-secondary-btn">Cancel</a>
-                    <button type="submit" class="btn-primary">Save signed affidavit</button>
+                    <button type="submit" class="btn-primary">Save Signed Affidavit</button>
                 </div>
             </form>
         </div>
@@ -213,8 +236,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const zoomInBtn = document.getElementById('zoomIn');
     const zoomResetBtn = document.getElementById('zoomReset');
     const zoomLabel = document.getElementById('zoomLevel');
+    const mobilePdfZoomQuery = window.matchMedia('(max-width: 640px) and (pointer: coarse)');
+    const canUseMobilePdfZoom = () => mobilePdfZoomQuery.matches;
+
+    const clampZoom = (value) => Math.min(2, Math.max(1, value));
 
     const applyZoom = () => {
+        if (!canUseMobilePdfZoom()) return;
+        zoomScale = clampZoom(zoomScale);
         const baseWidth = zoomContainer.clientWidth;
         const newWidth = baseWidth * zoomScale;
         container.style.width = newWidth + 'px';
@@ -239,47 +268,176 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (sigNameEl) sigNameEl.style.fontSize = Math.max(7, parseFloat(sigNameEl.dataset.fontsize || '12') * fontScale) + 'px';
     };
 
-    zoomInBtn.addEventListener('click', () => { zoomScale = Math.min(2, zoomScale + 0.1); applyZoom(); });
+    zoomInBtn.addEventListener('click', () => {
+        if (!canUseMobilePdfZoom()) return;
+        zoomScale = clampZoom(zoomScale + 0.1);
+        applyZoom();
+    });
     zoomResetBtn.addEventListener('click', () => { zoomScale = 1; container.style.width = '100%'; renderPdf(); zoomLabel.textContent = '100%'; });
+
+    let pinchStartDistance = 0;
+    let pinchStartZoom = 1;
+
+    const touchDistance = (touches) => {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.hypot(dx, dy);
+    };
+
+    const touchCenterInZoomContainer = (touches) => {
+        const rect = zoomContainer.getBoundingClientRect();
+        return {
+            x: ((touches[0].clientX + touches[1].clientX) / 2) - rect.left,
+            y: ((touches[0].clientY + touches[1].clientY) / 2) - rect.top,
+        };
+    };
+
+    const applyZoomAtPoint = (nextZoom, center) => {
+        const oldWidth = Math.max(container.offsetWidth, 1);
+        const oldHeight = Math.max(container.offsetHeight, 1);
+        const ratioX = (zoomContainer.scrollLeft + center.x) / oldWidth;
+        const ratioY = (zoomContainer.scrollTop + center.y) / oldHeight;
+
+        zoomScale = clampZoom(nextZoom);
+        applyZoom();
+
+        zoomContainer.scrollLeft = Math.max(0, (ratioX * container.offsetWidth) - center.x);
+        zoomContainer.scrollTop = Math.max(0, (ratioY * container.offsetHeight) - center.y);
+    };
+
+    zoomContainer.addEventListener('touchstart', (event) => {
+        if (!canUseMobilePdfZoom()) return;
+        if (event.touches.length !== 2) return;
+        pinchStartDistance = touchDistance(event.touches);
+        pinchStartZoom = zoomScale;
+        event.preventDefault();
+    }, { passive: false });
+
+    zoomContainer.addEventListener('touchmove', (event) => {
+        if (!canUseMobilePdfZoom()) return;
+        if (event.touches.length !== 2 || !pinchStartDistance) return;
+        const center = touchCenterInZoomContainer(event.touches);
+        const nextZoom = pinchStartZoom * (touchDistance(event.touches) / pinchStartDistance);
+        applyZoomAtPoint(nextZoom, center);
+        event.preventDefault();
+        event.stopPropagation();
+    }, { passive: false });
+
+    zoomContainer.addEventListener('touchend', (event) => {
+        if (event.touches.length < 2) {
+            pinchStartDistance = 0;
+        }
+    });
+
+    zoomContainer.addEventListener('gesturestart', (event) => {
+        if (canUseMobilePdfZoom()) event.preventDefault();
+    }, { passive: false });
+    zoomContainer.addEventListener('gesturechange', (event) => {
+        if (canUseMobilePdfZoom()) event.preventDefault();
+    }, { passive: false });
 
     // Signature canvas
     const form = document.querySelector('[data-affidavit-form]');
     const sigCanvas = document.querySelector('[data-signature-canvas]');
+    const fullSigCanvas = document.querySelector('[data-signature-full-canvas]');
     const sigInput = document.querySelector('[data-signature-input]');
     const clearBtn = document.querySelector('[data-clear-signature]');
+    const openSigBtns = document.querySelectorAll('[data-open-signature]');
+    const sigModal = document.querySelector('[data-signature-modal]');
+    const sigModalPanel = sigModal.querySelector('.signature-modal-panel');
+    const closeSigBtn = document.querySelector('[data-signature-modal-close]');
+    const modalClearBtn = document.querySelector('[data-signature-modal-clear]');
+    const modalResetBtn = document.querySelector('[data-signature-modal-reset]');
+    const modalSaveBtn = document.querySelector('[data-signature-modal-save]');
+    const modalSigError = document.querySelector('[data-signature-modal-error]');
+    const sigPlaceholder = document.querySelector('[data-signature-placeholder]');
     const sigError = document.querySelector('[data-signature-error]');
     const sigPreview = document.getElementById('sigPreview');
     const sigNamePreview = document.getElementById('sigNamePreview');
     const guardianInput = document.querySelector('input[name="guardian_name"]');
 
-    if (!sigCanvas) return;
+    if (!sigCanvas || !fullSigCanvas) return;
     const sigCtx = sigCanvas.getContext('2d');
-    let drawing = false, hasSig = false;
+    const fullSigCtx = fullSigCanvas.getContext('2d');
+    let drawing = false, hasSig = false, currentSignatureData = sigInput.value || '';
+    let modalHasInk = Boolean(currentSignatureData);
+    let lastBodyOverflow = '';
+    let enteredSignatureFullscreen = false;
+    let orientationLockActive = false;
+    const mobileSignatureQuery = window.matchMedia('(max-width: 768px)');
 
-    const resizeSig = () => {
-        const rect = sigCanvas.getBoundingClientRect();
+    const setupCanvas = (canvas, ctx, height) => {
+        const rect = canvas.getBoundingClientRect();
         const ratio = window.devicePixelRatio || 1;
-        sigCanvas.width = rect.width * ratio;
-        sigCanvas.height = 220 * ratio;
-        sigCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        sigCtx.lineCap = 'round';
-        sigCtx.lineJoin = 'round';
-        sigCtx.lineWidth = 2.5;
-        sigCtx.strokeStyle = '#0f172a';
+        canvas.width = Math.max(rect.width, 1) * ratio;
+        canvas.height = height * ratio;
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = canvas === fullSigCanvas ? 3 : 2.5;
+        ctx.strokeStyle = '#0f172a';
     };
 
-    const pt = (e) => {
-        const rect = sigCanvas.getBoundingClientRect();
+    const canvasPoint = (canvas, e) => {
+        const rect = canvas.getBoundingClientRect();
         const src = e.touches ? e.touches[0] : e;
         return { x: src.clientX - rect.left, y: src.clientY - rect.top };
     };
 
-    const syncPreview = () => {
-        currentSignatureData = sigCanvas.toDataURL('image/png');
+    const clearCanvas = (canvas, ctx) => {
+        const rect = canvas.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, rect.height);
+    };
+
+    const drawSignatureTo = (canvas, ctx, dataUrl, updateState = false) => {
+        clearCanvas(canvas, ctx);
+        if (!dataUrl) return;
+
+        const img = new Image();
+        img.onload = () => {
+            const rect = canvas.getBoundingClientRect();
+            clearCanvas(canvas, ctx);
+            ctx.drawImage(img, 0, 0, rect.width, rect.height);
+            if (updateState) {
+                currentSignatureData = dataUrl;
+                hasSig = true;
+                sigInput.value = dataUrl;
+                sigPreview.src = dataUrl;
+                sigPreview.style.opacity = '1';
+                sigPlaceholder.hidden = true;
+            }
+        };
+        img.src = dataUrl;
+    };
+
+    const resizeSig = () => {
+        setupCanvas(sigCanvas, sigCtx, sigCanvas.getBoundingClientRect().height || 240);
+        if (currentSignatureData) drawSignatureTo(sigCanvas, sigCtx, currentSignatureData);
+    };
+
+    const resizeFullSig = () => {
+        const rect = fullSigCanvas.getBoundingClientRect();
+        setupCanvas(fullSigCanvas, fullSigCtx, Math.max(rect.height, 320));
+        if (currentSignatureData) drawSignatureTo(fullSigCanvas, fullSigCtx, currentSignatureData);
+    };
+
+    const setSignatureData = (dataUrl) => {
+        currentSignatureData = dataUrl;
+        hasSig = Boolean(dataUrl);
+        modalHasInk = Boolean(dataUrl);
         sigInput.value = currentSignatureData;
         sigPreview.src = currentSignatureData;
-        sigPreview.style.opacity = '1';
+        sigPreview.style.opacity = currentSignatureData ? '1' : '0';
+        sigPlaceholder.hidden = Boolean(currentSignatureData);
+        resizeSig();
+        if (currentSignatureData) {
+            drawSignatureTo(sigCanvas, sigCtx, currentSignatureData);
+        } else {
+            clearCanvas(sigCanvas, sigCtx);
+            sigPreview.removeAttribute('src');
+        }
     };
+
     const syncName = () => { sigNamePreview.textContent = guardianInput.value; };
     syncName();
     guardianInput.addEventListener('input', syncName);
@@ -336,31 +494,81 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 700);
     };
 
-    const start = (e) => { drawing = true; hasSig = true; sigError.hidden = true; const p = pt(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y); e.preventDefault(); };
-    const move = (e) => { if (!drawing) return; const p = pt(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); e.preventDefault(); };
-    const stop = () => { if (drawing) { drawing = false; syncPreview(); autosaveDraft(); } else { drawing = false; } };
+    const requestMobileLandscape = async () => {
+        if (!mobileSignatureQuery.matches) return;
 
-    let currentSignatureData = sigInput.value || '';
-    const drawSignatureData = (dataUrl) => {
-        if (!dataUrl) return;
-        const img = new Image();
-        img.onload = () => {
-            const rect = sigCanvas.getBoundingClientRect();
-            sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-            sigCtx.drawImage(img, 0, 0, rect.width, 220);
-            currentSignatureData = dataUrl;
-            hasSig = true;
-            sigInput.value = dataUrl;
-            sigPreview.src = dataUrl;
-            sigPreview.style.opacity = '1';
-        };
-        img.src = dataUrl;
+        try {
+            if (!document.fullscreenElement && sigModalPanel.requestFullscreen) {
+                await sigModalPanel.requestFullscreen({ navigationUI: 'hide' });
+                enteredSignatureFullscreen = true;
+            }
+        } catch (error) {}
+
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape');
+                orientationLockActive = true;
+            }
+        } catch (error) {}
+
+        requestAnimationFrame(resizeFullSig);
+        setTimeout(resizeFullSig, 350);
     };
 
-    const originalResizeSig = resizeSig;
-    const resizeAndRestoreSignature = () => {
-        originalResizeSig();
-        if (currentSignatureData) drawSignatureData(currentSignatureData);
+    const releaseMobileLandscape = async () => {
+        if (orientationLockActive && screen.orientation && screen.orientation.unlock) {
+            try { screen.orientation.unlock(); } catch (error) {}
+        }
+        orientationLockActive = false;
+
+        if (enteredSignatureFullscreen && document.fullscreenElement) {
+            try { await document.exitFullscreen(); } catch (error) {}
+        }
+        enteredSignatureFullscreen = false;
+    };
+
+    const openSignatureModal = async () => {
+        sigError.hidden = true;
+        modalSigError.hidden = true;
+        sigModal.hidden = false;
+        lastBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => {
+            resizeFullSig();
+            modalHasInk = Boolean(currentSignatureData);
+            fullSigCanvas.focus();
+        });
+        await requestMobileLandscape();
+    };
+
+    const closeSignatureModal = () => {
+        sigModal.hidden = true;
+        document.body.style.overflow = lastBodyOverflow;
+        drawing = false;
+        releaseMobileLandscape();
+    };
+
+    const start = (e) => {
+        drawing = true;
+        sigError.hidden = true;
+        modalSigError.hidden = true;
+        modalHasInk = true;
+        const p = canvasPoint(fullSigCanvas, e);
+        fullSigCtx.beginPath();
+        fullSigCtx.moveTo(p.x, p.y);
+        e.preventDefault();
+    };
+
+    const move = (e) => {
+        if (!drawing) return;
+        const p = canvasPoint(fullSigCanvas, e);
+        fullSigCtx.lineTo(p.x, p.y);
+        fullSigCtx.stroke();
+        e.preventDefault();
+    };
+
+    const stop = () => {
+        drawing = false;
     };
 
     const restoreLocalDraft = () => {
@@ -383,29 +591,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.addEventListener('input', autosaveDraft);
     form.addEventListener('change', autosaveDraft);
 
-    resizeAndRestoreSignature();
     restoreLocalDraft();
-    if (currentSignatureData) drawSignatureData(currentSignatureData);
-    window.addEventListener('resize', resizeAndRestoreSignature);
-    sigCanvas.addEventListener('mousedown', start);
-    sigCanvas.addEventListener('mousemove', move);
+    resizeSig();
+    if (currentSignatureData) setSignatureData(currentSignatureData);
+    window.addEventListener('resize', () => {
+        resizeSig();
+        if (!sigModal.hidden) resizeFullSig();
+    });
+    openSigBtns.forEach((button) => button.addEventListener('click', openSignatureModal));
+    closeSigBtn.addEventListener('click', closeSignatureModal);
+    sigModal.addEventListener('click', (e) => {
+        if (e.target === sigModal) closeSignatureModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !sigModal.hidden) closeSignatureModal();
+    });
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) enteredSignatureFullscreen = false;
+        if (!sigModal.hidden) requestAnimationFrame(resizeFullSig);
+    });
+    fullSigCanvas.addEventListener('mousedown', start);
+    fullSigCanvas.addEventListener('mousemove', move);
     window.addEventListener('mouseup', stop);
-    sigCanvas.addEventListener('touchstart', start, { passive: false });
-    sigCanvas.addEventListener('touchmove', move, { passive: false });
-    sigCanvas.addEventListener('touchend', stop);
+    fullSigCanvas.addEventListener('touchstart', start, { passive: false });
+    fullSigCanvas.addEventListener('touchmove', move, { passive: false });
+    fullSigCanvas.addEventListener('touchend', stop);
+    modalClearBtn.addEventListener('click', () => {
+        clearCanvas(fullSigCanvas, fullSigCtx);
+        modalHasInk = false;
+    });
+    modalResetBtn.addEventListener('click', () => {
+        resizeFullSig();
+        modalHasInk = Boolean(currentSignatureData);
+        modalSigError.hidden = true;
+    });
+    modalSaveBtn.addEventListener('click', () => {
+        if (!modalHasInk) {
+            modalSigError.hidden = false;
+            return;
+        }
+        const dataUrl = fullSigCanvas.toDataURL('image/png');
+        setSignatureData(dataUrl);
+        autosaveDraft();
+        closeSignatureModal();
+    });
     clearBtn.addEventListener('click', () => {
-        sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-        hasSig = false;
-        currentSignatureData = '';
-        sigInput.value = '';
-        sigPreview.style.opacity = '0';
-        sigPreview.src = '';
+        setSignatureData('');
+        clearCanvas(fullSigCanvas, fullSigCtx);
         autosaveDraft();
     });
 
     form.addEventListener('submit', (e) => {
-        if (!hasSig) { e.preventDefault(); sigError.hidden = false; return; }
-        sigInput.value = sigCanvas.toDataURL('image/png');
+        if (!hasSig || !currentSignatureData) { e.preventDefault(); sigError.hidden = false; openSignatureModal(); return; }
+        sigInput.value = currentSignatureData;
         saveDraftLocally();
     });
 });
@@ -413,6 +651,172 @@ document.addEventListener('DOMContentLoaded', async () => {
 @endpush
 
 <style>
+.signature-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.signature-panel h2,
+.signature-modal-header h2 {
+    color: #020617;
+    font-size: 1rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.signature-panel p,
+.signature-modal-header p {
+    color: #475569;
+    font-size: 0.9rem;
+    margin: 0.25rem 0 0;
+}
+
+.signature-preview-trigger {
+    appearance: none;
+    background: #ffffff;
+    border: 1px dashed #94a3b8;
+    border-radius: 10px;
+    cursor: pointer;
+    display: block;
+    min-height: 240px;
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+    width: 100%;
+}
+
+.signature-preview-trigger:hover,
+.signature-preview-trigger:focus-visible {
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+    outline: none;
+}
+
+.signature-canvas {
+    display: block;
+    height: 240px;
+    pointer-events: none;
+    width: 100%;
+}
+
+.signature-placeholder {
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 700;
+    left: 50%;
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.signature-actions,
+.affidavit-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+.signature-error {
+    color: #dc2626;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.signature-modal {
+    align-items: center;
+    background: rgba(15, 23, 42, 0.58);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 1rem;
+    position: fixed;
+    z-index: 80;
+}
+
+.signature-modal[hidden] {
+    display: none;
+}
+
+.signature-modal-panel {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: min(86vh, 660px);
+    max-width: 1080px;
+    padding: 1rem;
+    width: min(96vw, 1080px);
+}
+
+.signature-modal-panel:fullscreen {
+    border-radius: 0;
+    height: 100dvh;
+    max-width: none;
+    width: 100vw;
+}
+
+.signature-modal-panel:-webkit-full-screen {
+    border-radius: 0;
+    height: 100dvh;
+    max-width: none;
+    width: 100vw;
+}
+
+.signature-modal-header {
+    align-items: flex-start;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+.signature-modal-close {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #0f172a;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1.5rem;
+    font-weight: 700;
+    height: 40px;
+    justify-content: center;
+    line-height: 1;
+    width: 40px;
+}
+
+.signature-full-canvas {
+    background: #ffffff;
+    border: 1px dashed #94a3b8;
+    border-radius: 10px;
+    flex: 1;
+    min-height: 360px;
+    touch-action: none;
+    width: 100%;
+}
+
+.signature-full-canvas:focus {
+    outline: 3px solid rgba(16, 185, 129, 0.18);
+}
+
+.signature-modal-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
 .pdf-form-wrapper {
     display: flex;
     flex-direction: column;
@@ -433,7 +837,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     backdrop-filter: blur(4px);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 640px) and (pointer: coarse) {
     .pdf-zoom-toolbar {
         display: flex;
     }
@@ -476,10 +880,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 }
 
 .pdf-scroll-container {
-    overflow: auto;
+    overflow: visible;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
-    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 640px) and (pointer: coarse) {
+    .pdf-scroll-container {
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-x pan-y;
+    }
 }
 
 .pdf-form-container {
@@ -551,6 +963,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 }
 
 @media (max-width: 768px) {
+    .signature-preview-trigger,
+    .signature-canvas {
+        min-height: 190px;
+        height: 190px;
+    }
+
+    .signature-modal {
+        padding: 0;
+    }
+
+    .signature-modal-panel {
+        border-radius: 0;
+        height: 100dvh;
+        padding: 0.85rem;
+        width: 100vw;
+    }
+
+    .signature-full-canvas {
+        min-height: 56dvh;
+    }
+
+    .signature-modal-actions {
+        justify-content: stretch;
+    }
+
+    .signature-modal-actions .btn-primary,
+    .signature-modal-actions .affidavit-secondary-btn {
+        flex: 1 1 120px;
+    }
+
     .pdf-field {
         height: 2.05%;
         padding: 0 1px;
@@ -562,6 +1004,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     .pdf-signature-section {
         max-width: 100%;
+    }
+}
+
+@media (max-height: 768px) and (orientation: landscape) {
+    .signature-modal-panel,
+    .signature-modal-panel:fullscreen,
+    .signature-modal-panel:-webkit-full-screen {
+        border-radius: 0;
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: minmax(170px, 230px) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto;
+        height: 100dvh;
+        max-width: none;
+        padding: 0.75rem;
+        width: 100vw;
+    }
+
+    .signature-modal-header {
+        flex-direction: column;
+        grid-row: 1 / 3;
+    }
+
+    .signature-full-canvas {
+        grid-column: 2;
+        min-height: 0;
+    }
+
+    .signature-modal-actions {
+        grid-column: 2;
+        justify-content: flex-end;
     }
 }
 </style>

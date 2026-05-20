@@ -86,8 +86,8 @@
                 ])->filter(fn ($label, $key) => ($docStatuses[$key] ?? '') === 'rejected')->values();
             @endphp
 
-            <details class="family-child-card {{ $isSelectedChild ? 'is-selected' : '' }} {{ $child->status === 'approved' ? 'is-approved' : '' }}" open>
-                <summary class="sibling-card-header">
+            <div class="family-child-card is-open {{ $isSelectedChild ? 'is-selected' : '' }} {{ $child->status === 'approved' ? 'is-approved' : '' }}">
+                <div class="sibling-card-header">
                     <div class="sibling-card-avatar">
                         @if ($child->photo_2x2_url)
                             <img src="{{ asset('storage/' . $child->photo_2x2_url) }}" alt="{{ $childName }}">
@@ -111,10 +111,7 @@
                         @endif
                     </div>
 
-                    <span class="sibling-card-chevron">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                    </span>
-                </summary>
+                </div>
 
                 <div class="sibling-card-body">
                     <div class="sibling-card-progress">
@@ -179,7 +176,7 @@
                         </div>
                     @endif
 
-                    <div class="sibling-card-actions">
+                    <div class="sibling-card-actions {{ $child->status === 'ready_for_submission' ? 'has-three-actions' : '' }}">
                         @if ($isEditableChild)
                             <form method="POST" action="{{ route('enrollment.draft.discard') }}" data-clear-draft-form
                                 onsubmit="return confirm('Delete this enrollment? This cannot be undone.')">
@@ -188,6 +185,10 @@
                                 <input type="hidden" name="applicant_id" value="{{ $child->id }}">
                                 <button type="submit" class="sibling-btn-danger">Delete</button>
                             </form>
+
+                            @if ($child->status === 'ready_for_submission')
+                                <a href="{{ route('enrollment.form.child', $child) }}" class="sibling-btn-edit">Edit</a>
+                            @endif
 
                             <a href="{{ route('enrollment.form.child', $child) }}" class="sibling-btn-primary">
                                 {{ $isDraftChild ? 'Continue Draft' : ($child->status === 'rejected' ? 'Re-edit Form' : 'Review') }}
@@ -202,7 +203,7 @@
                         @endif
                     </div>
                 </div>
-            </details>
+            </div>
         @endforeach
     </div>
 

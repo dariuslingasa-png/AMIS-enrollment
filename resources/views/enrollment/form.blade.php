@@ -11,6 +11,13 @@
 
         <!-- Step Progress Bar -->
         <div class="enrollment-steps-bar">
+            <div class="enrollment-progress-summary">
+                <span x-text="`Step ${step} of ${steps.length}`"></span>
+                <strong x-text="currentStepLabel()"></strong>
+            </div>
+            <div class="enrollment-progress-track" aria-hidden="true">
+                <span :style="`width: ${steps.length > 1 ? ((step - 1) / (steps.length - 1)) * 100 : 100}%`"></span>
+            </div>
             <div class="enrollment-steps-container">
                 <template x-for="s in steps" :key="s.num">
                     <div
@@ -20,18 +27,16 @@
                             'done': isStepComplete(s.num),
                             'warning': isStepWarning(s.num)
                         }"
+                        role="button"
+                        tabindex="0"
+                        :aria-current="step === s.num ? 'step' : null"
+                        :aria-label="`Go to step ${s.num}: ${s.label}`"
                         @click="goToStep(s.num)"
+                        @keydown.enter.prevent="goToStep(s.num)"
+                        @keydown.space.prevent="goToStep(s.num)"
                     >
-                        <div class="enrollment-step-circle">
-                            <template x-if="isStepComplete(s.num) && !isStepWarning(s.num)">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                            </template>
-                            <template x-if="isStepWarning(s.num)">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 7v6"/><path d="M12 17h.01"/></svg>
-                            </template>
-                            <template x-if="!isStepComplete(s.num) && !isStepWarning(s.num)">
-                                <span x-text="s.num"></span>
-                            </template>
+                        <div class="enrollment-step-circle" aria-hidden="true">
+                            <span x-text="s.num"></span>
                         </div>
                         <span class="enrollment-step-label" x-text="s.label"></span>
                     </div>
@@ -922,6 +927,14 @@
                                                     </div>
                                                     <div class="report-card-affidavit-actions">
                                                         <a
+                                                            href="{{ asset('storage/' . $applicant->affidavit_url) }}"
+                                                            target="_blank"
+                                                            rel="noopener"
+                                                            class="report-card-affidavit-view"
+                                                        >
+                                                            View PDF
+                                                        </a>
+                                                        <a
                                                             href="{{ route('enrollment.affidavit', ['applicant' => $applicant?->id ?? '__APPLICANT__']) }}"
                                                             class="report-card-affidavit-edit"
                                                             @click.prevent="window.dispatchEvent(new CustomEvent('open-affidavit-builder'))"
@@ -1778,6 +1791,11 @@ function enrollmentForm() {
 
         isStepWarning(num) {
             return this.fixStepNumbers().includes(Number(num)) || (this.isStepTouched(num) && !this.isStepComplete(num));
+        },
+
+        currentStepLabel() {
+            const current = this.steps.find(item => item.num === this.step);
+            return current ? current.label : '';
         },
 
         fixStepNumbers() {

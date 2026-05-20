@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="auth-page">
-        <div class="auth-card" style="max-width: 420px; text-align: center;">
+        <div class="auth-card verify-email-card" style="max-width: 420px; text-align: center;">
             <div style="width:64px;height:64px;border-radius:50%;background:#f0fdf4;border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>

@@ -197,6 +197,72 @@
     font-weight: 700;
 }
 
+.enrollment-progress-summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto 0.65rem;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.enrollment-progress-summary strong {
+    min-width: 0;
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 900;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.enrollment-progress-track {
+    position: relative;
+    max-width: 1200px;
+    height: 8px;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.enrollment-progress-track span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #059669, #10b981);
+    transition: width 0.25s ease;
+}
+
+.enrollment-step-item {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+}
+
+.enrollment-step-circle {
+    width: 34px;
+    height: 34px;
+    border-width: 2px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.86rem;
+}
+
+.enrollment-step-item.active .enrollment-step-circle,
+.enrollment-step-item.done .enrollment-step-circle {
+    background: #059669;
+}
+
+.enrollment-step-item.warning .enrollment-step-circle {
+    background: #f59e0b;
+}
+
 .returning-coming-soon {
     background: #fff7ed;
     border: 1px solid #fed7aa;
@@ -849,27 +915,63 @@
     box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
 }
 
+.enrollment-progress-summary,
+.enrollment-progress-track {
+    width: min(100%, 1200px);
+}
+
+.enrollment-steps-container {
+    display: flex;
+    width: min(100%, 1200px);
+    margin-top: 0.85rem;
+    gap: 0.65rem;
+}
+
 .enrollment-step-item {
     min-height: 40px;
     border-radius: 999px;
-    padding: 0.25rem 0.45rem 0.25rem 0.25rem;
+    padding: 0.25rem 0.35rem;
+    user-select: none;
 }
 
 .enrollment-step-item.active {
-    background: #ecfdf5;
+    background: transparent;
 }
 
 .enrollment-step-item.warning.active {
-    background: #fffbeb;
+    background: transparent;
 }
 
 .enrollment-step-item:hover {
     opacity: 1;
-    background: #f0fdf4;
+    background: #f8fafc;
 }
 
 .enrollment-step-circle {
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    box-shadow: none;
+    width: 34px;
+    height: 34px;
+    border: 2px solid #dbe4ef;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 0.86rem;
+}
+
+.enrollment-step-circle span {
+    display: inline;
+}
+
+.enrollment-step-item.active .enrollment-step-circle,
+.enrollment-step-item.done .enrollment-step-circle {
+    background: #059669;
+    border-color: #059669;
+    color: #ffffff;
+}
+
+.enrollment-step-item.warning .enrollment-step-circle {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: #ffffff;
 }
 
 .enrollment-main {
@@ -1043,12 +1145,15 @@
 
 @media (max-width: 768px) {
     .enrollment-header-content {
-        align-items: flex-start;
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
         text-align: left;
     }
 
     .enrollment-header-left {
         justify-content: flex-start;
+        min-width: 0;
     }
 
     .enrollment-header-text .arabic,
@@ -1057,8 +1162,9 @@
     }
 
     .enrollment-header-right {
-        align-items: flex-start;
-        text-align: left;
+        align-items: flex-end;
+        flex-shrink: 0;
+        text-align: right;
     }
 
     .enrollment-step-item {
@@ -1067,18 +1173,6 @@
 
     .enrollment-form-header {
         padding-right: 2.75rem;
-    }
-
-    .dashboard-header {
-        align-items: flex-start;
-        gap: 1rem;
-        padding: 1rem;
-        flex-direction: column;
-    }
-
-    .dashboard-header form,
-    .logout-btn {
-        width: 100%;
     }
 
     .dashboard-content {
@@ -1724,9 +1818,12 @@
     align-items: center;
     display: flex;
     flex-shrink: 0;
+    flex-wrap: wrap;
     gap: 0.5rem;
+    justify-content: flex-end;
 }
 
+.report-card-affidavit-view,
 .report-card-affidavit-edit {
     align-items: center;
     background: #ecfdf5;
@@ -1740,6 +1837,17 @@
     padding: 0.625rem 0.75rem;
     text-decoration: none;
     white-space: nowrap;
+}
+
+.report-card-affidavit-view {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.report-card-affidavit-view:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
 }
 
 .report-card-affidavit-edit:hover {
