@@ -359,9 +359,13 @@ class EnrollmentController extends Controller
         SubmitEnrollmentRequest $request
     ) {
         $user = $request->user();
-        $applicant = $this->applications->submit($user, $request, $request->enrollmentData());
+        $result = $this->applications->submit($user, $request, $request->enrollmentData());
 
-        return redirect()->route('enrollment.dashboard', ['applicant' => $applicant->id])
+        if (is_array($result) && ($result['duplicate'] ?? false)) {
+            return back()->withInput()->with('warning', $result['message'] . ' A student with the same name and birthdate already exists in the system. Please verify before re-submitting.');
+        }
+
+        return redirect()->route('enrollment.dashboard', ['applicant' => $result->id])
             ->with('success', 'Child application is ready for submission. You may add another child or finalize enrollment.');
     }
 

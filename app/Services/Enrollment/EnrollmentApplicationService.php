@@ -133,8 +133,18 @@ class EnrollmentApplicationService
         return $applicant->refresh();
     }
 
-    public function submit(User $user, Request $request, array $data): EnrollmentApplicant
+    public function submit(User $user, Request $request, array $data): EnrollmentApplicant|array
     {
+        // Duplicate detection: check by last_name + first_name + middle_name + date_of_birth
+        $duplicate = $this->findDuplicate($data, $user);
+        if ($duplicate) {
+            return [
+                'duplicate' => true,
+                'message' => 'Possible duplicate enrollment record found.',
+                'existing' => $duplicate,
+            ];
+        }
+
         $submitData = array_merge($data, [
             'user_id' => $user->id,
             'status' => self::STATUS_READY,
@@ -431,5 +441,26 @@ class EnrollmentApplicationService
         $applicant->forceFill([
             'family_application_id' => $this->familyApplicationIdFor($user) ?: $applicant->id,
         ])->save();
+    }
+
+    private function findDuplicate(array $data, User $user): ?EnrollmentApplicant
+    {
+        $lastName = trim($data['last_name'] ?? '');
+        $firstName = trim($data['first_name'] ?? '');
+        $middleName = trim($data['middle_name'] ?? '');
+        $dob = $data['date_of_birth'] ?? null;
+
+        if (!$lastName || !$firstName || !$dob) {
+            return null;
+        }
+
+        return EnrollmentApplicant::query()
+            ->where('user_id', '!=', $user->id)
+            ->whereRaw('LOWER(TRIM(last_name)) = ?', [strtolower($lastName)])
+            ->whereRaw('LOWER(TRIM(first_name)) = ?', [strtolower($firstName)])
+            ->when($middleName, fn ($q) => $q->whereRaw('LOWER(TRIM(middle_name)) = ?', [strtolower($middleName)]))
+            ->where('date_of_birth', $dob)
+            ->whereNotIn('status', ['draft', 'rejected'])
+            ->first();
     }
 }
