@@ -1196,7 +1196,7 @@ function enrollmentForm() {
         rejectionRemarks: REJECTION_REMARKS,
         countriesLoading: true,
         countriesSource: 'api',
-        countryApiUrl: 'https://restcountries.com/v3.1/all?fields=name,cca2,idd,flag,flags',
+        countryApiUrl: 'https://restcountries.com/v3.1/independent?status=true&fields=name,cca2,idd,flag,flags',
         countries: [],
         _debounceTimer: null,
         _submitted: false,
@@ -1464,6 +1464,13 @@ function enrollmentForm() {
 
         async loadCountries() {
             this.countriesLoading = true;
+            // Non-sovereign territories to exclude as safety net
+            const excludeCodes = new Set([
+                'AQ','AS','AW','AX','BL','BM','BQ','BV','CC','CK','CW','CX','EH','FK',
+                'FO','GF','GG','GI','GL','GP','GS','GU','HK','HM','IM','IO','JE','KY',
+                'MF','MO','MP','MQ','MS','NC','NF','NU','PF','PM','PN','PR','RE','SH',
+                'SJ','SX','TC','TF','TK','UM','VG','VI','WF','YT','XK'
+            ]);
             try {
                 const response = await fetch(this.countryApiUrl, { cache: 'force-cache' });
                 if (!response.ok) throw new Error('Country API unavailable');
@@ -1471,7 +1478,7 @@ function enrollmentForm() {
                 const data = await response.json();
                 this.countries = data
                     .map(country => this.normalizeCountry(country))
-                    .filter(country => country.name && country.code)
+                    .filter(country => country.name && country.code && !excludeCodes.has(country.code))
                     .sort((a, b) => a.name.localeCompare(b.name));
                 this.countriesSource = 'api';
             } catch (_) {
