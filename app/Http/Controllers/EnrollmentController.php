@@ -309,17 +309,25 @@ class EnrollmentController extends Controller
 
     public function saveDraft(SaveDraftRequest $request)
     {
-        $applicant = $this->applications->saveDraft(
+        $result = $this->applications->saveDraft(
             $request->user(),
             $request,
             $request->draftData()
         );
 
+        if (is_array($result) && ($result['duplicate'] ?? false)) {
+            return response()->json([
+                'success' => false,
+                'duplicate' => true,
+                'message' => $result['message'],
+            ], 409);
+        }
+
         return response()->json([
             'success' => true,
-            'applicant_id' => $applicant->id,
-            'percentage' => $applicant->completion_percentage,
-            'last_step' => $applicant->last_step,
+            'applicant_id' => $result->id,
+            'percentage' => $result->completion_percentage,
+            'last_step' => $result->last_step,
         ]);
     }
 
@@ -359,13 +367,9 @@ class EnrollmentController extends Controller
         SubmitEnrollmentRequest $request
     ) {
         $user = $request->user();
-        $result = $this->applications->submit($user, $request, $request->enrollmentData());
+        $applicant = $this->applications->submit($user, $request, $request->enrollmentData());
 
-        if (is_array($result) && ($result['duplicate'] ?? false)) {
-            return back()->withInput()->with('warning', $result['message'] . ' A student with the same name and birthdate already exists in the system. Please verify before re-submitting.');
-        }
-
-        return redirect()->route('enrollment.dashboard', ['applicant' => $result->id])
+        return redirect()->route('enrollment.dashboard', ['applicant' => $applicant->id])
             ->with('success', 'Child application is ready for submission. You may add another child or finalize enrollment.');
     }
 

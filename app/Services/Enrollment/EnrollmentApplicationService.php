@@ -92,13 +92,26 @@ class EnrollmentApplicationService
         return $hasCompletedApplication && !$hasUnfinishedDraft;
     }
 
-    public function saveDraft(User $user, Request $request, array $data): EnrollmentApplicant
+    public function saveDraft(User $user, Request $request, array $data): EnrollmentApplicant|array
     {
         $data['user_id'] = $user->id;
         $data['status'] = self::STATUS_DRAFT;
         $familyId = $this->familyApplicationIdFor($user);
         if ($familyId) {
             $data['family_application_id'] = $familyId;
+        }
+
+        // Duplicate detection at Step 2: check when name + birthdate are filled
+        if (!empty($data['last_name']) && !empty($data['first_name']) && !empty($data['date_of_birth'])) {
+            $existingApplicant = $this->resolveEditableApplication($user, $request);
+            $duplicate = $this->findDuplicate($data, $user, $existingApplicant);
+            if ($duplicate) {
+                return [
+                    'duplicate' => true,
+                    'message' => 'Possible duplicate enrollment record found. A student with the same name and birthdate already exists in the system.',
+                    'existing' => $duplicate,
+                ];
+            }
         }
 
         $applicant = $this->resolveEditableApplication($user, $request);
@@ -133,18 +146,8 @@ class EnrollmentApplicationService
         return $applicant->refresh();
     }
 
-    public function submit(User $user, Request $request, array $data): EnrollmentApplicant|array
+    public function submit(User $user, Request $request, array $data): EnrollmentApplicant
     {
-        // Duplicate detection: check by last_name + first_name + middle_name + date_of_birth
-        $duplicate = $this->findDuplicate($data, $user);
-        if ($duplicate) {
-            return [
-                'duplicate' => true,
-                'message' => 'Possible duplicate enrollment record found.',
-                'existing' => $duplicate,
-            ];
-        }
-
         $submitData = array_merge($data, [
             'user_id' => $user->id,
             'status' => self::STATUS_READY,
@@ -443,7 +446,7 @@ class EnrollmentApplicationService
         ])->save();
     }
 
-    private function findDuplicate(array $data, User $user): ?EnrollmentApplicant
+    private function findDuplicate(array $data, User $user, ?EnrollmentApplicant $currentApplicant = null): ?EnrollmentApplicant
     {
         $lastName = trim($data['last_name'] ?? '');
         $firstName = trim($data['first_name'] ?? '');
@@ -456,6 +459,7 @@ class EnrollmentApplicationService
 
         return EnrollmentApplicant::query()
             ->where('user_id', '!=', $user->id)
+            ->when($currentApplicant, fn ($q) => $q->where('id', '!=', $currentApplicant->id))
             ->whereRaw('LOWER(TRIM(last_name)) = ?', [strtolower($lastName)])
             ->whereRaw('LOWER(TRIM(first_name)) = ?', [strtolower($firstName)])
             ->when($middleName, fn ($q) => $q->whereRaw('LOWER(TRIM(middle_name)) = ?', [strtolower($middleName)]))

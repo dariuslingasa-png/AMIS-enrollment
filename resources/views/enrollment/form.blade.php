@@ -1605,6 +1605,12 @@ function enrollmentForm() {
                     if (input && input.files.length) fd.append(name, input.files[0]);
                 });
                 const response = await fetch('{{ route("enrollment.draft") }}', { method: 'POST', body: fd });
+                if (response.status === 409) {
+                    const dupData = await response.json();
+                    this.error = dupData.message || 'Possible duplicate enrollment record found.';
+                    this.draftSaving = false;
+                    return { success: false, duplicate: true };
+                }
                 if (!response.ok) throw new Error('Draft save failed');
 
                 const data = await response.json();
@@ -1835,7 +1841,8 @@ function enrollmentForm() {
             if (!this.visitedSteps.includes(this.step)) this.visitedSteps.push(this.step);
             if (err) { this.error = err; return; }
             if (this.isStepComplete(this.step) && !this.completedSteps.includes(this.step)) this.completedSteps.push(this.step);
-            await this.saveDraft({ force: true });
+            const saveResult = await this.saveDraft({ force: true });
+            if (saveResult && saveResult.duplicate) return;
             this.pageLoading = true;
             setTimeout(() => {
                 this.step++;
