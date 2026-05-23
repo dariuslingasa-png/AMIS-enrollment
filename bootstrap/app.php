@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'applicant' => \App\Http\Middleware\ApplicantOnly::class,
         ]);
+
+        // Trust all proxies (cPanel shared hosting / CloudFlare).
+        // This ensures the request scheme is detected correctly for signed URL validation.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

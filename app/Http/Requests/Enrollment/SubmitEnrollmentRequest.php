@@ -25,7 +25,7 @@ class SubmitEnrollmentRequest extends FormRequest
 
         return [
             'student_type'            => 'required|in:New,Old',
-            'amis_student_id'         => 'nullable|required_if:student_type,Old|string|max:20',
+            'amis_student_id'         => 'nullable|string|max:20',
             'learning_mode'           => 'required|string',
             'timezone'                => 'nullable|string|max:64',
             'lrn'                     => 'nullable|digits:12',
