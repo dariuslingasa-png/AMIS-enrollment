@@ -1402,25 +1402,23 @@ function enrollmentForm() {
 
         filteredCountries(search) {
             const query = (search || '').trim().toLowerCase();
+            if (!query) return this.countries;
             return this.countries
                 .filter(country => {
-                    if (!query) return true;
                     return country.name.toLowerCase().includes(query)
                         || country.code.toLowerCase().includes(query);
-                })
-                .slice(0, 80);
+                });
         },
 
         filteredCallingCountries(search) {
             const query = (search || '').trim().toLowerCase();
+            if (!query) return this.countriesWithCallingCode;
             return this.countriesWithCallingCode
                 .filter(country => {
-                    if (!query) return true;
                     return country.name.toLowerCase().includes(query)
                         || country.code.toLowerCase().includes(query)
                         || country.callingCode.includes(query);
-                })
-                .slice(0, 80);
+                });
         },
 
         selectCountry(country) {
