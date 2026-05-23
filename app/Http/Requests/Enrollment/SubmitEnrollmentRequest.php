@@ -111,7 +111,7 @@ class SubmitEnrollmentRequest extends FormRequest
             $hasReportCard = $this->hasFile('report_card') || filled($applicant?->report_card_url);
             $hasTemporaryProof = $this->hasFile('affidavit') || filled($applicant?->affidavit_url);
             $gradeLevel = strtolower((string) $this->input('grade_level'));
-            $isKinderOrNursery = str_contains($gradeLevel, 'kinder') || str_contains($gradeLevel, 'nursery');
+            $isKinderOrNursery = str_contains($gradeLevel, 'kinder');
 
             if (!$isKinderOrNursery && $this->input('student_type') !== 'Old' && !$hasReportCard && !$hasTemporaryProof) {
                 $validator->errors()->add(

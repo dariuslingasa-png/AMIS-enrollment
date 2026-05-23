@@ -1350,7 +1350,7 @@ function enrollmentForm() {
 
         isKinderOrNursery() {
             const g = (this.form.grade_level || '').toLowerCase();
-            return g.includes('kinder') || g.includes('nursery');
+            return g.includes('kinder');
         },
 
         toggleStudentType(value) {
