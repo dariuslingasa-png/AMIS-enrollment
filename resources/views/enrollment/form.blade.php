@@ -809,7 +809,7 @@
                                 ]"
                             />
 
-                            <div x-show="form.student_type !== 'Old' && !['Kinder 1', 'Kinder 2'].includes(form.grade_level)" x-cloak>
+                            <div x-show="form.student_type !== 'Old' && !isKinderOrNursery()" x-cloak>
                                 <x-upload-requirement-card
                                     title="Official Transcript / Report Card"
                                     description="Choose the option that applies to the student."
@@ -1348,6 +1348,11 @@ function enrollmentForm() {
             this.form.physician_phone = '';
         },
 
+        isKinderOrNursery() {
+            const g = (this.form.grade_level || '').toLowerCase();
+            return g.includes('kinder') || g.includes('nursery');
+        },
+
         toggleStudentType(value) {
             this.form.student_type = this.form.student_type === value ? '' : value;
             if (this.form.student_type !== 'Old') {
@@ -1720,8 +1725,7 @@ function enrollmentForm() {
                     return '1:1 Ratio Picture is required.';
                 }
 
-                const isKinder = ['Kinder 1', 'Kinder 2'].includes(this.form.grade_level);
-                if (!isKinder && this.form.student_type !== 'Old' && !hasDocument('report_card') && !hasDocument('affidavit')) {
+                if (!this.isKinderOrNursery() && this.form.student_type !== 'Old' && !hasDocument('report_card') && !hasDocument('affidavit')) {
                     return 'Upload the Report Card, or use the signed Affidavit / Temporary Proof option if it is not yet available.';
                 }
             }
@@ -1788,9 +1792,8 @@ function enrollmentForm() {
                     return !!(input && input.files.length);
                 };
 
-                const isKinderLevel = ['Kinder 1', 'Kinder 2'].includes(this.form.grade_level);
                 return hasDocument('photo_2x2')
-                    && (isKinderLevel || this.form.student_type === 'Old' || hasDocument('report_card') || hasDocument('affidavit'));
+                    && (this.isKinderOrNursery() || this.form.student_type === 'Old' || hasDocument('report_card') || hasDocument('affidavit'));
             }
             if (num === 7) {
                 return !!this.form.agreed_to_data_privacy

@@ -110,9 +110,10 @@ class SubmitEnrollmentRequest extends FormRequest
 
             $hasReportCard = $this->hasFile('report_card') || filled($applicant?->report_card_url);
             $hasTemporaryProof = $this->hasFile('affidavit') || filled($applicant?->affidavit_url);
-            $isKinder = in_array($this->input('grade_level'), ['Kinder 1', 'Kinder 2'], true);
+            $gradeLevel = strtolower((string) $this->input('grade_level'));
+            $isKinderOrNursery = str_contains($gradeLevel, 'kinder') || str_contains($gradeLevel, 'nursery');
 
-            if (!$isKinder && $this->input('student_type') !== 'Old' && !$hasReportCard && !$hasTemporaryProof) {
+            if (!$isKinderOrNursery && $this->input('student_type') !== 'Old' && !$hasReportCard && !$hasTemporaryProof) {
                 $validator->errors()->add(
                     'report_card',
                     'Upload the report card, or upload a fully filled out and signed temporary proof if the report card is not yet available.'
