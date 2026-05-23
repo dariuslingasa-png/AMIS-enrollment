@@ -49,7 +49,7 @@
                         ['label' => 'Parent or guardian contact', 'done' => $applicant && $applicant->parent_mobile],
                         ['label' => 'Emergency contact', 'done' => $applicant && $applicant->emergency_name && $applicant->emergency_phone],
                         ['label' => 'Recent 1:1 or annual photo', 'done' => $applicant && $applicant->photo_2x2_url],
-                        ['label' => 'Report card or signed temporary proof', 'done' => $applicant && ($applicant->report_card_url || $applicant->affidavit_url)],
+                        ['label' => 'Report card or signed temporary proof', 'done' => $applicant && (in_array($applicant->grade_level, ['Kinder 1', 'Kinder 2'], true) || $applicant->report_card_url || $applicant->affidavit_url)],
                     ];
                     $optionalGuide = [
                         ['label' => 'Birth certificate copy, if available', 'done' => $applicant && $applicant->birth_cert_url],

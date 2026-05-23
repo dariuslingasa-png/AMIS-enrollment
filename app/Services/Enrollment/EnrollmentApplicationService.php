@@ -14,8 +14,9 @@ class EnrollmentApplicationService
     public const STATUS_DRAFT = 'draft';
     public const STATUS_READY = 'ready_for_submission';
     public const STATUS_PENDING = 'pending';
+    public const STATUS_SUBMITTED = 'submitted';
     public const EDITABLE_STATUSES = [self::STATUS_DRAFT, self::STATUS_READY, 'rejected'];
-    public const FINAL_STATUSES = [self::STATUS_PENDING, 'submitted', 'under_review', 'approved'];
+    public const FINAL_STATUSES = [self::STATUS_PENDING, self::STATUS_SUBMITTED, 'under_review', 'approved'];
 
     public function __construct(
         private SiblingDiscountService $discounts,
@@ -57,13 +58,16 @@ class EnrollmentApplicationService
             return null;
         }
 
+        $familyId = $this->familyApplicationIdFor($user);
         $applicant = EnrollmentApplicant::create(array_merge($this->reusableParentData($user), [
             'user_id' => $user->id,
+            'family_application_id' => $familyId,
             'status' => self::STATUS_DRAFT,
             'school_year' => '2026-2027',
             'last_step' => 1,
         ]));
 
+        $this->ensureFamilyApplication($applicant, $user);
         $this->discounts->apply($user, $applicant);
         session(['current_enrollment_applicant_id' => $applicant->id]);
 
@@ -92,6 +96,10 @@ class EnrollmentApplicationService
     {
         $data['user_id'] = $user->id;
         $data['status'] = self::STATUS_DRAFT;
+        $familyId = $this->familyApplicationIdFor($user);
+        if ($familyId) {
+            $data['family_application_id'] = $familyId;
+        }
 
         $applicant = $this->resolveEditableApplication($user, $request);
 
@@ -117,6 +125,7 @@ class EnrollmentApplicationService
             }
         }
 
+        $this->ensureFamilyApplication($applicant, $user);
         $this->discounts->apply($user, $applicant);
         session(['current_enrollment_applicant_id' => $applicant->id]);
         $this->uploads->storeEnrollmentDocuments($applicant, $request);
@@ -133,6 +142,10 @@ class EnrollmentApplicationService
             'document_statuses' => null,
             'review_remarks' => null,
         ]);
+        $familyId = $this->familyApplicationIdFor($user);
+        if ($familyId) {
+            $submitData['family_application_id'] = $familyId;
+        }
 
         $applicant = $this->resolveEditableApplication($user, $request);
 
@@ -142,6 +155,7 @@ class EnrollmentApplicationService
             $applicant = EnrollmentApplicant::create($submitData);
         }
 
+        $this->ensureFamilyApplication($applicant, $user);
         $this->discounts->apply($user, $applicant);
         session(['current_enrollment_applicant_id' => $applicant->id]);
         $this->uploads->storeEnrollmentDocuments($applicant, $request);
@@ -176,7 +190,7 @@ class EnrollmentApplicationService
 
         $applications->each(function (EnrollmentApplicant $applicant) {
             $applicant->update([
-                'status' => self::STATUS_PENDING,
+                'status' => self::STATUS_SUBMITTED,
                 'review_remarks' => null,
             ]);
         });
@@ -219,7 +233,7 @@ class EnrollmentApplicationService
             '2x2 photo' => $applicant->photo_2x2_url,
         ];
 
-        if ($applicant->student_type !== 'Old') {
+        if ($applicant->student_type !== 'Old' && !in_array($applicant->grade_level, ['Kinder 1', 'Kinder 2'], true)) {
             $requirements['Report card or signed temporary proof'] = $applicant->report_card_url ?: $applicant->affidavit_url;
         }
 
@@ -391,5 +405,31 @@ class EnrollmentApplicationService
         // Do NOT auto-copy any fields for another child.
         // Parent must use the "Same schedule" and "Same parent info" checkboxes to opt-in.
         return [];
+    }
+
+    private function familyApplicationIdFor(User $user): ?int
+    {
+        $existingFamilyId = $user->enrollmentApplicants()
+            ->whereNotNull('family_application_id')
+            ->oldest()
+            ->value('family_application_id');
+
+        if ($existingFamilyId) {
+            return (int) $existingFamilyId;
+        }
+
+        $rootId = $user->enrollmentApplicants()->oldest()->value('id');
+        return $rootId ? (int) $rootId : null;
+    }
+
+    private function ensureFamilyApplication(EnrollmentApplicant $applicant, User $user): void
+    {
+        if ($applicant->family_application_id) {
+            return;
+        }
+
+        $applicant->forceFill([
+            'family_application_id' => $this->familyApplicationIdFor($user) ?: $applicant->id,
+        ])->save();
     }
 }
