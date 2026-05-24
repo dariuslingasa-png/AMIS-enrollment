@@ -74,6 +74,7 @@
             'Marriage Contract' => $applicant->marriage_contract_url,
             'Medical Record' => $applicant->medical_record_url,
             'Affidavit' => $applicant->affidavit_url,
+            'Payment Proof' => $applicant->payment?->receipt_url,
         ];
         $uploadedDocs = array_filter($docs);
     @endphp

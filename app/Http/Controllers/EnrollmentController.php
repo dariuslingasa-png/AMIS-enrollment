@@ -10,6 +10,7 @@ use App\Services\Enrollment\EnrollmentNotificationService;
 use Illuminate\Http\Request;
 use App\Services\Enrollment\GradeShiftService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class EnrollmentController extends Controller
@@ -501,8 +502,41 @@ class EnrollmentController extends Controller
                 ->with('info', 'Please complete your enrollment application first.');
         }
 
+        $validated = $request->validate([
+            'method' => 'required|in:gcash_maya,gcash,maya,bdo',
+            'reference_no' => 'nullable|string|max:100',
+            'receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $receiptPath = $request->file('receipt')->store('documents/' . $applicant->id, 'public');
+        $paymentData = [
+            'user_id' => $user->id,
+            'method' => $validated['method'] === 'bdo' ? 'bdo' : 'gcash',
+            'amount' => 4000.00,
+            'receipt_url' => $receiptPath,
+            'status' => 'pending',
+            'remarks' => null,
+            'paid_at' => now(),
+            'verified_at' => null,
+        ];
+
+        if (Schema::hasColumn('payments', 'reference_no')) {
+            $paymentData['reference_no'] = $validated['reference_no'] ?? null;
+        }
+
+        $existingPayment = $applicant->payment;
+        if ($existingPayment?->receipt_url && $existingPayment->receipt_url !== $receiptPath) {
+            Storage::disk('public')->delete($existingPayment->receipt_url);
+        }
+
+        $applicant->payment()->updateOrCreate([], $paymentData);
+
+        $documentStatuses = $applicant->document_statuses ?? [];
+        $documentStatuses['payment_proof'] = 'pending';
+        $applicant->forceFill(['document_statuses' => $documentStatuses])->save();
+
         return redirect()->route('enrollment.dashboard')
-            ->with('info', 'Payment proof upload is coming soon. Please wait for the Finance Office announcement.');
+            ->with('success', 'Payment proof submitted successfully. The Finance Office will review it within 1-2 business days.');
     }
 
     public function showClosed()

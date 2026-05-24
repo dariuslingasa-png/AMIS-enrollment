@@ -69,6 +69,7 @@
                             'Marriage' => $child->marriage_contract_url,
                             'Medical' => $child->medical_record_url,
                             'Affidavit' => $child->affidavit_url,
+                            'Payment Proof' => $child->payment?->receipt_url,
                         ])->filter();
                         $missing = $incompleteApplications->get($child->id, []);
                     @endphp

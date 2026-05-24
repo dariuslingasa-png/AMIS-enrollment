@@ -9,13 +9,13 @@
 
 @php
     $statusStyles = [
-        'draft' => ['class' => 'is-draft', 'label' => 'Draft'],
-        'ready_for_submission' => ['class' => 'is-complete', 'label' => 'Completed'],
+        'draft' => ['class' => 'is-draft', 'label' => 'DRAFT'],
+        'ready_for_submission' => ['class' => 'is-complete', 'label' => 'COMPLETED'],
         'pending' => ['class' => 'is-submitted', 'label' => 'PENDING'],
-        'submitted' => ['class' => 'is-submitted', 'label' => 'Submitted'],
-        'under_review' => ['class' => 'is-review', 'label' => 'Admin Review'],
+        'submitted' => ['class' => 'is-submitted', 'label' => 'SUBMITTED'],
+        'under_review' => ['class' => 'is-review', 'label' => 'ADMIN REVIEW'],
         'approved' => ['class' => 'is-complete', 'label' => 'APPROVED'],
-        'rejected' => ['class' => 'is-rejected', 'label' => 'Needs Fixing'],
+        'rejected' => ['class' => 'is-rejected', 'label' => 'NEEDS FIXING'],
     ];
 
     $stepNames = [
@@ -32,6 +32,183 @@
     $canFinalize = $readyApplications->count() > 0 && !$hasDrafts;
     $allSubmitted = $applicants->every(fn ($item) => in_array($item->status, ['pending', 'submitted', 'under_review', 'approved'], true));
 @endphp
+
+<style>
+    .family-group-card {
+        border-radius: 18px;
+        padding: 1.15rem;
+    }
+
+    .family-child-card.is-open {
+        position: relative;
+        display: grid;
+        grid-template-columns: 132px minmax(0, 1fr) minmax(170px, auto);
+        gap: 1rem;
+        min-height: 0;
+        padding: 1rem;
+        border-color: #dbe3ee;
+        border-radius: 16px;
+        box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+
+    .family-child-card.is-open .sibling-card-header {
+        display: contents;
+        padding: 0;
+    }
+
+    .family-child-card.is-open .sibling-card-avatar {
+        position: static;
+        inset: auto;
+        grid-column: 1;
+        grid-row: 1;
+        width: 132px;
+        min-width: 132px;
+        height: 132px;
+        border: 1px solid #dbe3ee;
+        border-radius: 14px;
+        background: #f8fafc;
+    }
+
+    .family-child-card.is-open .sibling-card-info {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: start;
+        gap: 0.35rem;
+        padding-top: 0.15rem;
+    }
+
+    .family-child-card.is-open .sibling-card-name {
+        color: #0f172a;
+        font-size: 1.05rem;
+        letter-spacing: 0;
+    }
+
+    .family-child-card.is-open .sibling-card-meta {
+        color: #64748b;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .family-child-card.is-open .sibling-card-right {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        justify-content: flex-end;
+        padding: 0;
+    }
+
+    .family-child-card.is-open .sibling-card-body {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        gap: 0.8rem;
+        padding: 0;
+    }
+
+    .family-child-card.is-open .sibling-card-badge {
+        text-transform: uppercase;
+        letter-spacing: 0.035em;
+    }
+
+    .family-child-card.is-open .sibling-progress-meta {
+        justify-content: space-between;
+    }
+
+    .family-child-card.is-open .sibling-review-checklist {
+        display: grid;
+        gap: 0.55rem;
+        padding: 0.85rem 1rem;
+        border: 1px solid #fed7aa;
+        border-radius: 12px;
+        background: linear-gradient(180deg, #fffaf0, #fff);
+    }
+
+    .family-child-card.is-open .review-checklist-title {
+        margin: 0;
+        color: #92400e;
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    .family-child-card.is-open .review-checklist-copy {
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1.45;
+        margin: -0.2rem 0 0;
+    }
+
+    .family-child-card.is-open .review-checklist-items {
+        gap: 0.45rem;
+    }
+
+    .family-child-card.is-open .review-checklist-item {
+        min-height: 30px;
+        padding: 0.32rem 0.62rem;
+        border: 1px solid #fde68a;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #78350f;
+        font-size: 0.76rem;
+        font-weight: 800;
+    }
+
+    .family-child-card.is-open .review-checklist-item.is-missing {
+        border-color: #fecaca;
+        background: #fff1f2;
+        color: #991b1b;
+    }
+
+    .family-child-card.is-open .review-x-mark {
+        background: #fecaca;
+        color: #991b1b;
+    }
+
+    .family-child-card.is-open .review-dot-pulse {
+        background: #f59e0b;
+    }
+
+    .family-child-card.is-open .sibling-card-actions {
+        justify-content: flex-end;
+        padding-top: 0.05rem;
+    }
+
+    .family-child-card.is-open .sibling-btn-payment {
+        min-height: 42px;
+        padding-inline: 1.15rem;
+        border-color: #f59e0b;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        box-shadow: 0 10px 18px rgba(245, 158, 11, 0.18);
+    }
+
+    @media (max-width: 760px) {
+        .family-child-card.is-open {
+            grid-template-columns: 76px minmax(0, 1fr);
+            gap: 0.85rem;
+            padding: 0.85rem;
+        }
+
+        .family-child-card.is-open .sibling-card-avatar {
+            width: 76px;
+            min-width: 76px;
+            height: 76px;
+            grid-row: 1;
+        }
+
+        .family-child-card.is-open .sibling-card-right {
+            top: 0.85rem;
+            right: 0.85rem;
+            align-items: flex-end;
+        }
+
+        .family-child-card.is-open .sibling-card-body {
+            grid-column: 1 / -1;
+            grid-row: 3;
+        }
+    }
+</style>
 
 <section class="family-group-card">
     <div class="family-group-header">
@@ -60,7 +237,7 @@
     <div class="family-child-list">
         @foreach ($applicants as $child)
             @php
-                $childStatus = $statusStyles[$child->status] ?? ['class' => 'is-neutral', 'label' => ucfirst($child->status ?? 'Draft')];
+                $childStatus = $statusStyles[$child->status] ?? ['class' => 'is-neutral', 'label' => strtoupper(str_replace('_', ' ', $child->status ?? 'draft'))];
                 $childName = trim(($child->first_name ?? '') . ' ' . ($child->middle_name ?? '') . ' ' . ($child->last_name ?? '')) ?: 'New applicant draft';
                 $isSelectedChild = $applicant && (int) $applicant->id === (int) $child->id;
                 $isEditableChild = in_array($child->status, ['draft', 'ready_for_submission', 'rejected'], true);
@@ -103,7 +280,7 @@
 
                     <div class="sibling-card-right">
                         @if ($progress >= 100 && $child->status === 'ready_for_submission')
-                            <span class="sibling-card-badge {{ $childStatus['class'] }}">Completed - 100%</span>
+                            <span class="sibling-card-badge {{ $childStatus['class'] }}">COMPLETED - 100%</span>
                         @elseif ($progress >= 100)
                             <span class="sibling-card-badge {{ $childStatus['class'] }}">{{ $childStatus['label'] }}</span>
                         @else
@@ -143,6 +320,7 @@
                     @if (in_array($child->status, ['pending', 'submitted', 'under_review'], true))
                         <div class="sibling-review-checklist">
                             <div class="review-checklist-title">Admin is reviewing<span class="review-dots"><span>.</span><span>.</span><span>.</span></span></div>
+                            <p class="review-checklist-copy">We are checking the registration form, documents, and payment proof for this applicant.</p>
                             <div class="review-checklist-items">
                                 <div class="review-checklist-item"><span class="review-dot-pulse"></span>Registration Form</div>
                                 <div class="review-checklist-item"><span class="review-dot-pulse"></span>Documents</div>
