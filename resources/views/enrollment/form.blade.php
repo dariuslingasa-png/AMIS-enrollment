@@ -1127,11 +1127,11 @@
                         </svg>
                     </button>
                     <div class="confirm-dialog-copy">
-                        <h3>Possible duplicate enrollment record found.</h3>
+                        <h3 style="color:#991b1b;font-size:1.45rem;line-height:1.25;">Possible duplicate enrollment record found.</h3>
                         <p>An enrollment, application, or student record with the same full name and birthdate already exists in the system. Please review the student details before continuing.</p>
                     </div>
-                    <div class="confirm-dialog-actions">
-                        <button type="button" class="btn-primary duplicate-dialog-button" @click="closeDuplicateModal()">OK</button>
+                    <div class="confirm-dialog-actions" style="grid-template-columns:1fr;">
+                        <button type="button" class="btn-primary duplicate-dialog-button" style="width:100%;" @click="closeDuplicateModal()">OK</button>
                     </div>
                 </div>
             </div>

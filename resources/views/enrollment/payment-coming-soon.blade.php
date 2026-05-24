@@ -1,5 +1,5 @@
 <x-guest-layout>
-<div x-data="{ loaded: false, method: 'gcash' }" x-init="setTimeout(() => loaded = true, 800)" class="enrollment-page">
+<div x-data="{ loaded: false, method: 'gcash_maya' }" x-init="setTimeout(() => loaded = true, 800)" class="enrollment-page">
 
     {{-- Initial loading --}}
     <x-page-loader
@@ -119,7 +119,7 @@
                         <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="payment-channels-logo">
                         <div>
                             <div class="payment-channels-title">Official Payment Channels</div>
-                            <div class="payment-channels-subtitle">Only BDO and GCash are recognized as official modes of payment.</div>
+                            <div class="payment-channels-subtitle">Only BDO, GCash, and Maya are recognized as official modes of payment.</div>
                         </div>
                     </div>
 
@@ -154,19 +154,20 @@
                             </div>
                         </div>
 
-                        {{-- GCash --}}
+                        {{-- GCash / Maya --}}
                         <div class="payment-channel-card">
                             <div class="payment-channel-head">
                                 <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash" class="payment-channel-img">
-                                <strong>GCash Payment Center</strong>
+                                <img src="{{ asset('images/mode_of_payments/MAYA.png') }}" alt="Maya" class="payment-channel-img">
+                                <strong>GCash / Maya Payment Center</strong>
                             </div>
                             <div class="payment-account-list">
                                 <div class="payment-account-item">
-                                    <div class="payment-account-type">GCash Number</div>
+                                    <div class="payment-account-type">GCash / Maya Number</div>
                                     <div class="payment-account-number">(+63) 927 299 1833</div>
                                 </div>
                                 <div class="payment-account-item">
-                                    <div class="payment-account-type">GCash Number</div>
+                                    <div class="payment-account-type">GCash / Maya Number</div>
                                     <div class="payment-account-number">(+63) 995 233 9423</div>
                                 </div>
                                 <div class="payment-account-item">
@@ -175,7 +176,7 @@
                                 </div>
                             </div>
                             <div class="payment-channel-reminder">
-                                <strong>Important:</strong> Only BDO and GCash are recognized as official modes of payment. Use of MoneyGram or cash pick-up is strongly discouraged and will not be accepted or deducted from school fees.
+                                <strong>Important:</strong> Only BDO, GCash, and Maya are recognized as official modes of payment. Use of MoneyGram or cash pick-up is strongly discouraged and will not be accepted or deducted from school fees.
                             </div>
                         </div>
                     </div>
@@ -190,13 +191,14 @@
                 <div class="payment-section">
                     <div class="payment-section-label">SELECT PAYMENT METHOD</div>
                     <div class="payment-method-selector">
-                        <button type="button" @click="method = 'gcash'"
-                            :class="method === 'gcash' ? 'is-active' : ''"
+                        <button type="button" @click="method = 'gcash_maya'"
+                            :class="method === 'gcash_maya' ? 'is-active' : ''"
                             class="payment-method-btn">
-                            <div class="payment-method-img-wrap">
+                            <div class="payment-method-img-wrap" style="gap:0.9rem;">
                                 <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash">
+                                <img src="{{ asset('images/mode_of_payments/MAYA.png') }}" alt="Maya" style="max-width:45%;">
                             </div>
-                            <span>GCash</span>
+                            <span>GCash/Maya</span>
                         </button>
                         <button type="button" @click="method = 'bdo'"
                             :class="method === 'bdo' ? 'is-active' : ''"
@@ -209,27 +211,30 @@
                     </div>
                 </div>
 
-                {{-- GCash Steps --}}
-                <div x-show="method === 'gcash'" x-transition class="payment-section">
-                    <div class="payment-section-label">HOW TO PAY VIA GCASH</div>
+                {{-- GCash / Maya Steps --}}
+                <div x-show="method === 'gcash_maya'" x-transition class="payment-section">
+                    <div class="payment-section-label">HOW TO PAY VIA GCASH / MAYA</div>
                     <div class="payment-info-banner">
                         <div>
-                            <div class="payment-info-label">Send to GCash Number</div>
+                            <div class="payment-info-label">Send to GCash / Maya Number</div>
                             <div class="payment-info-number">(+63) 927 299 1833</div>
                             <div class="payment-info-number payment-info-number-alt">(+63) 995 233 9423</div>
                             <div class="payment-info-name">CABEL B. NURHASAN</div>
                         </div>
-                        <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash" class="payment-info-logo">
+                        <div style="display:flex;align-items:center;gap:0.65rem;">
+                            <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash" class="payment-info-logo">
+                            <img src="{{ asset('images/mode_of_payments/MAYA.png') }}" alt="Maya" class="payment-info-logo">
+                        </div>
                     </div>
 
                     @php $gcashSteps = [
-                        ['Open GCash App', 'Launch the GCash app on your mobile phone and log in to your account.'],
+                        ['Open GCash or Maya App', 'Launch the GCash or Maya app on your mobile phone and log in to your account.'],
                         ['Tap "Send Money"', 'On the home screen, tap the "Send Money" button.'],
                         ['Enter the number', 'Type in (+63) 927 299 1833 or (+63) 995 233 9423 as the recipient number.'],
                         ['Enter the amount', 'Input ₱4,000.00 as the amount to send.'],
                         ['Add a note', 'In the message/note field, type your full name and grade level (e.g., Juan Dela Cruz – Grade 7).'],
                         ['Confirm & send', 'Review the details and tap "Send". Take a screenshot of the confirmation screen.'],
-                        ['Upload receipt below', 'Upload your GCash confirmation screenshot in the receipt field below.'],
+                        ['Upload receipt below', 'Upload your GCash or Maya confirmation screenshot in the receipt field below.'],
                     ]; @endphp
                     <div class="payment-steps">
                         @foreach ($gcashSteps as $i => $s)
