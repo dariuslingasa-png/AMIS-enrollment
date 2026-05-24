@@ -101,14 +101,16 @@ class EnrollmentApplicationService
             $data['family_application_id'] = $familyId;
         }
 
-        // Duplicate detection at Step 2: check when name + birthdate are filled
-        if (!empty($data['last_name']) && !empty($data['first_name']) && !empty($data['date_of_birth'])) {
+        $shouldCheckDuplicate = $request->boolean('check_duplicate')
+            && (int) $request->input('from_step', $data['last_step'] ?? 0) === 2;
+
+        if ($shouldCheckDuplicate) {
             $existingApplicant = $this->resolveEditableApplication($user, $request);
-            $duplicate = $this->findDuplicate($data, $user, $existingApplicant);
+            $duplicate = $this->findDuplicate($data, $existingApplicant);
             if ($duplicate) {
                 return [
                     'duplicate' => true,
-                    'message' => 'Possible duplicate enrollment record found. A student with the same name and birthdate already exists in the system.',
+                    'message' => 'Possible duplicate enrollment record found.',
                     'existing' => $duplicate,
                 ];
             }
@@ -446,7 +448,7 @@ class EnrollmentApplicationService
         ])->save();
     }
 
-    private function findDuplicate(array $data, User $user, ?EnrollmentApplicant $currentApplicant = null): ?EnrollmentApplicant
+    private function findDuplicate(array $data, ?EnrollmentApplicant $currentApplicant = null): ?EnrollmentApplicant
     {
         $lastName = trim($data['last_name'] ?? '');
         $firstName = trim($data['first_name'] ?? '');
@@ -458,13 +460,11 @@ class EnrollmentApplicationService
         }
 
         return EnrollmentApplicant::query()
-            ->where('user_id', '!=', $user->id)
             ->when($currentApplicant, fn ($q) => $q->where('id', '!=', $currentApplicant->id))
             ->whereRaw('LOWER(TRIM(last_name)) = ?', [strtolower($lastName)])
             ->whereRaw('LOWER(TRIM(first_name)) = ?', [strtolower($firstName)])
-            ->when($middleName, fn ($q) => $q->whereRaw('LOWER(TRIM(middle_name)) = ?', [strtolower($middleName)]))
-            ->where('date_of_birth', $dob)
-            ->whereNotIn('status', ['draft', 'rejected'])
+            ->whereRaw('LOWER(TRIM(COALESCE(middle_name, \'\'))) = ?', [strtolower($middleName)])
+            ->whereDate('date_of_birth', $dob)
             ->first();
     }
 }

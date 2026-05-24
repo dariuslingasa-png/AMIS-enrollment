@@ -344,6 +344,7 @@
                             </div>
                         </div>
                     </section>
+
                 </div>
                 </template>
 
@@ -1094,9 +1095,14 @@
                         <button type="button" x-show="step > 1" @click="prevStep()" class="btn-secondary">
                             Back
                         </button>
-                        <button type="button" x-show="step < totalSteps" @click="nextStep()" class="btn-primary">
-                            Next
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button type="button" x-show="step < totalSteps" @click="nextStep()" class="btn-primary"
+                            :disabled="stepSaving"
+                            :class="{ 'is-disabled': stepSaving }">
+                            <template x-if="stepSaving">
+                                <svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                            </template>
+                            <span x-text="stepSaving ? 'Checking...' : 'Next'"></span>
+                            <svg x-show="!stepSaving" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="9 18 15 12 9 6"/>
                             </svg>
                         </button>
@@ -1111,6 +1117,24 @@
                     </div>
                 </div>
             </form>
+
+            <div x-show="showDuplicateModal" x-cloak class="confirm-overlay" @keydown.escape.window="closeDuplicateModal()">
+                <div class="confirm-dialog duplicate-dialog" @click.outside="closeDuplicateModal()">
+                    <button type="button" class="confirm-close-button" @click="closeDuplicateModal()" aria-label="Close dialog">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                    <div class="confirm-dialog-copy">
+                        <h3>Possible duplicate enrollment record found.</h3>
+                        <p>An enrollment, application, or student record with the same full name and birthdate already exists in the system. Please review the student details before continuing.</p>
+                    </div>
+                    <div class="confirm-dialog-actions">
+                        <button type="button" class="btn-primary duplicate-dialog-button" @click="closeDuplicateModal()">OK</button>
+                    </div>
+                </div>
+            </div>
 
             <div x-show="showCancelPrompt" x-cloak class="confirm-overlay" @keydown.escape.window="closeCancelPrompt()">
                 <div class="confirm-dialog" @click.outside="closeCancelPrompt()">
@@ -1175,6 +1199,7 @@ function enrollmentForm() {
         step: {{ $initialStep }},
         totalSteps: 7,
         loading: false,
+        stepSaving: false,
         leavingWithoutSaving: false,
         useSiblingSchedule: false,
         useSiblingParent: false,
@@ -1189,6 +1214,7 @@ function enrollmentForm() {
         draftDiscarded: false,
         savedApplicantId: CURRENT_APPLICANT_ID,
         showCancelPrompt: false,
+        showDuplicateModal: false,
         detectingTimezone: false,
         timezoneMessage: '',
         error: '',
@@ -1580,11 +1606,11 @@ function enrollmentForm() {
         },
 
         // ── Core draft save (localStorage + backend) ──────────────────
-        async saveDraft({ force = false } = {}) {
+        async saveDraft({ force = false, checkDuplicate = false, showStatus = true, fromStep = null } = {}) {
             if (this.isDiscarding || this.draftDiscarded) return;
             if (this._submitted || this.leavingWithoutSaving) return;
             if (!force && !this.hasUserEdited) return;
-            this.draftSaving = true;
+            if (showStatus) this.draftSaving = true;
 
             // 1. Always save to localStorage first (instant, no network needed)
             const snapshot = { ...this.form, last_step: this.step };
@@ -1597,6 +1623,12 @@ function enrollmentForm() {
                 Object.entries(this.form).forEach(([k, v]) => {
                     if (typeof v !== 'boolean') fd.append(k, v ?? '');
                 });
+                if (checkDuplicate) {
+                    fd.append('check_duplicate', '1');
+                }
+                if (fromStep !== null) {
+                    fd.append('from_step', fromStep);
+                }
                 fd.append('last_step', this.step);
                 fd.append('school_year', '2026-2027');
                 if (this.savedApplicantId) fd.append('applicant_id', this.savedApplicantId);
@@ -1606,22 +1638,25 @@ function enrollmentForm() {
                 });
                 const response = await fetch('{{ route("enrollment.draft") }}', { method: 'POST', body: fd });
                 if (response.status === 409) {
-                    const dupData = await response.json();
-                    this.error = dupData.message || 'Possible duplicate enrollment record found.';
-                    this.draftSaving = false;
+                    await response.json().catch(() => ({}));
+                    this.error = '';
+                    this.showDuplicateModal = true;
+                    if (showStatus) this.draftSaving = false;
                     return { success: false, duplicate: true };
                 }
                 if (!response.ok) throw new Error('Draft save failed');
 
                 const data = await response.json();
                 if (data.applicant_id) this.savedApplicantId = data.applicant_id;
-                this.draftSaving = false;
-                this.draftSaved = true;
-                setTimeout(() => { this.draftSaved = false; }, 3000);
+                if (showStatus) {
+                    this.draftSaving = false;
+                    this.draftSaved = true;
+                    setTimeout(() => { this.draftSaved = false; }, 3000);
+                }
                 return data;
             } catch (_) { /* network error — localStorage already saved */ }
 
-            this.draftSaving = false;
+            if (showStatus) this.draftSaving = false;
             if (force) return { success: false };
             return null;
         },
@@ -1837,13 +1872,22 @@ function enrollmentForm() {
         },
 
         async nextStep() {
+            if (this.stepSaving) return;
             const err = this.validateStep();
             if (!this.visitedSteps.includes(this.step)) this.visitedSteps.push(this.step);
             if (err) { this.error = err; return; }
             if (this.isStepComplete(this.step) && !this.completedSteps.includes(this.step)) this.completedSteps.push(this.step);
-            const saveResult = await this.saveDraft({ force: true });
-            if (saveResult && saveResult.duplicate) return;
+            this.error = '';
+            this.stepSaving = true;
+            this.draftSaving = false;
+            this.draftSaved = false;
+            const saveResult = await this.saveDraft({ force: true, checkDuplicate: this.step === 2, showStatus: false, fromStep: this.step });
+            if (saveResult && saveResult.duplicate) {
+                this.stepSaving = false;
+                return;
+            }
             this.pageLoading = true;
+            this.stepSaving = false;
             setTimeout(() => {
                 this.step++;
                 if (!this.visitedSteps.includes(this.step)) this.visitedSteps.push(this.step);
@@ -2024,6 +2068,10 @@ function enrollmentForm() {
 
         closeCancelPrompt() {
             this.showCancelPrompt = false;
+        },
+
+        closeDuplicateModal() {
+            this.showDuplicateModal = false;
         },
 
         leaveWithoutSaving() {
