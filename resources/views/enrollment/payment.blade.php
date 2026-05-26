@@ -103,7 +103,7 @@
                     {{-- Payment reminder notice --}}
                     <div class="payment-reminder-notice">
                         <div class="payment-reminder-header">
-                            <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="payment-reminder-logo">
+                            <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="payment-reminder-logo" style="width: 48px; height: 48px; object-fit: contain; flex-shrink: 0;">
                             <div>
                                 <div class="payment-reminder-title">Monthly Payment Reminder</div>
                                 <div class="payment-reminder-greeting">Assalaamu alaykum wa rahmatullahi wa barakatuh.</div>
@@ -119,7 +119,7 @@
                     </div>
 
                     <div class="payment-channels-header">
-                        <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="payment-channels-logo">
+                        <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="payment-channels-logo" style="width: 42px; height: 42px; object-fit: contain; background: white; border-radius: 50%; padding: 3px; flex-shrink: 0;">
                         <div>
                             <div class="payment-channels-title">Official Payment Channels</div>
                             <div class="payment-channels-subtitle">Only BDO, GCash, and Maya are recognized as official modes of payment.</div>
@@ -130,7 +130,7 @@
                         {{-- BDO --}}
                         <div class="payment-channel-card">
                             <div class="payment-channel-head">
-                                <img src="{{ asset('images/mode_of_payments/BDO.png') }}" alt="BDO" class="payment-channel-img">
+                                <img src="{{ asset('images/mode_of_payments/BDO.png') }}" alt="BDO" class="payment-channel-img" style="height: 28px; object-fit: contain;">
                                 <strong>BDO Bank Transfer / Deposit</strong>
                             </div>
                             @php
@@ -160,8 +160,8 @@
                         {{-- GCash / Maya --}}
                         <div class="payment-channel-card">
                             <div class="payment-channel-head">
-                                <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash" class="payment-channel-img">
-                                <img src="{{ asset('images/mode_of_payments/MAYA.png') }}" alt="Maya" class="payment-channel-img">
+                                <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash" class="payment-channel-img" style="height: 28px; object-fit: contain;">
+                                <img src="{{ asset('images/mode_of_payments/MAYA.png') }}" alt="Maya" class="payment-channel-img" style="height: 28px; object-fit: contain;">
                                 <strong>GCash / Maya Payment Center</strong>
                             </div>
                             <div class="payment-account-list">
@@ -198,8 +198,8 @@
                             :class="method === 'gcash_maya' ? 'is-active' : ''"
                             class="payment-method-btn">
                             <div class="payment-method-img-wrap" style="gap:0.9rem;">
-                                <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash">
-                                <img src="{{ asset('images/mode_of_payments/MAYA.png') }}" alt="Maya" style="max-width:45%;">
+                                <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                <img src="{{ asset('images/mode_of_payments/MAYA.png') }}" alt="Maya" style="max-height: 100%; max-width: 45%; object-fit: contain;">
                             </div>
                             <span>GCash/Maya</span>
                         </button>
@@ -207,7 +207,7 @@
                             :class="method === 'bdo' ? 'is-active' : ''"
                             class="payment-method-btn">
                             <div class="payment-method-img-wrap">
-                                <img src="{{ asset('images/mode_of_payments/BDO.png') }}" alt="BDO">
+                                <img src="{{ asset('images/mode_of_payments/BDO.png') }}" alt="BDO" style="max-height: 100%; max-width: 100%; object-fit: contain;">
                             </div>
                             <span>BDO Bank</span>
                         </button>
