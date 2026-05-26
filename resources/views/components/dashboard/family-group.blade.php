@@ -42,14 +42,20 @@
     $submittedStatuses = ['pending', 'submitted', 'under_review', 'approved'];
     $submittedApplications = $applicants->filter(fn ($item) => in_array($item->status, $submittedStatuses, true))->values();
     $draftLikeApplications = $applicants->reject(fn ($item) => in_array($item->status, $submittedStatuses, true))->values();
-    $paymentTarget = $submittedApplications->first(function ($item) {
+
+    // Find family-wide payment status
+    $familyPayment = $applicants->map(fn($item) => $item->payment)->filter()->first();
+    $hasFamilyPayment = $familyPayment && filled($familyPayment->receipt_url);
+
+    $paymentTarget = !$hasFamilyPayment ? $submittedApplications->first(function ($item) {
         $docStatuses = $item->document_statuses ?? [];
 
         return !filled($item->payment?->receipt_url)
             && $item->payment?->status !== 'verified'
             && ($docStatuses['payment_proof'] ?? '') !== 'approved';
-    });
-    $hasDrafts = $draftLikeApplications->isNotEmpty();
+    }) : null;
+
+    $hasDrafts = $applicants->contains(fn($item) => in_array($item->status, ['draft', 'rejected'], true));
     $canFinalize = $readyApplications->count() > 0 && !$hasDrafts;
 @endphp
 
@@ -408,8 +414,12 @@
                     $childStatus = $statusStyles[$child->status] ?? ['class' => 'is-neutral', 'label' => strtoupper(str_replace('_', ' ', $child->status ?? 'draft'))];
                     $childName = trim(($child->first_name ?? '') . ' ' . ($child->middle_name ?? '') . ' ' . ($child->last_name ?? '')) ?: 'New applicant draft';
                     $docStatuses = $child->document_statuses ?? [];
-                    $hasPaymentProof = filled($child->payment?->receipt_url)
+                    $hasLocalPaymentProof = filled($child->payment?->receipt_url)
                         || $child->payment?->status === 'verified'
+                        || ($docStatuses['payment_proof'] ?? '') === 'approved';
+                    $hasPaymentProof = $hasLocalPaymentProof || $hasFamilyPayment;
+                    $isVerified = ($child->payment?->status ?? null) === 'verified'
+                        || ($familyPayment?->status ?? null) === 'verified'
                         || ($docStatuses['payment_proof'] ?? '') === 'approved';
                     $requiredDocsApproved = ($docStatuses['photo_2x2'] ?? '') === 'approved'
                         && (
@@ -421,7 +431,7 @@
                         );
                     $modeKey = strtolower((string) ($child->learning_mode ?? $child->enrollment_type ?? ''));
                     $learningMode = $learningModeLabels[$modeKey] ?? strtoupper(str_replace('_', ' ', $modeKey ?: 'LEARNING MODE PENDING'));
-                    $paymentLabel = ($child->payment?->status ?? null) === 'verified' ? 'Paid Enrollment Fee' : ($hasPaymentProof ? 'Payment Proof' : 'Missing Payment Proof');
+                    $paymentLabel = $isVerified ? 'Paid Enrollment Fee' : ($hasPaymentProof ? 'Payment Proof' : 'Missing Payment Proof');
                     $documentsLabel = $requiredDocsApproved ? 'Documents Approved' : 'Documents Pending';
                 @endphp
 
