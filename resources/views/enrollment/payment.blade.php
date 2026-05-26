@@ -76,24 +76,27 @@
                     </div>
                 </div>
 
-                {{-- Fee breakdown --}}
-                @php $total = 4000.00; @endphp
-                <div class="payment-section">
-                    <div class="payment-section-label">FEE BREAKDOWN</div>
-                    <div class="payment-fee-card">
-                        <div class="payment-fee-main">
-                            <div>
-                                <div class="payment-fee-title">Enrollment Fee</div>
-                                <div class="payment-fee-subtitle">Non-refundable</div>
-                            </div>
-                            <span class="payment-fee-amount">₱{{ number_format($total, 2) }}</span>
-                        </div>
-                        <div class="payment-fee-notice">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            <span>This fee is non-refundable once paid.</span>
-                        </div>
-                    </div>
-                </div>
+                @php
+                    $invoiceApplicants = collect($invoiceApplicants ?? [$applicant])->values();
+                    $perChildAmount = 4000.00;
+                    $invoiceTotal = $invoiceApplicants->count() * $perChildAmount;
+                    $total = (float) old('amount', $payment->amount ?? $invoiceTotal);
+                    $invoiceRootId = $applicant->family_application_id ?: $applicant->id;
+                    $invoiceNumber = 'INV-ENR-' . str_pad((string) $invoiceRootId, 5, '0', STR_PAD_LEFT);
+                    $paymentStatus = strtolower((string) ($payment->status ?? 'pending'));
+                    $isPaid = $paymentStatus === 'verified';
+                    $paymentMethodLabel = strtoupper(str_replace('_', '/', (string) ($payment->method ?? 'gcash_maya')));
+                    $learningModeLabel = function ($mode) {
+                        $normalized = strtolower(trim((string) $mode));
+
+                        return match ($normalized) {
+                            'face_to_face', 'face-to-face', 'face to face', 'f2f' => 'FACE TO FACE',
+                            'flexible_1st_shift', 'flexible learning - 1st shift', 'flexible 1st shift', '1st shift' => 'FLEXIBLE LEARNING - 1ST SHIFT',
+                            'flexible_2nd_shift', 'flexible learning - 2nd shift', 'flexible 2nd shift', '2nd shift' => 'FLEXIBLE LEARNING - 2ND SHIFT',
+                            default => $mode ? strtoupper((string) $mode) : 'LEARNING MODE PENDING',
+                        };
+                    };
+                @endphp
 
                 {{-- Official payment channels --}}
                 <div class="payment-section">
@@ -211,96 +214,64 @@
                     </div>
                 </div>
 
-                {{-- GCash / Maya Steps --}}
-                <div x-show="method === 'gcash_maya'" x-transition class="payment-section">
-                    <div class="payment-section-label">HOW TO PAY VIA GCASH / MAYA</div>
-                    <div class="payment-info-banner">
-                        <div>
-                            <div class="payment-info-label">Send to GCash / Maya Number</div>
-                            <div class="payment-info-number">(+63) 927 299 1833</div>
-                            <div class="payment-info-number payment-info-number-alt">(+63) 995 233 9423</div>
-                            <div class="payment-info-name">CABEL B. NURHASAN</div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:0.65rem;">
-                            <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash" class="payment-info-logo">
-                            <img src="{{ asset('images/mode_of_payments/MAYA.png') }}" alt="Maya" class="payment-info-logo">
-                        </div>
-                    </div>
-
-                    @php $gcashSteps = [
-                        ['Open GCash or Maya App', 'Launch the GCash or Maya app on your mobile phone and log in to your account.'],
-                        ['Tap "Send Money"', 'On the home screen, tap the "Send Money" button.'],
-                        ['Enter the number', 'Type in (+63) 927 299 1833 or (+63) 995 233 9423 as the recipient number.'],
-                        ['Enter the amount', 'Input ₱4,000.00 as the amount to send.'],
-                        ['Add a note', 'In the message/note field, type your full name and grade level (e.g., Juan Dela Cruz – Grade 7).'],
-                        ['Confirm & send', 'Review the details and tap "Send". Take a screenshot of the confirmation screen.'],
-                        ['Upload receipt below', 'Upload your GCash or Maya confirmation screenshot in the receipt field below.'],
-                    ]; @endphp
-                    <div class="payment-steps">
-                        @foreach ($gcashSteps as $i => $s)
-                        <div class="payment-step">
-                            <div class="payment-step-num">{{ $i + 1 }}</div>
+                {{-- Invoice summary near payment controls --}}
+                <div class="payment-section">
+                    <div class="payment-section-label">INVOICE</div>
+                    <div class="payment-invoice-card">
+                        <div class="payment-invoice-head">
                             <div>
-                                <div class="payment-step-title">{{ $s[0] }}</div>
-                                <div class="payment-step-desc">{{ $s[1] }}</div>
+                                <span>Invoice #</span>
+                                <strong>{{ $invoiceNumber }}</strong>
+                            </div>
+                            <div>
+                                <span>Status</span>
+                                <strong>{{ $isPaid ? 'PAID' : 'PENDING PAYMENT' }}</strong>
+                            </div>
+                            <div>
+                                <span>Applications Covered</span>
+                                <strong>{{ $invoiceApplicants->count() }} {{ \Illuminate\Support\Str::plural('Application', $invoiceApplicants->count()) }}</strong>
                             </div>
                         </div>
-                        @endforeach
+                        <div class="payment-invoice-table">
+                            <div class="payment-invoice-row payment-invoice-row-head">
+                                <span>Application ID</span>
+                                <span>Child</span>
+                                <span>Grade</span>
+                                <span>Learning Mode</span>
+                                <span>Amount</span>
+                            </div>
+                            @foreach ($invoiceApplicants as $invoiceChild)
+                                <div class="payment-invoice-row">
+                                    <span>APP-{{ str_pad((string) $invoiceChild->id, 5, '0', STR_PAD_LEFT) }}</span>
+                                    <span>{{ strtoupper($invoiceChild->full_name ?: trim(($invoiceChild->first_name ?? '') . ' ' . ($invoiceChild->middle_name ?? '') . ' ' . ($invoiceChild->last_name ?? ''))) }}</span>
+                                    <span>{{ strtoupper($invoiceChild->grade_level ?? 'Grade pending') }}</span>
+                                    <span>{{ $learningModeLabel($invoiceChild->learning_mode ?? null) }}</span>
+                                    <span>PHP {{ number_format($perChildAmount, 2) }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="payment-invoice-total">
+                            <span>Total Amount To Pay</span>
+                            <strong>PHP {{ number_format($invoiceTotal, 2) }}</strong>
+                        </div>
+                        @if ($payment && filled($payment->receipt_url))
+                            <div class="payment-invoice-payment-line">
+                                <span>{{ $invoiceNumber }}</span>
+                                <span>Amount PHP {{ number_format((float) ($payment->amount ?? 0), 2) }}</span>
+                                <span>{{ $paymentMethodLabel }}</span>
+                                <strong>{{ $isPaid ? 'PAID' : strtoupper($paymentStatus ?: 'PENDING') }}</strong>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
-                {{-- BDO Steps --}}
-                <div x-show="method === 'bdo'" x-transition class="payment-section">
-                    <div class="payment-section-label">HOW TO PAY VIA BDO BANK TRANSFER</div>
-                    <div class="payment-info-banner">
-                        <div>
-                            <div class="payment-info-label">BDO Account Details</div>
-                            @php
-                                $bdoPanelAccounts = [
-                                    ['BDO Savings Account', '010478011996', 'AL MUNAWWARA ISLAMIC SCHOOL Inc.'],
-                                    ['BDO Current Account', '010478008782', 'CABEL B. NURHASAN'],
-                                    ['BDO Savings Account', '010470022817', 'CABEL NURHASAN'],
-                                    ['BDO Savings Account', '010470099925', 'WARDAH D. PINDATON or JAMELLA P. MOHAMAD'],
-                                    ['BDO Savings Account', '010470105712', 'JAMELLA P. MOHAMAD or WARDAH P. PINDATON'],
-                                ];
-                            @endphp
-                            <div class="payment-bdo-accounts">
-                                @foreach ($bdoPanelAccounts as [$type, $number, $name])
-                                    <div class="payment-bdo-item">
-                                        <div class="payment-account-type">{{ $type }}</div>
-                                        <div class="payment-account-number">{{ $number }}</div>
-                                        <div class="payment-account-name">{{ $name }}</div>
-                                    </div>
-                                @endforeach
-                            </div>
-                            <div class="payment-channel-meta">
-                                <strong>Swift code:</strong> BNORPHMM · <strong>Branch:</strong> WOODLANE DIVERSION ROAD - DAVAO CITY · <strong>Amount:</strong> ₱{{ number_format($total, 2) }}
-                            </div>
-                        </div>
-                        <img src="{{ asset('images/mode_of_payments/BDO.png') }}" alt="BDO" class="payment-info-logo">
-                    </div>
-
-                    @php $bdoSteps = [
-                        ['Log in to BDO Online / App', 'Open BDO Online Banking or the BDO app and log in to your account.'],
-                        ['Go to "Fund Transfer"', 'Select "Fund Transfer" or "Transfer Money" from the main menu.'],
-                        ['Select "Other BDO Account"', 'Choose to transfer to another BDO account.'],
-                        ['Enter account number', 'Use any official BDO account listed above and verify the account name before confirming.'],
-                        ['Enter the amount', 'Input ₱4,000.00 as the transfer amount.'],
-                        ['Add remarks', 'In the remarks field, type your full name and grade level (e.g., Juan Dela Cruz – Grade 7).'],
-                        ['Confirm transfer', 'Review all details carefully and confirm the transaction. Save or screenshot the confirmation.'],
-                        ['Upload proof below', 'Upload your transfer confirmation screenshot or deposit slip in the receipt field below.'],
-                    ]; @endphp
-                    <div class="payment-steps">
-                        @foreach ($bdoSteps as $i => $s)
-                        <div class="payment-step">
-                            <div class="payment-step-num">{{ $i + 1 }}</div>
-                            <div>
-                                <div class="payment-step-title">{{ $s[0] }}</div>
-                                <div class="payment-step-desc">{{ $s[1] }}</div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
+                {{-- Amount --}}
+                <div class="payment-section">
+                    <label class="payment-field-label">Amount Paid <span class="required">*</span></label>
+                    <input type="number" name="amount" value="{{ old('amount', $payment->amount ?? $invoiceTotal) }}"
+                        min="1" step="0.01" required
+                        placeholder="Enter the amount paid"
+                        class="plain-input">
                 </div>
 
                 {{-- Reference number --}}

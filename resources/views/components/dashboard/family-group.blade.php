@@ -10,7 +10,7 @@
 @php
     $statusStyles = [
         'draft' => ['class' => 'is-draft', 'label' => 'DRAFT'],
-        'ready_for_submission' => ['class' => 'is-complete', 'label' => 'COMPLETED'],
+        'ready_for_submission' => ['class' => 'is-complete', 'label' => 'READY TO COMPLETE'],
         'pending' => ['class' => 'is-submitted', 'label' => 'PENDING'],
         'submitted' => ['class' => 'is-submitted', 'label' => 'SUBMITTED'],
         'under_review' => ['class' => 'is-review', 'label' => 'ADMIN REVIEW'],
@@ -28,184 +28,358 @@
         7 => 'Ready to complete',
     ];
 
-    $hasDrafts = $draftApplications->count() > 0;
+    $learningModeLabels = [
+        'face_to_face' => 'FACE TO FACE',
+        'face-to-face' => 'FACE TO FACE',
+        'face to face' => 'FACE TO FACE',
+        'f2f' => 'FACE TO FACE',
+        'flexible_learning_1st_shift' => 'FLEXIBLE LEARNING - 1ST SHIFT',
+        'flexible_learning_2nd_shift' => 'FLEXIBLE LEARNING - 2ND SHIFT',
+        'flexible_1st_shift' => 'FLEXIBLE LEARNING - 1ST SHIFT',
+        'flexible_2nd_shift' => 'FLEXIBLE LEARNING - 2ND SHIFT',
+    ];
+
+    $submittedStatuses = ['pending', 'submitted', 'under_review', 'approved'];
+    $submittedApplications = $applicants->filter(fn ($item) => in_array($item->status, $submittedStatuses, true))->values();
+    $draftLikeApplications = $applicants->reject(fn ($item) => in_array($item->status, $submittedStatuses, true))->values();
+    $paymentTarget = $submittedApplications->first(function ($item) {
+        $docStatuses = $item->document_statuses ?? [];
+
+        return !filled($item->payment?->receipt_url)
+            && $item->payment?->status !== 'verified'
+            && ($docStatuses['payment_proof'] ?? '') !== 'approved';
+    });
+    $hasDrafts = $draftLikeApplications->isNotEmpty();
     $canFinalize = $readyApplications->count() > 0 && !$hasDrafts;
-    $allSubmitted = $applicants->every(fn ($item) => in_array($item->status, ['pending', 'submitted', 'under_review', 'approved'], true));
 @endphp
 
 <style>
     .family-group-card {
+        background: #fff;
+        border: 1px solid #dbe3ee;
         border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(15, 23, 42, 0.06);
         padding: 1.15rem;
     }
 
-    .family-child-card.is-open {
-        position: relative;
+    .family-group-header,
+    .family-group-actions,
+    .family-child-card,
+    .family-child-main,
+    .family-child-footer,
+    .family-review-items,
+    .family-card-actions,
+    .family-draft-card {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .family-group-header {
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .family-group-title h3 {
+        margin: 0.45rem 0 0;
+        color: #0f172a;
+        font-size: 1.15rem;
+        font-weight: 900;
+    }
+
+    .family-group-title h3 span,
+    .family-group-title p,
+    .family-muted {
+        color: #64748b;
+    }
+
+    .family-group-title p {
+        margin: 0.45rem 0 0;
+        font-size: 0.9rem;
+        line-height: 1.45;
+    }
+
+    .family-section-kicker {
+        display: inline-flex;
+        width: fit-content;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        background: #ecfdf5;
+        color: #047857;
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .family-group-actions,
+    .family-review-items,
+    .family-card-actions {
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .family-group-actions,
+    .family-card-actions {
+        justify-content: flex-end;
+    }
+
+    .family-list {
         display: grid;
-        grid-template-columns: 132px minmax(0, 1fr) minmax(170px, auto);
-        gap: 1rem;
-        min-height: 0;
-        padding: 1rem;
-        border-color: #dbe3ee;
-        border-radius: 16px;
-        box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
-        overflow: hidden;
+        gap: 0.85rem;
     }
 
-    .family-child-card.is-open .sibling-card-header {
-        display: contents;
-        padding: 0;
-    }
-
-    .family-child-card.is-open .sibling-card-avatar {
-        position: static;
-        inset: auto;
-        grid-column: 1;
-        grid-row: 1;
-        width: 132px;
-        min-width: 132px;
-        height: 132px;
+    .family-child-card {
+        align-items: stretch;
+        padding: 0.95rem;
         border: 1px solid #dbe3ee;
-        border-radius: 14px;
+        border-radius: 18px;
+        background: #fff;
+    }
+
+    .family-child-photo {
+        width: 118px;
+        height: 118px;
+        flex: 0 0 118px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid #dbe3ee;
+        border-radius: 16px;
         background: #f8fafc;
     }
 
-    .family-child-card.is-open .sibling-card-info {
-        grid-column: 2;
-        grid-row: 1;
-        align-self: start;
-        gap: 0.35rem;
-        padding-top: 0.15rem;
+    .family-child-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
-    .family-child-card.is-open .sibling-card-name {
-        color: #0f172a;
-        font-size: 1.05rem;
-        letter-spacing: 0;
-    }
-
-    .family-child-card.is-open .sibling-card-meta {
+    .family-photo-placeholder {
         color: #64748b;
-        font-size: 0.82rem;
-        font-weight: 700;
-    }
-
-    .family-child-card.is-open .sibling-card-right {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        justify-content: flex-end;
-        padding: 0;
-    }
-
-    .family-child-card.is-open .sibling-card-body {
-        grid-column: 1 / -1;
-        grid-row: 2;
-        gap: 0.8rem;
-        padding: 0;
-    }
-
-    .family-child-card.is-open .sibling-card-badge {
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        letter-spacing: 0.035em;
     }
 
-    .family-child-card.is-open .sibling-progress-meta {
+    .family-child-main {
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
         justify-content: space-between;
     }
 
-    .family-child-card.is-open .sibling-review-checklist {
+    .family-child-top {
         display: grid;
-        gap: 0.55rem;
-        padding: 0.85rem 1rem;
-        border: 1px solid #fed7aa;
-        border-radius: 12px;
-        background: linear-gradient(180deg, #fffaf0, #fff);
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.75rem;
+        align-items: flex-start;
     }
 
-    .family-child-card.is-open .review-checklist-title {
-        margin: 0;
-        color: #92400e;
-        font-size: 0.78rem;
-        letter-spacing: 0.02em;
+    .family-child-name {
+        display: block;
+        color: #0f172a;
+        font-size: 1rem;
+        font-weight: 950;
+        line-height: 1.25;
         text-transform: uppercase;
     }
 
-    .family-child-card.is-open .review-checklist-copy {
+    .family-child-meta,
+    .family-muted,
+    .family-draft-title {
+        font-size: 0.73rem;
+        font-weight: 850;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .family-child-meta {
+        display: block;
+        margin-top: 0.35rem;
         color: #64748b;
-        font-size: 0.78rem;
-        font-weight: 600;
-        line-height: 1.45;
-        margin: -0.2rem 0 0;
     }
 
-    .family-child-card.is-open .review-checklist-items {
-        gap: 0.45rem;
+    .family-child-footer {
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding-top: 0.75rem;
+        border-top: 1px solid #eef2f7;
     }
 
-    .family-child-card.is-open .review-checklist-item {
-        min-height: 30px;
-        padding: 0.32rem 0.62rem;
-        border: 1px solid #fde68a;
+    .family-group-count,
+    .family-add-yes,
+    .family-finalize,
+    .family-status-badge,
+    .family-chip,
+    .family-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
         border-radius: 999px;
-        background: #ffffff;
-        color: #78350f;
-        font-size: 0.76rem;
-        font-weight: 800;
+        font-size: 0.72rem;
+        font-weight: 900;
+        text-decoration: none;
+        white-space: nowrap;
     }
 
-    .family-child-card.is-open .review-checklist-item.is-missing {
+    .family-group-count {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #047857;
+        padding: 0.35rem 0.8rem;
+    }
+
+    .family-add-yes {
+        border: 1px solid #bbf7d0;
+        color: #047857;
+        padding: 0.35rem 0.8rem;
+    }
+
+    .family-finalize,
+    .family-action-primary {
+        background: #059669;
+        color: #fff;
+        padding: 0.45rem 0.9rem;
+    }
+
+    .family-action-danger {
+        border: 1px solid #fecaca;
+        background: #fff;
+        color: #dc2626;
+        padding: 0.45rem 0.85rem;
+    }
+
+    .family-action-payment {
+        background: #f59e0b;
+        color: #fff;
+        padding: 0.45rem 0.9rem;
+    }
+
+    .family-status-badge {
+        padding: 0.32rem 0.75rem;
+        text-transform: uppercase;
+    }
+
+    .family-status-badge.is-draft { background: #f1f5f9; color: #475569; }
+    .family-status-badge.is-submitted { background: #dbeafe; color: #1d4ed8; }
+    .family-status-badge.is-review { background: #fef3c7; color: #92400e; }
+    .family-status-badge.is-complete { background: #dcfce7; color: #166534; }
+    .family-status-badge.is-rejected { background: #fee2e2; color: #991b1b; }
+    .family-status-badge.is-neutral { background: #f1f5f9; color: #334155; }
+
+    .family-chip {
+        min-height: 29px;
+        gap: 0.35rem;
+        padding: 0.3rem 0.7rem;
+        border: 1px solid #fde68a;
+        background: #fffaf0;
+        color: #78350f;
+    }
+
+    .family-chip.is-missing {
         border-color: #fecaca;
         background: #fff1f2;
         color: #991b1b;
     }
 
-    .family-child-card.is-open .review-x-mark {
-        background: #fecaca;
-        color: #991b1b;
-    }
-
-    .family-child-card.is-open .review-dot-pulse {
+    .family-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
         background: #f59e0b;
     }
 
-    .family-child-card.is-open .sibling-card-actions {
-        justify-content: flex-end;
-        padding-top: 0.05rem;
+    .family-x {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fee2e2;
+        color: #991b1b;
+        font-size: 0.68rem;
+        font-weight: 900;
+        line-height: 1;
     }
 
-    .family-child-card.is-open .sibling-btn-payment {
-        min-height: 42px;
-        padding-inline: 1.15rem;
-        border-color: #f59e0b;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        box-shadow: 0 10px 18px rgba(245, 158, 11, 0.18);
+    .family-draft-section {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .family-payment-action-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1rem;
+    }
+
+    .family-draft-title {
+        display: block;
+        margin-bottom: 0.7rem;
+        color: #64748b;
+    }
+
+    .family-draft-card {
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding: 0.85rem 0.95rem;
+        border: 1px dashed #cbd5e1;
+        border-radius: 16px;
+        background: #f8fafc;
+    }
+
+    .family-draft-name {
+        color: #0f172a;
+        font-size: 0.92rem;
+        font-weight: 950;
+        text-transform: uppercase;
+    }
+
+    .family-card-actions form {
+        margin: 0;
+    }
+
+    .family-card-actions button {
+        border: 0;
+        cursor: pointer;
+        font-family: inherit;
     }
 
     @media (max-width: 760px) {
-        .family-child-card.is-open {
-            grid-template-columns: 76px minmax(0, 1fr);
-            gap: 0.85rem;
-            padding: 0.85rem;
+        .family-group-header,
+        .family-child-card,
+        .family-child-footer,
+        .family-draft-card {
+            flex-direction: column;
         }
 
-        .family-child-card.is-open .sibling-card-avatar {
-            width: 76px;
-            min-width: 76px;
-            height: 76px;
-            grid-row: 1;
+        .family-child-top {
+            grid-template-columns: 1fr;
         }
 
-        .family-child-card.is-open .sibling-card-right {
-            top: 0.85rem;
-            right: 0.85rem;
-            align-items: flex-end;
+        .family-child-photo,
+        .family-group-actions,
+        .family-card-actions,
+        .family-add-yes,
+        .family-finalize {
+            width: 100%;
         }
 
-        .family-child-card.is-open .sibling-card-body {
-            grid-column: 1 / -1;
-            grid-row: 3;
+        .family-child-photo {
+            height: 190px;
+            flex-basis: auto;
+        }
+
+        .family-card-actions {
+            justify-content: flex-start;
         }
     }
 </style>
@@ -215,18 +389,11 @@
         <div class="family-group-title">
             <span class="family-section-kicker">Enrollment Applications</span>
             <h3>Enrollment Applications <span>SY 2026-2027</span></h3>
-            <p>Review each applicant below. Open a card to continue, check progress, or see what happens next.</p>
+            <p>Submitted applications are shown first. Drafts stay simple at the bottom.</p>
         </div>
 
         <div class="family-group-actions">
             <span class="family-group-count">{{ $applicants->count() }} Enrollment {{ \Illuminate\Support\Str::plural('Application', $applicants->count()) }}</span>
-
-            @if ($canAddAnotherChild)
-                <a href="{{ route('enrollment.new') }}" class="family-add-yes">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                    Add Another Child
-                </a>
-            @endif
 
             @if ($canFinalize)
                 <a href="{{ route('enrollment.finalize.preview') }}" class="family-finalize">Finalize Enrollment</a>
@@ -234,189 +401,152 @@
         </div>
     </div>
 
-    <div class="family-child-list">
-        @foreach ($applicants as $child)
-            @php
-                $childStatus = $statusStyles[$child->status] ?? ['class' => 'is-neutral', 'label' => strtoupper(str_replace('_', ' ', $child->status ?? 'draft'))];
-                $childName = trim(($child->first_name ?? '') . ' ' . ($child->middle_name ?? '') . ' ' . ($child->last_name ?? '')) ?: 'New applicant draft';
-                $isSelectedChild = $applicant && (int) $applicant->id === (int) $child->id;
-                $isEditableChild = in_array($child->status, ['draft', 'ready_for_submission', 'rejected'], true);
-                $isDraftChild = $child->status === 'draft';
-                $progress = in_array($child->status, ['ready_for_submission', 'pending', 'submitted', 'under_review', 'approved'], true)
-                    ? 100
-                    : (int) ($child->completion_percentage ?? 0);
-                $step = min(max((int) ($child->last_step ?? 1), 1), 7);
-                $docStatuses = $child->document_statuses ?? [];
-                $hasPaymentProof = filled($child->payment?->receipt_url)
-                    || $child->payment?->status === 'verified'
-                    || ($docStatuses['payment_proof'] ?? '') === 'approved';
-                $rejectedItems = collect([
-                    'registration_form' => 'Registration form',
-                    'documents' => 'Documents',
-                    'photo_2x2' => '2x2 picture',
-                    'birth_cert' => 'Birth certificate',
-                    'report_card' => 'Report card',
-                    'marriage_contract' => 'Marriage contract',
-                    'medical_record' => 'Medical record',
-                    'affidavit' => 'Affidavit',
-                    'payment_proof' => 'Payment proof',
-                ])->filter(fn ($label, $key) => ($docStatuses[$key] ?? '') === 'rejected')->values();
-            @endphp
+    @if ($submittedApplications->isNotEmpty())
+        <div class="family-list">
+            @foreach ($submittedApplications as $child)
+                @php
+                    $childStatus = $statusStyles[$child->status] ?? ['class' => 'is-neutral', 'label' => strtoupper(str_replace('_', ' ', $child->status ?? 'draft'))];
+                    $childName = trim(($child->first_name ?? '') . ' ' . ($child->middle_name ?? '') . ' ' . ($child->last_name ?? '')) ?: 'New applicant draft';
+                    $docStatuses = $child->document_statuses ?? [];
+                    $hasPaymentProof = filled($child->payment?->receipt_url)
+                        || $child->payment?->status === 'verified'
+                        || ($docStatuses['payment_proof'] ?? '') === 'approved';
+                    $requiredDocsApproved = ($docStatuses['photo_2x2'] ?? '') === 'approved'
+                        && (
+                            strcasecmp((string) $child->student_type, 'Old') === 0
+                            || (
+                                ($docStatuses['birth_cert'] ?? '') === 'approved'
+                                && (($docStatuses['report_card'] ?? '') === 'approved' || ($docStatuses['affidavit'] ?? '') === 'approved')
+                            )
+                        );
+                    $modeKey = strtolower((string) ($child->learning_mode ?? $child->enrollment_type ?? ''));
+                    $learningMode = $learningModeLabels[$modeKey] ?? strtoupper(str_replace('_', ' ', $modeKey ?: 'LEARNING MODE PENDING'));
+                    $paymentLabel = ($child->payment?->status ?? null) === 'verified' ? 'Paid Enrollment Fee' : ($hasPaymentProof ? 'Payment Proof' : 'Missing Payment Proof');
+                    $documentsLabel = $requiredDocsApproved ? 'Documents Approved' : 'Documents Pending';
+                @endphp
 
-            <div class="family-child-card is-open {{ $isSelectedChild ? 'is-selected' : '' }} {{ $child->status === 'approved' ? 'is-approved' : '' }}">
-                <div class="sibling-card-header">
-                    <div class="sibling-card-avatar">
+                <article class="family-child-card">
+                    <div class="family-child-photo">
                         @if ($child->photo_2x2_url)
                             <img src="{{ asset('storage/' . $child->photo_2x2_url) }}" alt="{{ $childName }}">
                         @else
-                            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span class="family-photo-placeholder">No Photo</span>
                         @endif
                     </div>
 
-                    <div class="sibling-card-info">
-                        <span class="sibling-card-name">{{ $loop->iteration }}) {{ $childName }}</span>
-                        <span class="sibling-card-meta">{{ $child->student_type ? strtoupper($child->student_type) : '' }}{{ $child->student_type ? ' • ' : '' }}{{ strtoupper($child->grade_level ?? 'NO GRADE') }} • SY {{ $child->school_year ?? '2026-2027' }}</span>
-                    </div>
-
-                    <div class="sibling-card-right">
-                        @if ($progress >= 100 && $child->status === 'ready_for_submission')
-                            <span class="sibling-card-badge {{ $childStatus['class'] }}">COMPLETED - 100%</span>
-                        @elseif ($progress >= 100)
-                            <span class="sibling-card-badge {{ $childStatus['class'] }}">{{ $childStatus['label'] }}</span>
-                        @else
-                            <span class="sibling-card-badge {{ $childStatus['class'] }}">{{ $childStatus['label'] }} - {{ $progress }}%</span>
-                        @endif
-                    </div>
-
-                </div>
-
-                <div class="sibling-card-body">
-                    <div class="sibling-card-progress">
-                        @if ($progress < 100)
-                            <div class="sibling-progress-bar">
-                                <div class="sibling-progress-fill" style="width:{{ $progress }}%;"></div>
+                    <div class="family-child-main">
+                        <div class="family-child-top">
+                            <div>
+                                <span class="family-child-name">{{ $loop->iteration }}) {{ $childName }}</span>
+                                <span class="family-child-meta">{{ strtoupper($child->grade_level ?? 'NO GRADE') }} | {{ $learningMode }} | SY {{ $child->school_year ?? '2026-2027' }}</span>
                             </div>
-                        @endif
-                        <div class="sibling-progress-meta">
-                            @if ($child->status !== 'approved')
-                                <span>{{ $stepNames[$step] }}</span>
-                            @else
-                                <span></span>
-                            @endif
-                            <span>{{ $child->updated_at?->diffForHumans() ?? 'Not saved' }}</span>
-                        </div>
-                    </div>
 
-                    @if ($child->status === 'approved')
-                        <div class="sibling-approved-message">
-                            <div class="sibling-approved-title">Assalamu Alaikum!</div>
-                            <p>Congratulations and welcome to Al Munawwara Islamic School.</p>
-                            <p>Your enrollment application for SY {{ $child->school_year ?? '2026-2027' }} has been successfully approved.</p>
-                            <p>Please check your personal email inbox for important enrollment details, class schedule, and further school updates.</p>
-                            <p>Thank you and welcome to the AMIS family.</p>
+                            <span class="family-status-badge {{ $childStatus['class'] }}">{{ $childStatus['label'] }}</span>
                         </div>
-                    @endif
 
-                    @if (in_array($child->status, ['pending', 'submitted', 'under_review'], true))
-                        <div class="sibling-review-checklist">
-                            <div class="review-checklist-title">Admin is reviewing<span class="review-dots"><span>.</span><span>.</span><span>.</span></span></div>
-                            <p class="review-checklist-copy">We are checking the registration form, documents, and payment proof for this applicant.</p>
-                            <div class="review-checklist-items">
-                                <div class="review-checklist-item"><span class="review-dot-pulse"></span>Registration Form</div>
-                                <div class="review-checklist-item"><span class="review-dot-pulse"></span>Documents</div>
-                                <div class="review-checklist-item {{ $hasPaymentProof ? '' : 'is-missing' }}">
-                                    @if ($hasPaymentProof)
-                                        <span class="review-dot-pulse"></span>
+                        <div class="family-child-footer">
+                            <div class="family-review-items">
+                                <span class="family-chip"><span class="family-dot"></span>Registration Form</span>
+                                <span class="family-chip {{ $requiredDocsApproved ? '' : 'is-missing' }}">
+                                    @if ($requiredDocsApproved)
+                                        <span class="family-dot"></span>
                                     @else
-                                        <span class="review-x-mark">x</span>
+                                        <span class="family-x">x</span>
                                     @endif
-                                    {{ $hasPaymentProof ? 'Payment Proof' : 'Missing Payment Proof' }}
+                                    {{ $documentsLabel }}
+                                </span>
+                                <span class="family-chip {{ $hasPaymentProof ? '' : 'is-missing' }}">
+                                    @if ($hasPaymentProof)
+                                        <span class="family-dot"></span>
+                                    @else
+                                        <span class="family-x">x</span>
+                                    @endif
+                                    {{ $paymentLabel }}
+                                </span>
+                            </div>
+
+                            <span class="family-muted">Updated {{ $child->updated_at?->diffForHumans() ?? 'not saved' }}</span>
+                        </div>
+                    </div>
+                </article>
+            @endforeach
+        </div>
+
+        @if ($paymentTarget)
+            <div class="family-payment-action-row">
+                <a href="{{ route('enrollment.payment', ['applicant' => $paymentTarget->id]) }}" class="family-action family-action-payment">Upload Payment Proof</a>
+            </div>
+        @endif
+    @endif
+
+    @if ($draftLikeApplications->isNotEmpty())
+        <div class="family-draft-section">
+            <span class="family-draft-title">Draft Applications</span>
+
+            <div class="family-list">
+                @foreach ($draftLikeApplications as $child)
+                    @php
+                        $childNumber = $submittedApplications->count() + $loop->iteration;
+                        $childStatus = $statusStyles[$child->status] ?? ['class' => 'is-neutral', 'label' => strtoupper(str_replace('_', ' ', $child->status ?? 'draft'))];
+                        $childName = trim(($child->first_name ?? '') . ' ' . ($child->middle_name ?? '') . ' ' . ($child->last_name ?? '')) ?: 'New applicant draft';
+                        $progress = in_array($child->status, ['ready_for_submission', 'approved'], true)
+                            ? 100
+                            : (int) ($child->completion_percentage ?? 0);
+                        $step = min(max((int) ($child->last_step ?? 1), 1), 7);
+                        $actionLabel = $child->status === 'rejected'
+                            ? 'Re-edit Form'
+                            : ($child->status === 'ready_for_submission' ? 'Review' : 'Continue Draft');
+                        $modeKey = strtolower((string) ($child->learning_mode ?? $child->enrollment_type ?? ''));
+                        $learningMode = $learningModeLabels[$modeKey] ?? strtoupper(str_replace('_', ' ', $modeKey ?: 'LEARNING MODE PENDING'));
+                    @endphp
+
+                    <article class="family-child-card">
+                        <div class="family-child-photo">
+                            @if ($child->photo_2x2_url)
+                                <img src="{{ asset('storage/' . $child->photo_2x2_url) }}" alt="{{ $childName }}">
+                            @else
+                                <span class="family-photo-placeholder">No Photo</span>
+                            @endif
+                        </div>
+
+                        <div class="family-child-main">
+                            <div class="family-child-top">
+                                <div>
+                                    <span class="family-child-name">{{ $childNumber }}) {{ $childName }}</span>
+                                    <span class="family-child-meta">{{ strtoupper($child->grade_level ?? 'NO GRADE') }} | {{ $learningMode }} | SY {{ $child->school_year ?? '2026-2027' }}</span>
+                                </div>
+
+                                <span class="family-status-badge {{ $childStatus['class'] }}">{{ $childStatus['label'] }}{{ $progress < 100 ? ' - ' . $progress . '%' : '' }}</span>
+                            </div>
+
+                            <div class="family-child-footer">
+                                <span class="family-muted">{{ $stepNames[$step] }}</span>
+
+                                <div class="family-card-actions">
+                                    <form method="POST" action="{{ route('enrollment.draft.discard') }}" data-clear-draft-form onsubmit="return confirm('Delete this enrollment? This cannot be undone.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="applicant_id" value="{{ $child->id }}">
+                                        <button type="submit" class="family-action family-action-danger">Delete</button>
+                                    </form>
+
+                                    <a href="{{ route('enrollment.form.child', $child) }}" class="family-action family-action-primary">{{ $actionLabel }}</a>
                                 </div>
                             </div>
                         </div>
-                    @endif
-
-                    @if ($child->status === 'rejected')
-                        <div class="sibling-review-checklist" style="background:#fff1f2;border-color:#fecdd3;">
-                            <div class="review-checklist-title" style="color:#991b1b;">Why this needs fixing</div>
-                            @if ($child->review_remarks)
-                                <p style="color:#7f1d1d;font-size:0.82rem;font-weight:650;line-height:1.5;margin:0 0 0.65rem;">{{ $child->review_remarks }}</p>
-                            @endif
-                            @if ($rejectedItems->isNotEmpty())
-                                <div class="review-checklist-items">
-                                    @foreach ($rejectedItems as $item)
-                                        <div class="review-checklist-item is-missing"><span class="review-x-mark">x</span>{{ $item }}</div>
-                                    @endforeach
-                                </div>
-                            @elseif (!$child->review_remarks)
-                                <p style="color:#7f1d1d;font-size:0.82rem;font-weight:650;line-height:1.5;margin:0;">Please review your application details and resubmit.</p>
-                            @endif
-                        </div>
-                    @endif
-
-                    <div class="sibling-card-actions {{ $child->status === 'ready_for_submission' ? 'has-three-actions' : '' }}">
-                        @if ($isEditableChild)
-                            <form method="POST" action="{{ route('enrollment.draft.discard') }}" data-clear-draft-form
-                                onsubmit="return confirm('Delete this enrollment? This cannot be undone.')">
-                                @csrf
-                                @method('DELETE')
-                                <input type="hidden" name="applicant_id" value="{{ $child->id }}">
-                                <button type="submit" class="sibling-btn-danger">Delete</button>
-                            </form>
-
-                            @if ($child->status === 'ready_for_submission')
-                                <a href="{{ route('enrollment.form.child', $child) }}" class="sibling-btn-edit">Edit</a>
-                            @endif
-
-                            <a href="{{ route('enrollment.form.child', $child) }}" class="sibling-btn-primary">
-                                {{ $isDraftChild ? 'Continue Draft' : ($child->status === 'rejected' ? 'Re-edit Form' : 'Review') }}
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                            </a>
-                        @endif
-
-                        @if (!$hasPaymentProof && in_array($child->status, ['pending', 'submitted', 'under_review', 'approved'], true))
-                            <a href="{{ route('enrollment.payment', ['applicant' => $child->id]) }}" class="sibling-btn-payment">
-                                Upload Payment Proof
-                            </a>
-                        @endif
-                    </div>
-                </div>
+                    </article>
+                @endforeach
             </div>
-        @endforeach
-    </div>
+        </div>
+    @endif
 
-    @if (!$allSubmitted || !$canAddAnotherChild)
-        <div class="family-draft-progress">
-            <div class="family-draft-copy">
-                <span class="family-section-kicker">Next Step</span>
-                <h4>Draft Progress</h4>
-                <p>
-                    {{ $readyApplications->count() }} enrollment {{ \Illuminate\Support\Str::plural('application', $readyApplications->count()) }} completed.
-                    @if ($hasDrafts)
-                        @php
-                            $draftNames = $draftApplications->pluck('first_name')->filter()->toArray();
-                        @endphp
-                        Complete {{ implode(', ', $draftNames) ?: $draftApplications->count() . ' draft(s)' }} first.
-                    @elseif ($canFinalize)
-                        You can finalize once you are ready.
-                    @else
-                        Continue the current application to unlock the next step.
-                    @endif
-                </p>
-
-                @if ($hasDrafts)
-                    <div class="family-finalize-helper">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
-                        Complete all applications to unlock finalize.
-                    </div>
-                @endif
-            </div>
-
-            @if (!$canAddAnotherChild && !$canFinalize)
-                <div class="family-add-actions">
-                    <span class="family-add-disabled">Complete current application first</span>
-                </div>
-            @endif
+    @if ($submittedApplications->isEmpty() && $canAddAnotherChild)
+        <div class="family-draft-section">
+            <a href="{{ route('enrollment.new') }}" class="family-add-yes">Create New Enrollment</a>
+        </div>
+    @elseif ($canAddAnotherChild)
+        <div class="family-draft-section">
+            <a href="{{ route('enrollment.new') }}" class="family-add-yes">Add Another Child</a>
         </div>
     @endif
 </section>

@@ -488,7 +488,29 @@ class EnrollmentController extends Controller
                 ->with('info', 'Please complete your enrollment application first.');
         }
 
-        return view('enrollment.payment-coming-soon', compact('applicant'));
+        $applicant->loadMissing('payment');
+        $payment = $applicant->payment;
+        $invoiceApplicants = collect([$applicant]);
+
+        if (Schema::hasColumn('enrollment_applicants', 'family_application_id')) {
+            $familyApplicationId = $applicant->family_application_id ?: $applicant->id;
+
+            $invoiceApplicants = $user->enrollmentApplicants()
+                ->with('payment')
+                ->whereIn('status', ['pending', 'submitted', 'under_review', 'approved'])
+                ->where(function ($query) use ($familyApplicationId) {
+                    $query->where('family_application_id', $familyApplicationId)
+                        ->orWhere('id', $familyApplicationId);
+                })
+                ->oldest()
+                ->get();
+
+            if ($invoiceApplicants->isEmpty()) {
+                $invoiceApplicants = collect([$applicant]);
+            }
+        }
+
+        return view('enrollment.payment', compact('applicant', 'payment', 'invoiceApplicants'));
     }
 
     public function submitPayment(Request $request)
@@ -505,6 +527,7 @@ class EnrollmentController extends Controller
         $validated = $request->validate([
             'method' => 'required|in:gcash_maya,gcash,maya,bdo',
             'reference_no' => 'nullable|string|max:100',
+            'amount' => 'required|numeric|min:1|max:999999',
             'receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
@@ -512,7 +535,7 @@ class EnrollmentController extends Controller
         $paymentData = [
             'user_id' => $user->id,
             'method' => $validated['method'] === 'bdo' ? 'bdo' : 'gcash',
-            'amount' => 4000.00,
+            'amount' => $validated['amount'],
             'receipt_url' => $receiptPath,
             'status' => 'pending',
             'remarks' => null,

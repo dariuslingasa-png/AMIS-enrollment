@@ -23,3 +23,21 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Cache uploaded images and static assets (served to admin portal cross-origin)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 7 days"
+    ExpiresByType image/png "access plus 7 days"
+    ExpiresByType image/gif "access plus 7 days"
+    ExpiresByType image/webp "access plus 7 days"
+    ExpiresByType application/pdf "access plus 7 days"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Allow admin portal to load images cross-origin
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|pdf)$">
+        Header set Access-Control-Allow-Origin "https://admin.amis.edu.ph"
+        Header set Cache-Control "public, max-age=604800, immutable"
+    </FilesMatch>
+</IfModule>
