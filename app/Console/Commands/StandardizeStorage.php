@@ -80,8 +80,8 @@ class StandardizeStorage extends Command
                     continue;
                 }
 
-                // Locate file physically (including base_path fallbacks for root directory folders)
-                $physicalPath = $this->locatePhysicalFile($oldPath);
+                // Locate file physically (including base_path fallbacks and smart folder searches)
+                $physicalPath = $this->locatePhysicalFile($oldPath, $applicant, $prefix);
 
                 if (!$physicalPath) {
                     if (Storage::disk('public')->exists($newPath)) {
@@ -158,7 +158,7 @@ class StandardizeStorage extends Command
                 $newPath = 'documents/' . $familyFolder . '/' . $newFilename;
 
                 if ($oldPath !== $newPath) {
-                    $physicalPath = $this->locatePhysicalFile($oldPath);
+                    $physicalPath = $this->locatePhysicalFile($oldPath, $applicant, 'payment_proof');
                     if ($physicalPath) {
                         $this->line("👉 Standardizing: [Child #{$applicant->id}] {$applicant->full_name} (payment_proof)");
                         $this->line("   Old: {$oldPath} (Found in {$physicalPath['source']})");
@@ -194,9 +194,9 @@ class StandardizeStorage extends Command
     }
 
     /**
-     * Locate physical file across standard public storage and cPanel root directory fallbacks.
+     * Locate physical file across standard public storage, cPanel root directory fallbacks, and smart search.
      */
-    private function locatePhysicalFile(string $oldPath): ?array
+    private function locatePhysicalFile(string $oldPath, ?EnrollmentApplicant $applicant = null, ?string $prefix = null): ?array
     {
         // 1. Check standard Laravel public storage disk
         if (Storage::disk('public')->exists($oldPath)) {
@@ -249,6 +249,131 @@ class StandardizeStorage extends Command
                 'source' => 'live_site_disk',
                 'path' => $liveSitePath
             ];
+        }
+
+        // 6. Check intermediate renamed path (from enrollment:rename-documents command)
+        if ($applicant && $prefix) {
+            $lastNameRenamed = strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '', trim($applicant->last_name ?? '')));
+            $firstNameRenamed = strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '', trim($applicant->first_name ?? '')));
+            $folderNameRenamed = "{$applicant->id}_{$lastNameRenamed}_{$firstNameRenamed}";
+            $extension = strtolower(pathinfo($oldPath, PATHINFO_EXTENSION) ?: 'jpg');
+            $intermediatePath = "documents/{$folderNameRenamed}/{$prefix}/{$prefix}_{$applicant->id}_{$lastNameRenamed}_{$firstNameRenamed}.{$extension}";
+
+            // Check standard Laravel public storage disk at intermediate path
+            if (Storage::disk('public')->exists($intermediatePath)) {
+                return [
+                    'source' => 'intermediate_disk',
+                    'path' => Storage::disk('public')->path($intermediatePath)
+                ];
+            }
+
+            // Check root and cPanel paths for intermediate path
+            $rootIntermediatePath = base_path($intermediatePath);
+            if (File::exists($rootIntermediatePath)) {
+                return [
+                    'source' => 'intermediate_root',
+                    'path' => $rootIntermediatePath
+                ];
+            }
+
+            $liveIntermediatePath = "/home/amisdavc/enrollment.amis.edu.ph/storage/app/public/{$intermediatePath}";
+            if (File::exists($liveIntermediatePath)) {
+                return [
+                    'source' => 'intermediate_live_site',
+                    'path' => $liveIntermediatePath
+                ];
+            }
+
+            $repIntermediatePath = "/home/amisdavc/repositories/AMIS-enrollment/storage/app/public/{$intermediatePath}";
+            if (File::exists($repIntermediatePath)) {
+                return [
+                    'source' => 'intermediate_repository',
+                    'path' => $repIntermediatePath
+                ];
+            }
+        }
+
+        // 7. SMART SEARCH: Scan all directories for matching applicant folder & leading-zero variations
+        if ($applicant) {
+            $applicantId = $applicant->id;
+            $filename = basename($oldPath);
+
+            $applicantIdStr = (string)$applicantId;
+            $paddedId2 = sprintf('%02d', $applicantId);
+            $paddedId3 = sprintf('%03d', $applicantId);
+
+            $allowedFolderNames = [$applicantIdStr, $paddedId2, $paddedId3];
+            $allowedPrefixes = [$applicantIdStr . '_', $paddedId2 . '_', $paddedId3 . '_'];
+
+            // List of parent directories to search for applicant-specific folders
+            $parentDirs = [
+                Storage::disk('public')->path('documents'),
+                Storage::disk('public')->path(''),
+                base_path('documents'),
+                base_path(''),
+                "/home/amisdavc/repositories/AMIS-enrollment/storage/app/public/documents",
+                "/home/amisdavc/repositories/AMIS-enrollment/storage/app/public",
+                "/home/amisdavc/repositories/AMIS-enrollment",
+                "/home/amisdavc/enrollment.amis.edu.ph/storage/app/public/documents",
+                "/home/amisdavc/enrollment.amis.edu.ph/storage/app/public",
+                "/home/amisdavc/enrollment.amis.edu.ph",
+            ];
+
+            foreach ($parentDirs as $parentDir) {
+                if (empty($parentDir) || !File::isDirectory($parentDir)) {
+                    continue;
+                }
+
+                // Scan all directories inside this parent directory
+                $subDirs = File::directories($parentDir);
+                foreach ($subDirs as $subDir) {
+                    $dirName = basename($subDir);
+                    $dirNameLower = strtolower($dirName);
+                    $matchFound = false;
+
+                    // Check exact matches
+                    foreach ($allowedFolderNames as $allowedName) {
+                        if ($dirNameLower === strtolower($allowedName)) {
+                            $matchFound = true;
+                            break;
+                        }
+                    }
+
+                    // Check prefix matches
+                    if (!$matchFound) {
+                        foreach ($allowedPrefixes as $allowedPrefix) {
+                            if (str_starts_with($dirNameLower, strtolower($allowedPrefix))) {
+                                $matchFound = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($matchFound) {
+                        // A. Check if the original file is directly in this directory
+                        $directFilePath = $subDir . '/' . $filename;
+                        if (File::exists($directFilePath)) {
+                            return [
+                                'source' => 'smart_search_direct',
+                                'path' => $directFilePath
+                            ];
+                        }
+
+                        // B. Check if the original file is in any subdirectory of this folder (recursive)
+                        if (File::isDirectory($subDir)) {
+                            $allFiles = File::allFiles($subDir);
+                            foreach ($allFiles as $file) {
+                                if (strtolower($file->getFilename()) === strtolower($filename)) {
+                                    return [
+                                        'source' => 'smart_search_recursive',
+                                        'path' => $file->getRealPath()
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         return null;
