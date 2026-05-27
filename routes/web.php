@@ -19,10 +19,10 @@ Route::get('/enrollment-closed', [EnrollmentController::class, 'showClosed'])->n
 // Dashboard redirect
 Route::get('/dashboard', function () {
     return redirect()->route('enrollment.dashboard');
-})->middleware(['auth'])->name('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 // Profile
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -41,7 +41,9 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 // Email verification — signed link (replaces OTP)
-Route::get('/verify-email/notice', [AuthController::class, 'showVerificationNotice'])->name('verify.email.notice');
+Route::get('/verify-email/notice', [AuthController::class, 'showVerificationNotice'])->name('verification.notice');
+Route::get('/verify-email/notice-compat', [AuthController::class, 'showVerificationNotice'])->name('verify.email.notice');
+Route::get('/verify-email/status', [AuthController::class, 'checkVerificationStatus'])->name('verify.email.status');
 Route::post('/verify-email/resend', [AuthController::class, 'resendVerificationLink'])->middleware('throttle:6,1')->name('verify.email.resend');
 Route::post('/email/verification-notification', [\App\Http\Controllers\Auth\EmailVerificationNotificationController::class, 'store'])
     ->middleware(['auth', 'throttle:6,1'])
@@ -50,14 +52,14 @@ Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.verify');
 
-// Dashboard — accessible to all authenticated users
-Route::middleware(['auth'])->group(function () {
+// Dashboard — accessible to all authenticated and verified users
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/enrollment/dashboard', [EnrollmentController::class, 'showDashboard'])->name('enrollment.dashboard');
     Route::get('/enrollment/status', [EnrollmentController::class, 'checkApplicationStatus'])->name('enrollment.status');
 });
 
-// Enrollment routes (applicant role only)
-Route::middleware(['auth', 'applicant'])->group(function () {
+// Enrollment routes (applicant role only, must be verified)
+Route::middleware(['auth', 'verified', 'applicant'])->group(function () {
     Route::get('/enroll/new', [EnrollmentController::class, 'startNewApplication'])->name('enrollment.new');
     Route::get('/enroll/affidavit', [EnrollmentController::class, 'showAffidavit'])->name('enrollment.affidavit');
     Route::post('/enroll/affidavit/draft', [EnrollmentController::class, 'saveAffidavitDraft'])->name('enrollment.affidavit.draft');
@@ -74,5 +76,4 @@ Route::middleware(['auth', 'applicant'])->group(function () {
     Route::get('/enrollment/success', [EnrollmentController::class, 'showSuccess'])->name('enrollment.success');
     Route::get('/enrollment/payment', [EnrollmentController::class, 'showPayment'])->name('enrollment.payment');
     Route::post('/enrollment/payment', [EnrollmentController::class, 'submitPayment'])->name('enrollment.payment.submit');
-
 });

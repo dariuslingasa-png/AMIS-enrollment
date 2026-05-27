@@ -33,30 +33,63 @@
 
                 <!-- Smart Status Banner -->
                 @php
-                    $photo = $applicant?->photo_2x2_url;
-                    $firstName = $applicant?->first_name ?? $user->name;
-                    $studentDisplayName = $applicant ? (trim(($applicant->last_name ?? '') . ', ' . ($applicant->first_name ?? '') . ' ' . ($applicant->middle_name ?? '')) ?: $firstName) : $user->name;
                     $applicants = $applicants ?? collect([$applicant])->filter();
-                    $docStatuses = $applicant?->document_statuses ?? [];
+                    
+                    // Sibling Banner Prioritisation Logic:
+                    // 1. Rejected (requires urgent user correction)
+                    // 2. Ready for Submission (requires finalizing and paying)
+                    // 3. Draft (work in progress)
+                    // 4. Approved (all enrolled)
+                    // 5. Pending (under administrative review)
+                    $rejectedApplicant = $applicants->where('status', 'rejected')->first();
+                    $readyApplicant = $applicants->where('status', 'ready_for_submission')->first();
+                    $draftApplicant = $applicants->where('status', 'draft')->first();
+                    $approvedCount = $applicants->where('status', 'approved')->count();
+                    
+                    if ($rejectedApplicant) {
+                        $bannerType = 'rejected';
+                        $activeApplicant = $rejectedApplicant;
+                    } elseif ($readyApplicant) {
+                        $bannerType = 'ready_for_submission';
+                        $activeApplicant = $readyApplicant;
+                    } elseif ($applicants->count() === 0 || $draftApplicant) {
+                        $bannerType = 'draft';
+                        $activeApplicant = $draftApplicant;
+                    } elseif ($applicants->count() > 0 && $approvedCount === $applicants->count()) {
+                        $bannerType = 'approved';
+                        $activeApplicant = $applicants->first();
+                    } else {
+                        $bannerType = 'pending';
+                        $activeApplicant = $applicants->first();
+                    }
+                    
+                    $photo = $activeApplicant?->photo_2x2_url;
+                    $firstName = $activeApplicant?->first_name ?? $user->name;
+                    $studentDisplayName = $activeApplicant ? (trim(($activeApplicant->last_name ?? '') . ', ' . ($activeApplicant->first_name ?? '') . ' ' . ($activeApplicant->middle_name ?? '')) ?: $firstName) : $user->name;
+                    $docStatuses = $activeApplicant?->document_statuses ?? [];
+                    
                     $rejectedDocs = collect([
                         'photo_2x2'   => '2x2 Photo',
                         'birth_cert'  => 'Birth Certificate',
                         'report_card' => 'Report Card',
                     ])->filter(fn($l, $k) => ($docStatuses[$k] ?? '') === 'rejected');
+                    
                     $requiredGuide = [
-                        ['label' => 'Student profile', 'done' => $applicant && $applicant->first_name && $applicant->last_name && $applicant->grade_level],
-                        ['label' => 'Religion, country, and contact number', 'done' => $applicant && $applicant->religion && $applicant->country && $applicant->mobile_number],
-                        ['label' => 'Parent or guardian contact', 'done' => $applicant && $applicant->parent_mobile],
-                        ['label' => 'Emergency contact', 'done' => $applicant && $applicant->emergency_name && $applicant->emergency_phone],
-                        ['label' => 'Recent 1:1 or annual photo', 'done' => $applicant && $applicant->photo_2x2_url],
-                        ['label' => 'Report card or signed temporary proof', 'done' => $applicant && (in_array($applicant->grade_level, ['Kinder 1', 'Kinder 2'], true) || $applicant->report_card_url || $applicant->affidavit_url)],
+                        ['label' => 'Student profile', 'done' => $activeApplicant && $activeApplicant->first_name && $activeApplicant->last_name && $activeApplicant->grade_level],
+                        ['label' => 'Religion, country, and contact number', 'done' => $activeApplicant && $activeApplicant->religion && $activeApplicant->country && $activeApplicant->mobile_number],
+                        ['label' => 'Parent or guardian contact', 'done' => $activeApplicant && $activeApplicant->parent_mobile],
+                        ['label' => 'Emergency contact', 'done' => $activeApplicant && $activeApplicant->emergency_name && $activeApplicant->emergency_phone],
+                        ['label' => 'Recent 1:1 or annual photo', 'done' => $activeApplicant && $activeApplicant->photo_2x2_url],
+                        ['label' => 'Report card or signed temporary proof', 'done' => $activeApplicant && (in_array($activeApplicant->grade_level, ['Kinder 1', 'Kinder 2'], true) || $activeApplicant->report_card_url || $activeApplicant->affidavit_url)],
                     ];
+                    
                     $optionalGuide = [
-                        ['label' => 'Birth certificate copy, if available', 'done' => $applicant && $applicant->birth_cert_url],
-                        ['label' => 'Medical record or health history', 'done' => $applicant && ($applicant->medical_record_url || $applicant->psych_testing || $applicant->prescription_med)],
-                        ['label' => 'Marriage contract, if applicable', 'done' => $applicant && $applicant->marriage_contract_url],
-                        ['label' => 'Physician details, if available', 'done' => $applicant && ($applicant->family_physician || $applicant->physician_phone)],
+                        ['label' => 'Birth certificate copy, if available', 'done' => $activeApplicant && $activeApplicant->birth_cert_url],
+                        ['label' => 'Medical record or health history', 'done' => $activeApplicant && ($activeApplicant->medical_record_url || $activeApplicant->psych_testing || $activeApplicant->prescription_med)],
+                        ['label' => 'Marriage contract, if applicable', 'done' => $activeApplicant && $activeApplicant->marriage_contract_url],
+                        ['label' => 'Physician details, if available', 'done' => $activeApplicant && ($activeApplicant->family_physician || $activeApplicant->physician_phone)],
                     ];
+                    
                     $canAddAnotherChild = $canAddAnotherChild ?? false;
                     $readyApplications = $readyApplications ?? collect();
                     $draftApplications = $draftApplications ?? collect();
@@ -64,6 +97,7 @@
                     $submittedApplications = $applicants->filter(fn ($item) => in_array($item->status, ['pending', 'submitted', 'under_review'], true));
                     $rejectedApplications = $applicants->where('status', 'rejected');
                     $approvedApplications = $applicants->where('status', 'approved');
+                    
                     $familyStatusSummary = collect([
                         $submittedApplications->count() ? $submittedApplications->count() . ' under review' : null,
                         $readyApplications->count() ? $readyApplications->count() . ' ready' : null,
@@ -71,9 +105,16 @@
                         $rejectedApplications->count() ? $rejectedApplications->count() . ' needs fixing' : null,
                         $approvedApplications->count() ? $approvedApplications->count() . ' approved' : null,
                     ])->filter()->implode(', ');
+
+                    $totalSiblings = $applicants->count();
+                    $pendingCount = $submittedApplications->count();
+                    $approvedCount = $approvedApplications->count();
+                    $draftCount = $draftApplications->count();
+                    $rejectedCount = $rejectedApplications->count();
+                    $readyCount = $applicants->where('status', 'ready_for_submission')->count();
                 @endphp
 
-                @if (!$applicant || $applicant->status === 'draft' || !$applicant->status)
+                @if ($bannerType === 'draft')
                     {{-- Blue: No application / draft --}}
                     <div style="background:linear-gradient(135deg,#1d4ed8,#1e40af);border-radius:16px;padding:1.75rem 1.5rem;margin-bottom:1.5rem;color:white;display:flex;align-items:center;gap:1.25rem;">
                         <div style="width:56px;height:56px;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -82,21 +123,21 @@
                         <div style="flex:1;">
                             <div style="font-size:1.125rem;font-weight:800;margin-bottom:0.25rem;">Hello, {{ $user->name }}!</div>
                             <div style="font-size:0.9rem;opacity:0.9;">
-                                @if ($applicant && $applicant->status === 'draft')
+                                @if ($activeApplicant && $activeApplicant->status === 'draft')
                                     You have an enrollment in progress. Continue where you left off.
                                 @else
                                     Start your enrollment application for SY 2026–2027.
                                 @endif
                             </div>
                         </div>
-                        <a href="{{ $applicant ? route('enrollment.form.child', $applicant) : route('enrollment.form', ['fresh' => 1]) }}"
+                        <a href="{{ $activeApplicant ? route('enrollment.form.child', $activeApplicant) : route('enrollment.form', ['fresh' => 1]) }}"
                            style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.625rem 1.25rem;background:white;color:#1d4ed8;border-radius:8px;font-size:0.875rem;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0;">
-                            {{ $applicant && $applicant->status === 'draft' ? 'Continue' : 'Start Now' }}
+                            {{ $activeApplicant && $activeApplicant->status === 'draft' ? 'Continue' : 'Start Now' }}
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                         </a>
                     </div>
 
-                @elseif ($applicant->status === 'rejected')
+                @elseif ($bannerType === 'rejected')
                     {{-- Red: Rejected --}}
                     <div style="background:linear-gradient(135deg,#dc2626,#b91c1c);border-radius:16px;padding:1.75rem 1.5rem;margin-bottom:1.5rem;color:white;display:flex;align-items:center;gap:1.25rem;">
                         <div style="flex-shrink:0;">
@@ -121,40 +162,77 @@
                                 </div>
                             @endif
                         </div>
-                        <a href="{{ route('enrollment.form.child', $applicant) }}"
+                        <a href="{{ route('enrollment.form.child', $activeApplicant) }}"
                            style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.625rem 1.25rem;background:white;color:#dc2626;border-radius:8px;font-size:0.875rem;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0;">
                             Re-upload
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                         </a>
                     </div>
 
-                @elseif ($applicant->status === 'ready_for_submission')
+                @elseif ($bannerType === 'ready_for_submission')
                     @php
-                        $readyNames = $applicants->where('status', 'ready_for_submission')->pluck('first_name')->filter()->toArray();
+                        $readyNames = $applicants->where('status', 'ready_for_submission')->pluck('first_name')->filter()->map(fn($n) => strtoupper($n))->toArray();
                         $readyCount = count($readyNames);
+                        $totalSiblings = $applicants->count();
+                        
+                        $pendingCount = $applicants->whereIn('status', ['pending', 'submitted', 'under_review'])->count();
+                        $approvedCount = $applicants->where('status', 'approved')->count();
+                        $draftCount = $applicants->where('status', 'draft')->count();
+                        $rejectedCount = $applicants->where('status', 'rejected')->count();
                     @endphp
-                    <div class="dashboard-welcome" style="background:linear-gradient(135deg,#0f766e,#115e59);">
-                        <div class="welcome-icon">
+                    <div style="background:linear-gradient(135deg,#0f766e,#115e59); border-radius:16px; padding:1.75rem 1.5rem; margin-bottom:1.5rem; color:white; text-align: left;">
+                        <div style="text-align: left;">
                             @if ($readyCount >= 2)
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-                            @elseif ($photo)
-                                <img src="{{ asset('storage/' . $photo) }}" alt="Photo" style="width:56px;height:56px;object-fit:cover;border-radius:50%;border:2px solid rgba(255,255,255,0.4);">
+                                <h2 style="font-size:1.25rem; font-weight:800; margin:0 0 0.5rem 0; line-height:1.25; color: white;">{{ $readyCount }} siblings are ready for submission.</h2>
+                                <div style="font-size:0.9rem; opacity:0.95; line-height:1.45; margin-bottom:0.75rem;">
+                                    <strong>Dear Parents,</strong> the enrollment applications for <strong style="text-decoration:underline;">{{ implode(', ', $readyNames) }}</strong> are fully completed and ready to be submitted.
+                                </div>
                             @else
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" color="white"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <h2 style="font-size:1.25rem; font-weight:800; margin:0 0 0.5rem 0; line-height:1.25; color: white;">{{ strtoupper($studentDisplayName) }} IS READY FOR SUBMISSION</h2>
+                                <div style="font-size:0.9rem; opacity:0.95; line-height:1.45; margin-bottom:0.75rem;">
+                                    <strong>Dear Parents,</strong> the enrollment application for <strong style="text-decoration:underline;">{{ strtoupper($studentDisplayName) }}</strong> is fully completed and ready to be submitted.
+                                </div>
                             @endif
-                        </div>
-                        <div>
-                            @if ($readyCount >= 2)
-                                <h2>{{ $readyCount }} siblings are ready for submission.</h2>
-                                <p>{{ implode(', ', $readyNames) }} — you may finalize enrollment from this dashboard.</p>
-                            @else
-                                <h2>{{ $studentDisplayName }} is ready for submission.</h2>
-                                <p>You may add another child or finalize enrollment from this dashboard.</p>
+                            
+                            <div style="font-size:0.875rem; opacity:0.9; line-height:1.45;">
+                                Please proceed to <strong>Finalize & Submit</strong> below to settle the payment and complete the enrollment process. You may also add another child first if you wish to enroll multiple siblings together.
+                            </div>
+
+                            {{-- Dynamic sibling status summary --}}
+                            @if ($totalSiblings > 1)
+                                <div style="margin-top:1.15rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.18); font-size:0.82rem; opacity:0.95; display:flex; flex-direction:column; gap:0.4rem;">
+                                    <div style="font-weight:700; color:#fde68a; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.025em; margin-bottom:0.15rem;">Sibling Application Status Summary</div>
+                                    
+                                    @if ($pendingCount > 0)
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <span style="display:inline-block; width:6px; height:6px; background:#fde68a; border-radius:50%;"></span>
+                                            <span>{{ $pendingCount }} sibling {{ \Illuminate\Support\Str::plural('application', $pendingCount) }}: <strong style="color:#fde68a;">Pending Review by Admin/Registrar</strong>. No action is required. We are currently verifying the details.</span>
+                                        </div>
+                                    @endif
+                                    @if ($approvedCount > 0)
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <span style="display:inline-block; width:6px; height:6px; background:#34d399; border-radius:50%;"></span>
+                                            <span>{{ $approvedCount }} sibling {{ \Illuminate\Support\Str::plural('application', $approvedCount) }}: <strong style="color:#a7f3d0;">Approved & Enrolled</strong>. Check your email inbox for welcome packs and updates.</span>
+                                        </div>
+                                    @endif
+                                    @if ($draftCount > 0)
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <span style="display:inline-block; width:6px; height:6px; background:#60a5fa; border-radius:50%;"></span>
+                                            <span>{{ $draftCount }} sibling {{ \Illuminate\Support\Str::plural('application', $draftCount) }}: <strong>Draft Stage</strong> (in progress). You can complete their profiles to submit them.</span>
+                                        </div>
+                                    @endif
+                                    @if ($rejectedCount > 0)
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <span style="display:inline-block; width:6px; height:6px; background:#f87171; border-radius:50%;"></span>
+                                            <span style="color:#fecaca;">{{ $rejectedCount }} sibling {{ \Illuminate\Support\Str::plural('application', $rejectedCount) }}: <strong style="color:#fca5a5;">Returned for Correction</strong>. Click "Re-upload" on their cards below to fix.</span>
+                                        </div>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     </div>
 
-                @elseif ($applicant->status === 'approved')
+                @elseif ($bannerType === 'approved')
                     {{-- Green: Approved + animated confetti --}}
                     <style>
                         @keyframes confettiFall {
@@ -211,7 +289,7 @@
                             @endif
                         </div>
                         <div style="position:relative;">
-                            <div style="font-size:0.8125rem;font-weight:600;opacity:0.85;margin-bottom:0.25rem;letter-spacing:0.05em;text-transform:uppercase;">OFFICIALLY ENROLLED — SY {{ $applicant->school_year }}</div>
+                            <div style="font-size:0.8125rem;font-weight:600;opacity:0.85;margin-bottom:0.25rem;letter-spacing:0.05em;text-transform:uppercase;">OFFICIALLY ENROLLED — SY {{ $activeApplicant->school_year }}</div>
                             <div style="font-size:1.375rem;font-weight:900;line-height:1.2;margin-bottom:0.25rem;">Congratulations, {{ $studentDisplayName }}!</div>
                             <div style="font-size:0.9rem;opacity:0.9;">Your enrollment has been approved. Please check your personal email inbox for important enrollment details, class schedule, and further school updates.</div>
                         </div>
@@ -219,33 +297,48 @@
 
                 @else
                     {{-- Default: pending/under review --}}
-                    <div class="dashboard-welcome">
-                        <div class="welcome-icon">
-                            @if ($multipleApplicants)
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-                            @elseif ($photo)
-                                <img src="{{ asset('storage/' . $photo) }}" alt="Photo" style="width:56px;height:56px;object-fit:cover;border-radius:50%;border:2px solid rgba(255,255,255,0.4);">
-                            @else
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" color="white"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            @endif
-                        </div>
-                        <div>
-                            <h2>Hello, {{ $user->name }}!</h2>
-                            @if ($multipleApplicants)
-                                <p>{{ $applicants->count() }} enrollment applications are being tracked: {{ $familyStatusSummary }}.</p>
-                            @else
-                                <p>Your enrollment application has been submitted and is under review.</p>
+                    <div style="background:linear-gradient(135deg,#0f766e,#115e59); border-radius:16px; padding:1.75rem 1.5rem; margin-bottom:1.5rem; color:white; text-align: left;">
+                        <div style="text-align: left;">
+                            <h2 style="font-size:1.25rem; font-weight:800; margin:0 0 0.5rem 0; line-height:1.25; color: white; text-transform: uppercase; letter-spacing: 0.05em;">ENROLLMENT APPLICATIONS UNDER REVIEW</h2>
+                            <div style="font-size:0.9rem; opacity:0.95; line-height:1.45; margin-bottom:0.75rem;">
+                                <strong>Dear Parents,</strong> your enrollment {{ $totalSiblings > 1 ? 'applications have' : 'application has' }} been successfully submitted and {{ $totalSiblings > 1 ? 'are' : 'is' }} currently pending review by the school registrar and admin office. We will verify your submitted documents and transaction references shortly. No further action is required at this stage.
+                            </div>
+
+                            {{-- Dynamic sibling status summary --}}
+                            @if ($totalSiblings > 1)
+                                <div style="margin-top:1.15rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.18); font-size:0.82rem; opacity:0.95; display:flex; flex-direction:column; gap:0.4rem;">
+                                    <div style="font-weight:700; color:#fde68a; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.025em; margin-bottom:0.15rem;">Sibling Application Status Summary</div>
+                                    
+                                    @if ($pendingCount > 0)
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <span style="display:inline-block; width:6px; height:6px; background:#fde68a; border-radius:50%;"></span>
+                                            <span>{{ $pendingCount }} sibling {{ \Illuminate\Support\Str::plural('application', $pendingCount) }}: <strong style="color:#fde68a;">Pending Review by Admin/Registrar</strong>. No action is required. We are currently verifying the details.</span>
+                                        </div>
+                                    @endif
+                                    @if ($approvedCount > 0)
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <span style="display:inline-block; width:6px; height:6px; background:#34d399; border-radius:50%;"></span>
+                                            <span>{{ $approvedCount }} sibling {{ \Illuminate\Support\Str::plural('application', $approvedCount) }}: <strong style="color:#a7f3d0;">Approved & Enrolled</strong>. Check your email inbox for welcome packs and updates.</span>
+                                        </div>
+                                    @endif
+                                    @if ($draftCount > 0)
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <span style="display:inline-block; width:6px; height:6px; background:#60a5fa; border-radius:50%;"></span>
+                                            <span>{{ $draftCount }} sibling {{ \Illuminate\Support\Str::plural('application', $draftCount) }}: <strong>Draft Stage</strong> (in progress). You can complete their profiles to submit them.</span>
+                                        </div>
+                                    @endif
+                                    @if ($rejectedCount > 0)
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <span style="display:inline-block; width:6px; height:6px; background:#f87171; border-radius:50%;"></span>
+                                            <span style="color:#fecaca;">{{ $rejectedCount }} sibling {{ \Illuminate\Support\Str::plural('application', $rejectedCount) }}: <strong style="color:#fca5a5;">Returned for Correction</strong>. Click "Re-upload" on their cards below to fix.</span>
+                                        </div>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     </div>
                 @endif
 
-                <x-dashboard.beta-notice />
-
-                <x-dashboard.readiness-guide
-                    :required-items="$requiredGuide"
-                    :optional-items="$optionalGuide"
-                />
 
                 @if ($applicants->count())
                     <x-dashboard.family-group

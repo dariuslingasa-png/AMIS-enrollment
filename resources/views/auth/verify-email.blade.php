@@ -1,6 +1,82 @@
 <x-guest-layout>
     <div class="auth-page">
-        <div class="auth-card verify-email-card" style="max-width: 420px; text-align: center;">
+        <div class="auth-card verify-email-card" 
+             x-data="{ 
+                 email: '{{ addslashes(auth()->check() ? auth()->user()->email : session('email', session('verify_email', ''))) }}',
+                 timeLeft: 300, 
+                 timerText: '05:00', 
+                 isExpired: false, 
+                 interval: null,
+                 pollInterval: null,
+                 init() {
+                     if (this.email) {
+                         const storageKey = 'verify_timer_start_' + btoa(this.email).replace(/=/g, '');
+                         let startTimestamp = localStorage.getItem(storageKey);
+                         if (!startTimestamp) {
+                             startTimestamp = Date.now().toString();
+                             localStorage.setItem(storageKey, startTimestamp);
+                         }
+                         
+                         const elapsed = Math.floor((Date.now() - parseInt(startTimestamp)) / 1000);
+                         const remaining = 300 - elapsed;
+                         
+                         if (remaining <= 0) {
+                             this.timeLeft = 0;
+                             this.isExpired = true;
+                         } else {
+                             this.timeLeft = remaining;
+                             this.isExpired = false;
+                         }
+                     } else {
+                         this.timeLeft = 300;
+                         this.isExpired = false;
+                     }
+                     
+                     this.updateText();
+                     
+                     if (!this.isExpired) {
+                         this.interval = setInterval(() => {
+                             if (this.timeLeft > 0) {
+                                 this.timeLeft--;
+                                 this.updateText();
+                             } else {
+                                 this.isExpired = true;
+                                 clearInterval(this.interval);
+                             }
+                         }, 1000);
+                     }
+
+                     // Poll verification status every 3 seconds to auto-redirect if they verify in another tab
+                     this.pollInterval = setInterval(async () => {
+                         try {
+                             const response = await fetch('{{ route('verify.email.status') }}');
+                             if (response.ok) {
+                                 const data = await response.json();
+                                 if (data.verified) {
+                                     clearInterval(this.pollInterval);
+                                     if (this.interval) clearInterval(this.interval);
+                                     this.resetTimer();
+                                     window.location.href = '{{ route('enrollment.dashboard') }}';
+                                 }
+                             }
+                         } catch (error) {
+                             console.error('Error polling verification status:', error);
+                         }
+                     }, 3000);
+                 },
+                 updateText() {
+                     const mins = Math.floor(this.timeLeft / 60);
+                     const secs = this.timeLeft % 60;
+                     this.timerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                 },
+                 resetTimer() {
+                     if (this.email) {
+                         const storageKey = 'verify_timer_start_' + btoa(this.email).replace(/=/g, '');
+                         localStorage.removeItem(storageKey);
+                     }
+                 }
+             }"
+             style="max-width: 420px; text-align: center;">
             <div style="width:64px;height:64px;border-radius:50%;background:#f0fdf4;border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -9,10 +85,31 @@
             </div>
 
             <h1 style="font-size:1.375rem;font-weight:800;color:#111827;margin:0 0 0.5rem;">Check Your Email</h1>
-            <p style="font-size:0.9375rem;color:#6b7280;margin:0 0 1.5rem;line-height:1.6;">
+            <p style="font-size:0.9375rem;color:#6b7280;margin:0 0 1.25rem;line-height:1.6;">
                 We sent a verification link to<br>
-                <strong style="color:#111827;">{{ session('email', 'your email address') }}</strong>
+                <strong style="color:#111827;">{{ auth()->check() ? auth()->user()->email : session('email', session('verify_email', 'your email address')) }}</strong>
             </p>
+
+            {{-- Countdown Notice Box --}}
+            <div style="background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; gap: 0.65rem; align-items: center; color: #b45309; text-align: left; font-family: inherit; font-size: 0.85rem; line-height: 1.4;">
+                {{-- Clock Icon --}}
+                <svg style="width: 20px; height: 20px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 800; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; margin-bottom: 0.15rem;">Verification Expiry</div>
+                    <div x-show="!isExpired">
+                        Verification link expires in <strong style="color: #b45309;">5 minutes</strong>.
+                        <div style="margin-top: 0.15rem; font-weight: 750;">
+                            Time remaining: <span x-text="timerText" style="font-family: monospace; font-size: 0.9rem; color: #dc2626; font-weight: 900;">05:00</span>
+                        </div>
+                    </div>
+                    <div x-show="isExpired" x-cloak style="color: #dc2626; font-weight: 800; text-transform: uppercase; font-size: 0.76rem; letter-spacing: 0.03em;">
+                        Verification link has expired! Please request a new one below.
+                    </div>
+                </div>
+            </div>
 
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;text-align:left;">
                 <div style="font-size:0.8125rem;font-weight:700;color:#374151;margin-bottom:0.75rem;">What to do:</div>
@@ -25,10 +122,15 @@
                 </ol>
             </div>
 
-            <form method="POST" action="{{ route('verify.email.resend') }}" data-loading-form>
+            <form method="POST" action="{{ route('verify.email.resend') }}" data-loading-form @submit="resetTimer()">
                 @csrf
-                <input type="hidden" name="email" value="{{ session('email') }}">
-                <x-loading-button class="auth-button auth-button-outline" style="margin-bottom:1rem;" loading="Sending email...">
+                <input type="hidden" name="email" value="{{ auth()->check() ? auth()->user()->email : session('email', session('verify_email')) }}">
+                <x-loading-button 
+                    class="auth-button auth-button-outline" 
+                    style="margin-bottom:1rem; transition: all 0.2s;" 
+                    ::style="!isExpired ? 'opacity: 0.6; cursor: not-allowed; pointer-events: none;' : 'cursor: pointer;'"
+                    loading="Sending email..."
+                    ::disabled="!isExpired">
                     Resend Verification Email
                 </x-loading-button>
             </form>

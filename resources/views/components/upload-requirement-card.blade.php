@@ -4,7 +4,8 @@
     'description' => '',
     'required' => false,
     'accept' => 'image/jpeg,image/jpg,image/png',
-    'hint' => 'JPG or PNG up to 5MB',
+    'maxSizeMB' => 5,
+    'hint' => '',
     'uploaded' => null,
     'guideTitle' => 'Guide',
     'guide' => [],
@@ -26,17 +27,133 @@
 @php
     $uploadedBasename = $uploaded ? basename($uploaded) : null;
     $uploadedIsPdf = $uploaded ? str_ends_with(strtolower($uploaded), '.pdf') : false;
+
+    // Parse accept string to dynamic friendly formats
+    $acceptParts = explode(',', $accept);
+    $friendlyAccepts = [];
+    foreach ($acceptParts as $part) {
+        $part = trim(strtolower($part));
+        if ($part === 'application/pdf' || str_ends_with($part, '.pdf')) {
+            $friendlyAccepts[] = 'PDF';
+        } elseif (str_contains($part, 'jpeg') || str_contains($part, 'jpg') || str_ends_with($part, '.jpg') || str_ends_with($part, '.jpeg')) {
+            $friendlyAccepts[] = 'JPG';
+            $friendlyAccepts[] = 'JPEG';
+        } elseif (str_contains($part, 'png') || str_ends_with($part, '.png')) {
+            $friendlyAccepts[] = 'PNG';
+        }
+    }
+    $friendlyAccepts = array_unique($friendlyAccepts);
+    $formattedAccept = implode(', ', $friendlyAccepts);
 @endphp
 
-<div
-    x-data="{
+<script>
+if (!window.AMIS_UploadUtils) {
+    window.AMIS_UploadUtils = {
+        // Validate file type format
+        validateFile(file, acceptStr) {
+            if (!acceptStr) return { valid: true };
+            const allowed = acceptStr.split(',').map(s => s.trim().toLowerCase());
+            const fileName = file.name.toLowerCase();
+            const fileType = file.type.toLowerCase();
+            
+            let match = false;
+            for (const item of allowed) {
+                if (item.startsWith('.')) {
+                    if (fileName.endsWith(item)) { match = true; break; }
+                } else if (item.endsWith('/*')) {
+                    const prefix = item.slice(0, -1); // e.g. "image/"
+                    if (fileType.startsWith(prefix)) { match = true; break; }
+                } else {
+                    if (fileType === item) { match = true; break; }
+                }
+            }
+            
+            if (!match) {
+                const readableTypes = allowed.map(item => {
+                    if (item.startsWith('.')) return item.substring(1).toUpperCase();
+                    if (item === 'application/pdf') return 'PDF';
+                    if (item.startsWith('image/')) return item.substring(6).toUpperCase();
+                    return item;
+                });
+                return {
+                    valid: false,
+                    error: `Unsupported file format. Supported: ${[...new Set(readableTypes)].join(', ')}.`
+                };
+            }
+            return { valid: true };
+        },
+
+        // Client-side image compression using canvas
+        compressImage(file, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            // High print resolution cap (2048px on the longest side)
+                            const maxDim = 2048;
+                            if (width > maxDim || height > maxDim) {
+                                if (width > height) {
+                                    height = Math.round((height * maxDim) / width);
+                                    width = maxDim;
+                                } else {
+                                    width = Math.round((width * maxDim) / height);
+                                    height = maxDim;
+                                }
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            
+                            const ctx = canvas.getContext('2d');
+                            // Paint canvas with a solid white background (converting transparent PNGs cleanly to JPEG)
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.fillRect(0, 0, width, height);
+                            
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            canvas.toBlob((blob) => {
+                                if (!blob) {
+                                    reject(new Error('Optimizing image canvas conversion failed.'));
+                                    return;
+                                }
+                                const optimizedFile = new File([blob], file.name, {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now()
+                                });
+                                resolve(optimizedFile);
+                            }, 'image/jpeg', quality);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    };
+                    img.onerror = () => reject(new Error('Selected file could not be read as an image.'));
+                };
+                reader.onerror = () => reject(new Error('Selected file reader error.'));
+            });
+        }
+    };
+}
+
+function registerUploadComponent(Alpine) {
+    // Define globally on window so Alpine can find it even if initialization races with asset loading
+    window.uploadRequirementCard = (config) => ({
         fileName: '',
         preview: '',
-        hasUploaded: {{ $uploaded ? 'true' : 'false' }},
-        showUpload: {{ $deferUpload ? 'false' : 'true' }},
+        hasUploaded: !!config.uploaded,
+        showUpload: !config.deferUpload,
         removingUploaded: false,
         supportModal: null,
-        uploadedName: @js($uploadedBasename ?? 'Saved file'),
+        uploadedName: config.uploadedName || 'Saved file',
+        isProcessing: false,
+        errorMsg: '',
         get currentState() {
             if (this.fileName) return 'selected';
             if (this.hasUploaded) return 'uploaded';
@@ -45,23 +162,24 @@
         async removeUploaded() {
             if (!this.hasUploaded || this.removingUploaded) return;
             this.removingUploaded = true;
+            this.errorMsg = '';
             try {
                 const applicantQuery = window.AMIS_CURRENT_APPLICANT_ID ? '?applicant=' + encodeURIComponent(window.AMIS_CURRENT_APPLICANT_ID) : '';
-                const response = await fetch('{{ route('enrollment.draft.document.remove', ['document' => $name]) }}' + applicantQuery, {
+                const response = await fetch(config.removeUrl + applicantQuery, {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').content,
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json',
                     },
                 });
                 if (!response.ok) throw new Error('Unable to remove file');
                 this.hasUploaded = false;
                 window.dispatchEvent(new CustomEvent('enrollment:file-removed', {
-                    detail: { name: '{{ $name }}' }
+                    detail: { name: config.name }
                 }));
             } catch (_) {
                 window.dispatchEvent(new CustomEvent('enrollment:file-remove-failed', {
-                    detail: { name: '{{ $name }}' }
+                    detail: { name: config.name }
                 }));
             } finally {
                 this.removingUploaded = false;
@@ -72,7 +190,7 @@
             this.preview = '';
             this.$refs.input.value = '';
             window.dispatchEvent(new CustomEvent('enrollment:file-removed', {
-                detail: { name: '{{ $name }}' }
+                detail: { name: config.name }
             }));
         },
         chooseFile() {
@@ -91,7 +209,129 @@
         closeSupportModal() {
             this.supportModal = null;
         },
-    }"
+        async handleFileChange(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            
+            this.errorMsg = '';
+            
+            const validation = window.AMIS_UploadUtils.validateFile(file, config.accept);
+            if (!validation.valid) {
+                this.errorMsg = validation.error;
+                this.clearSelected();
+                return;
+            }
+            
+            const maxSizeMB = config.maxSizeMB;
+            const name = config.name;
+            const fileSizeMB = file.size / (1024 * 1024);
+            const isImage = file.type.startsWith('image/');
+            
+            if (!isImage) {
+                if (fileSizeMB > maxSizeMB) {
+                    this.errorMsg = 'File size exceeds the maximum limit of ' + maxSizeMB + 'MB.';
+                    this.clearSelected();
+                    return;
+                }
+            } else {
+                let needsCompression = false;
+                let quality = 0.82;
+                
+                if (name === 'photo_2x2') {
+                    if (fileSizeMB > 2) {
+                        needsCompression = true;
+                        quality = 0.80;
+                    }
+                } else {
+                    if (fileSizeMB > maxSizeMB) {
+                        needsCompression = true;
+                        quality = 0.88;
+                    } else if (fileSizeMB > 3) {
+                        needsCompression = true;
+                        quality = 0.90;
+                    }
+                }
+                
+                if (needsCompression) {
+                    this.isProcessing = true;
+                    try {
+                        const originalSize = file.size;
+                        const optimizedFile = await window.AMIS_UploadUtils.compressImage(file, quality);
+                        if (optimizedFile.size < originalSize) {
+                            file = optimizedFile;
+                            const dt = new DataTransfer();
+                            dt.items.add(optimizedFile);
+                            this.$refs.input.files = dt.files;
+                        }
+                    } catch (e) {
+                        console.error('Image compression error:', e);
+                        if (fileSizeMB > maxSizeMB) {
+                            this.errorMsg = 'Image optimization failed and the file exceeds the maximum limit of ' + maxSizeMB + 'MB.';
+                            this.clearSelected();
+                            this.isProcessing = false;
+                            return;
+                        }
+                    } finally {
+                        this.isProcessing = false;
+                    }
+                }
+            }
+            
+            const finalSizeMB = file.size / (1024 * 1024);
+            if (finalSizeMB > maxSizeMB) {
+                this.errorMsg = 'The selected file exceeds the maximum allowed limit of ' + maxSizeMB + 'MB.';
+                this.clearSelected();
+                return;
+            }
+            
+            this.fileName = file.name;
+            this.hasUploaded = false;
+            
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => this.preview = e.target.result;
+                reader.readAsDataURL(file);
+            } else {
+                this.preview = '';
+            }
+            
+            window.dispatchEvent(new CustomEvent('enrollment:file-selected', {
+                detail: { name: name }
+            }));
+        }
+    });
+
+    if (Alpine && Alpine.data) {
+        try {
+            Alpine.data('uploadRequirementCard', window.uploadRequirementCard);
+        } catch(e) {
+            console.error('Failed to register upload component data', e);
+        }
+    }
+}
+
+if (!window.AMIS_UploadComponentRegistered) {
+    window.AMIS_UploadComponentRegistered = true;
+    if (window.Alpine) {
+        registerUploadComponent(window.Alpine);
+    } else {
+        document.addEventListener('alpine:init', () => {
+            registerUploadComponent(window.Alpine);
+        });
+    }
+}
+</script>
+
+<div
+    x-data="uploadRequirementCard({
+        name: '{{ $name }}',
+        uploaded: {{ $uploaded ? 'true' : 'false' }},
+        deferUpload: {{ $deferUpload ? 'true' : 'false' }},
+        uploadedName: @js($uploadedBasename),
+        removeUrl: '{{ route('enrollment.draft.document.remove', ['document' => $name]) }}',
+        accept: '{{ $accept }}',
+        maxSizeMB: {{ $maxSizeMB }}
+    })"
     @keydown.escape.window="closeSupportModal()"
     class="!flex !h-full !flex-col !rounded-2xl !border !border-slate-200 !bg-white !p-5 sm:!p-6"
 >
@@ -103,7 +343,7 @@
                     <p class="!mt-1 !text-sm !leading-6 !text-slate-600">{{ $description }}</p>
                 @endif
             </div>
-            <span class="!shrink-0 !rounded-full {{ $required ? '!bg-emerald-50 !text-emerald-700' : '!bg-slate-100 !text-slate-600' }} !px-2.5 !py-1 !text-xs !font-semibold">
+            <span class="!shrink-0 !rounded-full {{ $required ? '!bg-emerald-50 !text-emerald-700' : '!bg-sky-50 !text-sky-700' }} !px-2.5 !py-1 !text-xs !font-semibold">
                 {{ $required ? 'Required' : 'Optional' }}
             </span>
         </div>
@@ -159,21 +399,55 @@
                 '!border !border-emerald-100 !bg-emerald-50': currentState === 'uploaded'
             }"
         >
+            <!-- Loading/Processing Overlay -->
+            <div
+                x-show="isProcessing"
+                x-cloak
+                style="position: absolute !important; inset: 0 !important; z-index: 50 !important; display: flex !important; align-items: center !important; justify-content: center !important; background: rgba(248, 250, 252, 0.75) !important; backdrop-filter: blur(4px) !important; border-radius: 1rem !important; box-sizing: border-box !important;"
+            >
+                <style>
+                    @keyframes upload-card-spin {
+                        to { transform: rotate(360deg); }
+                    }
+                    .upload-card-spinner {
+                        animation: upload-card-spin 1s linear infinite !important;
+                    }
+                </style>
+                <div style="background: #ffffff !important; border: 1px solid #e2e8f0 !important; border-radius: 16px !important; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05) !important; padding: 1.25rem 1.5rem !important; width: 85% !important; max-width: 200px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; text-align: center !important; box-sizing: border-box !important;">
+                    <div style="display: flex !important; align-items: center !important; justify-content: center !important; margin-bottom: 0.5rem !important; width: 100% !important;">
+                        <svg class="upload-card-spinner" style="width: 32px !important; height: 32px !important; display: block !important; margin: 0 auto !important; flex-shrink: 0 !important;" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="#e2e8f0" stroke-width="3"></circle>
+                            <path d="M12 2a10 10 0 0 1 10 10" stroke="#10b981" stroke-width="3" stroke-linecap="round"></path>
+                        </svg>
+                    </div>
+                    <span style="font-size: 0.85rem !important; font-weight: 700 !important; color: #0f172a !important; display: block !important; margin-bottom: 0.15rem !important; width: 100% !important; line-height: 1.25 !important;">Compressing Image...</span>
+                    <span style="font-size: 0.72rem !important; font-weight: 500 !important; color: #64748b !important; display: block !important; width: 100% !important; line-height: 1.2 !important;">Optimizing for upload</span>
+                </div>
+            </div>
+
             <template x-if="currentState === 'empty'">
                 <button
                     type="button"
                     @click="chooseFile()"
                     class="!flex !h-full !w-full !items-center !justify-center !p-5 !text-center focus-visible:!outline-none focus-visible:!ring-4 focus-visible:!ring-emerald-100"
                 >
-                    <div class="!flex !flex-col !items-center !justify-center !gap-3">
-                        <div class="!flex !h-12 !w-12 !items-center !justify-center !rounded-full !bg-white !text-slate-400">
-                            <svg class="!h-6 !w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <div class="!flex !flex-col !items-center !justify-center !gap-2">
+                        <div class="!flex !h-11 !w-11 !items-center !justify-center !rounded-full !bg-white !text-slate-400 !shadow-sm">
+                            <svg class="!h-5 !w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 0 1-.88-7.903A5 5 0 1 1 15.9 6L16 6a5 5 0 0 1 1 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                             </svg>
                         </div>
                         <div class="!space-y-1">
-                            <p class="!m-0 !text-base !font-semibold !leading-6 !text-emerald-700">Choose file</p>
-                            <p class="!m-0 !text-sm !leading-5 !text-slate-500">{{ $hint }}</p>
+                            <p class="!m-0 !text-sm !font-bold !leading-5 !text-emerald-700">Choose file</p>
+                            <p class="!m-0 !text-[11px] !font-medium !leading-4 !text-slate-400">
+                                Accepted: <span class="!font-semibold !text-slate-600">{{ $formattedAccept }}</span>
+                            </p>
+
+                            @if($name === 'photo_2x2')
+                                <p class="!m-0 !text-[10px] !font-semibold !text-emerald-600 !mt-0.5">(Large images auto-compressed)</p>
+                            @elseif(str_contains($accept, 'pdf'))
+                                <p class="!m-0 !text-[10px] !font-semibold !text-emerald-600 !mt-0.5">(Images optimized automatically)</p>
+                            @endif
                         </div>
                     </div>
                 </button>
@@ -191,7 +465,7 @@
                                 <line x1="8" y1="17" x2="14" y2="17"/>
                             </svg>
                         </div>
-                        <p class="!m-0 !text-sm !font-semibold">Image file</p>
+                        <p class="!m-0 !text-sm !font-semibold">Document File</p>
                     </div>
                     <div class="!absolute !inset-x-0 !bottom-0 !bg-white/90 !px-3 !py-2 !backdrop-blur-sm">
                         <p class="!m-0 !truncate !text-sm !font-semibold !leading-5 !text-slate-900" x-text="fileName"></p>
@@ -252,23 +526,7 @@
             name="{{ $name }}"
             accept="{{ $accept }}"
             class="!sr-only"
-            @change="
-                const file = $event.target.files[0];
-                if (file) {
-                    fileName = file.name;
-                    hasUploaded = false;
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => preview = e.target.result;
-                        reader.readAsDataURL(file);
-                    } else {
-                        preview = '';
-                    }
-                    window.dispatchEvent(new CustomEvent('enrollment:file-selected', {
-                        detail: { name: '{{ $name }}' }
-                    }));
-                }
-            "
+            @change="handleFileChange($event)"
         >
 
         <div class="!mt-4 !rounded-xl !bg-slate-50 !p-4">
@@ -452,6 +710,29 @@
                 <img :src="supportModal?.src" :alt="supportModal?.alt || supportModal?.label || 'Photo guide support'" loading="lazy" decoding="async">
             </div>
         </div>
+    </div>
+
+    <!-- Client-side Validation Error -->
+    <div
+        x-show="errorMsg"
+        x-cloak
+        style="margin-top: 0.75rem; display: flex; align-items: start; gap: 0.5rem; border-radius: 0.75rem; border: 1px solid #fecaca; background: #fef2f2; padding: 0.875rem; font-size: 0.875rem; line-height: 1.25rem; color: #b91c1c; box-sizing: border-box;"
+    >
+        <svg style="margin-top: 0.125rem; flex-shrink: 0; display: block;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <div style="flex: 1; text-align: left;">
+            <strong style="font-weight: 700;">Upload Error:</strong>
+            <span x-text="errorMsg"></span>
+        </div>
+        <button type="button" @click="errorMsg = ''" style="background: none; border: none; color: #fca5a5; cursor: pointer; padding: 0; outline: none; display: flex; align-items: center; justify-content: center;">
+            <svg style="display: block;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
     </div>
 
     @error($name)

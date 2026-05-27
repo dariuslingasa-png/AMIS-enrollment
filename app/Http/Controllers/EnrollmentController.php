@@ -45,11 +45,11 @@ class EnrollmentController extends Controller
         $hasErrors = session()->has('errors') && session('errors')->any();
         $rejectionFixSteps = $this->rejectionFixSteps($applicant);
         $initialStep = $hasErrors
-            ? 7
-            : ($rejectionFixSteps ? min(array_keys($rejectionFixSteps)) : ($applicant ? min((int) ($applicant->last_step ?? 1), 7) : 1));
+            ? 6
+            : ($rejectionFixSteps ? min(array_keys($rejectionFixSteps)) : ($applicant ? min((int) ($applicant->last_step ?? 1), 6) : 1));
         $completedSteps = $hasErrors
             ? range(1, 6)
-            : ($applicant ? range(1, min((int) ($applicant->last_step ?? 1), 7)) : []);
+            : ($applicant ? range(1, min((int) ($applicant->last_step ?? 1), 6)) : []);
 
         return view('enrollment.form', [
             'gradeLevels' => $this->gradeShifts->getGradeLevels(),
@@ -107,7 +107,7 @@ class EnrollmentController extends Controller
             ->all();
     }
 
-    public function startNewApplication()
+    public function startNewApplication(Request $request)
     {
         $applicant = $this->applications->startNewFor(Auth::user());
 
@@ -116,7 +116,12 @@ class EnrollmentController extends Controller
                 ->with('info', 'Please complete your current child application first before adding another child.');
         }
 
-        return redirect()->route('enrollment.form.child', $applicant)
+        $params = ['applicant' => $applicant->id];
+        if ($request->has('duplicate')) {
+            $params['duplicate'] = $request->query('duplicate');
+        }
+
+        return redirect()->route('enrollment.form.child', $params)
             ->with('success', 'New child enrollment draft started. This stays grouped with your parent account.');
     }
 
@@ -379,7 +384,6 @@ class EnrollmentController extends Controller
         $user = $request->user();
         $readyApplications = $this->applications->readyApplications($user);
         $draftApplications = $this->applications->draftApplications($user);
-        $incompleteApplications = $this->applications->incompleteApplications($readyApplications);
 
         if ($readyApplications->isEmpty()) {
             return redirect()->route('enrollment.dashboard')
@@ -391,12 +395,7 @@ class EnrollmentController extends Controller
                 ->with('info', 'Please complete all child drafts before finalizing enrollment.');
         }
 
-        return view('enrollment.finalize', [
-            'user' => $user,
-            'readyApplications' => $readyApplications,
-            'draftApplications' => $draftApplications,
-            'incompleteApplications' => $incompleteApplications,
-        ]);
+        return redirect()->route('enrollment.dashboard');
     }
 
     public function confirmFinalize(
@@ -495,15 +494,31 @@ class EnrollmentController extends Controller
         if (Schema::hasColumn('enrollment_applicants', 'family_application_id')) {
             $familyApplicationId = $applicant->family_application_id ?: $applicant->id;
 
-            $invoiceApplicants = $user->enrollmentApplicants()
+            $allFamilyApplicants = $user->enrollmentApplicants()
                 ->with('payment')
-                ->whereIn('status', ['pending', 'submitted', 'under_review', 'approved'])
                 ->where(function ($query) use ($familyApplicationId) {
                     $query->where('family_application_id', $familyApplicationId)
                         ->orWhere('id', $familyApplicationId);
                 })
                 ->oldest()
                 ->get();
+
+            $isNewPayment = $applicant->status === 'ready_for_submission';
+
+            $invoiceApplicants = $allFamilyApplicants->filter(function ($item) use ($applicant, $isNewPayment) {
+                // Unconditionally include the active applicant
+                if ($item->id === $applicant->id) {
+                    return true;
+                }
+
+                if ($isNewPayment) {
+                    // For a new payment transaction, we only include other ready-to-complete sibling drafts
+                    return $item->status === 'ready_for_submission';
+                } else {
+                    // For viewing a submitted/historical payment, we show the other pending/submitted/approved siblings
+                    return in_array($item->status, ['pending', 'submitted', 'under_review', 'approved'], true);
+                }
+            })->values();
 
             if ($invoiceApplicants->isEmpty()) {
                 $invoiceApplicants = collect([$applicant]);
@@ -524,14 +539,32 @@ class EnrollmentController extends Controller
                 ->with('info', 'Please complete your enrollment application first.');
         }
 
+        $receiptRule = ($applicant->payment?->receipt_url) ? 'nullable' : 'required';
         $validated = $request->validate([
             'method' => 'required|in:gcash_maya,gcash,maya,bdo',
             'reference_no' => 'nullable|string|max:100',
             'amount' => 'required|numeric|min:1|max:999999',
-            'receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'receipt' => $receiptRule . '|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
-        $receiptPath = $request->file('receipt')->store('documents/' . $applicant->id, 'public');
+        $receiptPath = $applicant->payment?->receipt_url;
+        if ($request->hasFile('receipt')) {
+            $familyFolder = 'family_' . strtolower(trim($applicant->last_name)) . '_' . str_replace(' ', '_', strtolower(trim($applicant->school_year ?? '2026-2027')));
+            $familyFolder = preg_replace('/[^a-z0-9_\-]+/', '', $familyFolder);
+            
+            $lastnameSlug = preg_replace('/[^a-z0-9]+/', '_', strtolower(trim($applicant->last_name)));
+            $timestamp = time();
+            $ext = $request->file('receipt')->getClientOriginalExtension() ?: $request->file('receipt')->guessExtension() ?: 'bin';
+            $filename = 'payment_receipt_' . $lastnameSlug . '_' . $timestamp . '.' . $ext;
+            
+            $receiptPath = $request->file('receipt')->storeAs('documents/' . $familyFolder, $filename, 'public');
+            
+            $existingPayment = $applicant->payment;
+            if ($existingPayment?->receipt_url && $existingPayment->receipt_url !== $receiptPath) {
+                Storage::disk('public')->delete($existingPayment->receipt_url);
+            }
+        }
+
         $paymentData = [
             'user_id' => $user->id,
             'method' => $validated['method'] === 'bdo' ? 'bdo' : 'gcash',
@@ -547,19 +580,31 @@ class EnrollmentController extends Controller
             $paymentData['reference_no'] = $validated['reference_no'] ?? null;
         }
 
-        $existingPayment = $applicant->payment;
-        if ($existingPayment?->receipt_url && $existingPayment->receipt_url !== $receiptPath) {
-            Storage::disk('public')->delete($existingPayment->receipt_url);
-        }
-
         $applicant->payment()->updateOrCreate([], $paymentData);
 
         $documentStatuses = $applicant->document_statuses ?? [];
         $documentStatuses['payment_proof'] = 'pending';
         $applicant->forceFill(['document_statuses' => $documentStatuses])->save();
 
+        if ($applicant->status === 'ready_for_submission') {
+            $this->applications->finalizeReadyApplications($user);
+            
+            try {
+                $notifications = app(EnrollmentNotificationService::class);
+                $freshApplicants = $user->enrollmentApplicants()->whereIn('status', ['pending', 'submitted', 'under_review'])->get();
+                foreach ($freshApplicants as $submittedApplication) {
+                    $notifications->sendSubmissionConfirmation($user->email, $submittedApplication);
+                    if (!empty($submittedApplication->parent_email) && $submittedApplication->parent_email !== $user->email) {
+                        $notifications->sendSubmissionConfirmation($submittedApplication->parent_email, $submittedApplication);
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send finalization emails from payment submit: ' . $e->getMessage());
+            }
+        }
+
         return redirect()->route('enrollment.dashboard')
-            ->with('success', 'Payment proof submitted successfully. The Finance Office will review it within 1-2 business days.');
+            ->with('success', 'Payment proof submitted successfully and applications finalized. The Finance Office will review it within 1-2 business days.');
     }
 
     public function showClosed()

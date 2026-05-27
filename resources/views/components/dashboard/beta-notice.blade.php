@@ -15,26 +15,44 @@
                     <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 11v2a2 2 0 002 2h2l4 4v-7l8 3V7l-8 3V3L7 7H5a2 2 0 00-2 2v2z"/><path d="M21 9v6"/></svg>
                 </div>
                 <div>
-                    <span class="beta-notice-badge">Beta Phase</span>
-                    <h2 id="beta-notice-title">Important Notice</h2>
-                    <p>Beta Phase Enrollment System</p>
+                    <span class="beta-notice-badge" style="background: #e6fdf5; border-color: #a7f3d0; color: #047857;">Teacher feedback applied</span>
+                    <h2 id="beta-notice-title">Enrollment Readiness Guide</h2>
+                    <p>SY 2026-2027</p>
                 </div>
             </header>
 
             <div id="beta-notice-description" class="beta-notice-body">
                 <p class="beta-notice-greeting">Assalamualaikum,</p>
+                
                 <div class="beta-notice-section">
-                    <h3>What this means</h3>
+                    <h3>Required before submission</h3>
                     <ul>
-                        <li>The AMIS Online Enrollment System is currently in Beta Phase.</li>
-                        <li>Some features may still be improving, updated, or temporarily limited.</li>
-                        <li>Minor issues may occur while we continue system testing and enhancement.</li>
-                        <li>We appreciate your patience as we finalize a smoother enrollment experience.</li>
+                        <li>Student profile setup & religion verification</li>
+                        <li>Parent or guardian contact details</li>
+                        <li>Emergency contact instructions</li>
+                        <li>Recent 1:1 picture or annual photo</li>
+                        <li>Report card or signed temporary affidavit proof</li>
                     </ul>
                 </div>
+
                 <div class="beta-notice-section">
-                    <h3>Need help?</h3>
-                    <p>If you encounter issues, errors, or concerns, please contact the school office or support team for assistance.</p>
+                    <h3>Optional but helpful</h3>
+                    <ul>
+                        <li>Birth certificate copy (if available)</li>
+                        <li>Medical record or health history</li>
+                        <li>Marriage contract (if applicable)</li>
+                        <li>Physician details (if available)</li>
+                    </ul>
+                </div>
+
+                <div class="beta-notice-section">
+                    <h3>Important Guidelines</h3>
+                    <p style="margin-bottom: 0.5rem; line-height: 1.55;">
+                        <strong>Document not available?</strong> Upload an affidavit or temporary proof for review, then prepare the original document when admissions requests it.
+                    </p>
+                    <p style="line-height: 1.55;">
+                        <strong>Multiple students?</strong> Use one parent email for coordination. For another child under the same parent, contact admissions to group the records correctly.
+                    </p>
                 </div>
             </div>
 

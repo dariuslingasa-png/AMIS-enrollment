@@ -27,18 +27,29 @@ class EnrollmentApplicationService
     public function resolveForUser(User $user, Request $request, bool $editableFirst = false): ?EnrollmentApplicant
     {
         $routeApplicant = $request->route('applicant');
-        $applicantId = $request->input('applicant_id')
+        $explicitId = $request->input('applicant_id')
             ?? $request->query('applicant')
-            ?? ($routeApplicant instanceof EnrollmentApplicant ? $routeApplicant->id : $routeApplicant)
-            ?? session('current_enrollment_applicant_id');
+            ?? ($routeApplicant instanceof EnrollmentApplicant ? $routeApplicant->id : $routeApplicant);
 
-        if ($applicantId) {
-            $applicant = $user->enrollmentApplicants()->whereKey($applicantId)->first();
-
-            if ($applicant) {
+        if ($explicitId) {
+            $existsGlobally = EnrollmentApplicant::whereKey($explicitId)->exists();
+            if ($existsGlobally) {
+                $applicant = $user->enrollmentApplicants()->whereKey($explicitId)->first();
+                if (!$applicant) {
+                    abort(403, 'Unauthorized access to applicant.');
+                }
                 session(['current_enrollment_applicant_id' => $applicant->id]);
                 return $applicant;
             }
+        }
+
+        $sessionApplicantId = session('current_enrollment_applicant_id');
+        if ($sessionApplicantId) {
+            $applicant = $user->enrollmentApplicants()->whereKey($sessionApplicantId)->first();
+            if ($applicant) {
+                return $applicant;
+            }
+            session()->forget('current_enrollment_applicant_id');
         }
 
         if ($editableFirst) {
@@ -299,10 +310,19 @@ class EnrollmentApplicationService
             return null;
         }
 
-        return $user->enrollmentApplicants()
-            ->whereKey($applicantId)
-            ->whereIn('status', [self::STATUS_DRAFT, self::STATUS_READY])
-            ->first();
+        $existsGlobal = EnrollmentApplicant::whereKey($applicantId)->exists();
+        if ($existsGlobal) {
+            $applicant = $user->enrollmentApplicants()
+                ->whereKey($applicantId)
+                ->whereIn('status', [self::STATUS_DRAFT, self::STATUS_READY])
+                ->first();
+            if (!$applicant) {
+                abort(403, 'Unauthorized access to applicant.');
+            }
+            return $applicant;
+        }
+
+        return null;
     }
 
     public function removeDraftDocument(User $user, Request $request, string $document): bool
@@ -329,7 +349,7 @@ class EnrollmentApplicationService
             return false;
         }
 
-        return in_array($applicant->status, self::FINAL_STATUSES, true);
+        return in_array($applicant->status, array_merge([self::STATUS_READY], self::FINAL_STATUSES), true);
     }
 
     /**
@@ -365,6 +385,8 @@ class EnrollmentApplicationService
             'timezone' => $source->timezone,
             // Address & contact fields
             'country' => $source->country,
+            'state_province' => $source->state_province,
+            'city' => $source->city,
             'street_address' => $source->street_address,
             'postal_code' => $source->postal_code,
             'mobile_country_code' => $source->mobile_country_code,
@@ -386,6 +408,11 @@ class EnrollmentApplicationService
             'parent_country_code' => $source->parent_country_code,
             'parent_mobile' => $source->parent_mobile,
             'parent_email' => $source->parent_email,
+            // Emergency fields
+            'emergency_name' => $source->emergency_name,
+            'emergency_relationship' => $source->emergency_relationship,
+            'emergency_phone' => $source->emergency_phone,
+            'emergency_instructions' => $source->emergency_instructions,
         ];
     }
 

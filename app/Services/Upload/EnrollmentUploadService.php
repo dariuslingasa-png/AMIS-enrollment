@@ -19,6 +19,20 @@ class EnrollmentUploadService
 
     public function storeEnrollmentDocuments(EnrollmentApplicant $applicant, Request $request): void
     {
+        // 1. Determine Family Folder
+        $familyFolder = 'family_' . strtolower(trim($applicant->last_name)) . '_' . str_replace(' ', '_', strtolower(trim($applicant->school_year ?? '2026-2027')));
+        $familyFolder = preg_replace('/[^a-z0-9_\-]+/', '', $familyFolder);
+
+        // 2. Determine Child Full Name & Folder (fullname_grade)
+        $childName = strtolower(trim($applicant->first_name . ' ' . ($applicant->middle_name ?? '') . ' ' . $applicant->last_name . ' ' . ($applicant->suffix ?? '')));
+        $childFullNameSlug = preg_replace('/[^a-z0-9]+/', '_', $childName);
+        $childFullNameSlug = trim($childFullNameSlug, '_');
+
+        $gradeSlug = preg_replace('/[^a-z0-9]+/', '_', strtolower(trim($applicant->grade_level ?? 'grade_pending')));
+        $gradeSlug = trim($gradeSlug, '_');
+
+        $childFolder = $childFullNameSlug . '_' . $gradeSlug;
+
         foreach (self::DOCUMENT_FIELDS as $key) {
             if (!$request->hasFile($key)) {
                 continue;
@@ -30,7 +44,20 @@ class EnrollmentUploadService
                 Storage::disk('public')->delete($oldPath);
             }
 
-            $path = $request->file($key)->store('documents/' . $applicant->id, 'public');
+            $prefix = match ($key) {
+                'photo_2x2' => '2x2',
+                'birth_cert' => 'birth_certificate',
+                'report_card' => 'report_card',
+                'marriage_contract' => 'marriage_contract',
+                'medical_record' => 'medical_record',
+                'affidavit' => 'affidavit',
+                default => $key,
+            };
+
+            $extension = $request->file($key)->getClientOriginalExtension() ?: $request->file($key)->guessExtension() ?: 'bin';
+            $filename = $prefix . '_' . $childFolder . '.' . $extension;
+
+            $path = $request->file($key)->storeAs('documents/' . $familyFolder . '/' . $childFolder, $filename, 'public');
             $applicant->update([$key . '_url' => $path]);
         }
     }

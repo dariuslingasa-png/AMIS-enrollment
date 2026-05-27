@@ -292,8 +292,7 @@ class EnrollmentDraftTest extends TestCase
 
         $this->actingAs($user)
             ->get('/enrollment/finalize')
-            ->assertOk()
-            ->assertSee('1 Ready');
+            ->assertRedirect(route('enrollment.dashboard', absolute: false));
 
         $this->actingAs($user)
             ->post('/enrollment/finalize')
@@ -301,7 +300,7 @@ class EnrollmentDraftTest extends TestCase
 
         $this->assertDatabaseHas('enrollment_applicants', [
             'id' => $ready->id,
-            'status' => 'pending',
+            'status' => 'submitted',
         ]);
     }
 
@@ -433,7 +432,7 @@ class EnrollmentDraftTest extends TestCase
             'emergency_relationship' => 'Parent',
             'emergency_phone' => '9123456789',
             'school_year' => '2026-2027',
-            'last_step' => 7,
+            'last_step' => 6,
         ]);
 
         $response = $this->actingAs($user)->get('/enroll/new');
@@ -489,7 +488,7 @@ class EnrollmentDraftTest extends TestCase
             'birth_cert_url' => 'documents/birth.png',
             'report_card_url' => 'documents/report.png',
             'school_year' => '2026-2027',
-            'last_step' => 7,
+            'last_step' => 6,
         ];
     }
 
@@ -526,5 +525,53 @@ class EnrollmentDraftTest extends TestCase
             'birth_cert' => UploadedFile::fake()->create('birth.jpg', 20, 'image/jpeg'),
             'report_card' => UploadedFile::fake()->create('report.jpg', 20, 'image/jpeg'),
         ];
+    }
+
+    public function test_user_cannot_access_another_users_applicant_id(): void
+    {
+        $user1 = User::factory()->create(['account_status' => 'verified', 'email_verified_at' => now()]);
+        $user2 = User::factory()->create(['account_status' => 'verified', 'email_verified_at' => now()]);
+
+        $applicant2 = EnrollmentApplicant::create([
+            'user_id' => $user2->id,
+            'status' => 'draft',
+            'student_type' => 'New',
+            'first_name' => 'Alice',
+            'last_name' => 'Smith',
+            'school_year' => '2026-2027',
+            'last_step' => 2,
+        ]);
+
+        $response = $this->actingAs($user1)->get('/enroll/' . $applicant2->id);
+        $response->assertStatus(403);
+
+        $responseDashboard = $this->actingAs($user1)->get('/enrollment/dashboard?applicant=' . $applicant2->id);
+        $responseDashboard->assertStatus(403);
+    }
+
+    public function test_user_cannot_discard_another_users_draft(): void
+    {
+        $user1 = User::factory()->create(['account_status' => 'verified', 'email_verified_at' => now()]);
+        $user2 = User::factory()->create(['account_status' => 'verified', 'email_verified_at' => now()]);
+
+        $draft2 = EnrollmentApplicant::create([
+            'user_id' => $user2->id,
+            'status' => 'draft',
+            'student_type' => 'New',
+            'first_name' => 'Bob',
+            'last_name' => 'Jones',
+            'school_year' => '2026-2027',
+            'last_step' => 2,
+        ]);
+
+        $response = $this->actingAs($user1)->delete('/enroll/draft', [
+            'applicant_id' => $draft2->id,
+        ]);
+
+        $response->assertStatus(403);
+
+        $this->assertDatabaseHas('enrollment_applicants', [
+            'id' => $draft2->id,
+        ]);
     }
 }

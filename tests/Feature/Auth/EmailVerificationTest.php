@@ -92,4 +92,23 @@ class EmailVerificationTest extends TestCase
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
+
+    public function test_email_verification_status_polling(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $response1 = $this->getJson('/verify-email/status');
+        $response1->assertOk()->assertJson(['verified' => false]);
+
+        $response2 = $this->withSession(['verify_email' => $user->email])->getJson('/verify-email/status');
+        $response2->assertOk()->assertJson(['verified' => false]);
+
+        $user->forceFill([
+            'email_verified_at' => now(),
+            'account_status' => 'verified',
+        ])->save();
+
+        $response3 = $this->withSession(['verify_email' => $user->email])->getJson('/verify-email/status');
+        $response3->assertOk()->assertJson(['verified' => true]);
+    }
 }

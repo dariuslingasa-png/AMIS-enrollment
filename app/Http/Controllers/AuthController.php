@@ -41,6 +41,8 @@ class AuthController extends Controller
 
             $user->sendEmailVerificationNotification();
 
+            $request->session()->put('verify_email', $email);
+
             return redirect()->route('verify.email.notice')
                 ->with('email', $email)
                 ->with('success', 'We sent a secure sign-in link to your email.');
@@ -57,6 +59,8 @@ class AuthController extends Controller
 
         // Sends a signed activation link; clicking it verifies and logs the user in.
         event(new Registered($user));
+
+        $request->session()->put('verify_email', $email);
 
         return redirect()->route('verify.email.notice')
             ->with('email', $email)
@@ -120,8 +124,38 @@ class AuthController extends Controller
         return redirect('/');
     }
 
-    public function showVerificationNotice()
+    public function checkVerificationStatus(Request $request)
     {
+        $email = $request->session()->get('verify_email');
+        
+        if (Auth::check()) {
+            $email = Auth::user()->email;
+        }
+
+        if (!$email) {
+            return response()->json(['verified' => false]);
+        }
+
+        $user = User::where('email', $email)->first();
+        $isVerified = $user && $user->hasVerifiedEmail() && $user->account_status === 'verified';
+
+        return response()->json([
+            'verified' => $isVerified,
+        ]);
+    }
+
+    public function showVerificationNotice(Request $request)
+    {
+        if (Auth::check()) {
+            if (Auth::user()->hasVerifiedEmail()) {
+                return redirect()->route('enrollment.dashboard');
+            }
+            return view('auth.verify-email');
+        }
+
+        if (!$request->session()->has('verify_email')) {
+            return redirect()->route('login');
+        }
         return view('auth.verify-email');
     }
 
@@ -158,6 +192,7 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $request->session()->forget('verify_email');
 
         return redirect()
             ->route('enrollment.dashboard')
@@ -167,13 +202,31 @@ class AuthController extends Controller
 
     public function resendVerificationLink(Request $request)
     {
+        if (Auth::check()) {
+            if (Auth::user()->hasVerifiedEmail()) {
+                return redirect()->route('enrollment.dashboard');
+            }
+            $sessionEmail = Auth::user()->email;
+        } else {
+            if (!$request->session()->has('verify_email')) {
+                abort(403, 'Unauthorized verification resend request.');
+            }
+            $sessionEmail = $request->session()->get('verify_email');
+        }
+
         $request->validate(['email' => 'required|email|exists:users,email']);
+
+        if (strtolower(trim($request->email)) !== strtolower(trim($sessionEmail))) {
+            abort(403, 'Unauthorized verification resend request.');
+        }
 
         $user = User::where('email', $request->email)->first();
 
         if ($user && !in_array($user->account_status, ['blocked', 'suspended'], true)) {
             $user->sendEmailVerificationNotification();
         }
+
+        $request->session()->put('verify_email', $request->email);
 
         return back()->with('success', 'Verification link resent! Please check your inbox or Spam/Junk folder.');
     }

@@ -8,11 +8,6 @@ use Illuminate\Validation\Validator;
 
 class SubmitEnrollmentRequest extends FormRequest
 {
-    private const LEARNING_MODES = [
-        'Face-to-Face',
-        'Flexible Online Learning - 1st Shift',
-        'Flexible Online Learning - 2nd Shift',
-    ];
 
     public function authorize(): bool
     {
@@ -78,9 +73,9 @@ class SubmitEnrollmentRequest extends FormRequest
             'emergency_name'          => 'required|string|max:255',
             'emergency_relationship'  => 'required|string|max:255',
             'emergency_phone'         => 'required|string|max:20',
-            'agreed_to_terms'         => 'accepted',
-            'agreed_to_fee_policy'    => 'accepted',
-            'agreed_to_data_privacy'  => 'accepted',
+            'agreed_to_terms'         => 'nullable',
+            'agreed_to_fee_policy'    => 'nullable',
+            'agreed_to_data_privacy'  => 'nullable',
             'school_year'             => 'required|string',
             'photo_2x2'               => ($applicant?->photo_2x2_url ? 'nullable' : 'required') . '|mimes:jpg,jpeg,png|max:5120',
             'birth_cert'              => 'nullable|mimes:jpg,jpeg,png|max:5120',
@@ -97,7 +92,22 @@ class SubmitEnrollmentRequest extends FormRequest
             $mode = $this->input('learning_mode');
             $applicant = $this->editableApplicant();
 
-            if ($mode && !in_array($mode, self::LEARNING_MODES, true)) {
+            $allowedModes = ['Face-to-Face'];
+            if (\Illuminate\Support\Facades\Schema::hasTable('enrollment_shifts')) {
+                $shifts = \App\Models\EnrollmentShift::where('is_active', true)
+                    ->where('school_year', '2026-2027')
+                    ->pluck('name')
+                    ->map(fn($name) => "Flexible Online Learning - {$name}")
+                    ->all();
+                $allowedModes = array_merge($allowedModes, $shifts);
+            } else {
+                $allowedModes = array_merge($allowedModes, [
+                    'Flexible Online Learning - 1st Shift',
+                    'Flexible Online Learning - 2nd Shift',
+                ]);
+            }
+
+            if ($mode && !in_array($mode, $allowedModes, true)) {
                 $validator->errors()->add(
                     'learning_mode',
                     'Please choose Face-to-Face or an available Flexible Online Learning shift.'

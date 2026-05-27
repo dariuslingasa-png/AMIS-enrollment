@@ -19,6 +19,7 @@ class EnrollmentApplicant extends Model
         'first_name',
         'last_name',
         'middle_name',
+        'suffix',
         'gender',
         'date_of_birth',
         'place_of_birth',
@@ -113,7 +114,7 @@ class EnrollmentApplicant extends Model
 
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . ($this->middle_name ?? '') . ' ' . $this->last_name);
+        return trim($this->first_name . ' ' . ($this->middle_name ?? '') . ' ' . $this->last_name . ($this->suffix ? ' ' . $this->suffix : ''));
     }
 
     /**

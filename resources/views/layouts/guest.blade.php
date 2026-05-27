@@ -89,20 +89,40 @@
     <script>
         document.addEventListener('submit', function (event) {
             var form = event.target;
-            if (!form.matches('[data-loading-form]')) return;
+            if (form.closest('.enrollment-page')) return; // Let Alpine handle enrollment form loading
 
-            var button = event.submitter || form.querySelector('button[type="submit"]');
-            if (!button || button.classList.contains('is-loading')) return;
+            // Show page load loader overlay instead of button spinner
+            var loader = document.querySelector('.initial-loading-screen');
+            if (loader) {
+                loader.style.setProperty('display', 'flex', 'important');
+                loader.style.opacity = '1';
+            }
+        });
 
-            var label = button.querySelector('.loading-button-label');
-            var loadingText = button.getAttribute('data-loading-text');
+        document.addEventListener('click', function (event) {
+            var clickable = event.target.closest('a, button');
+            if (!clickable) return;
+            if (clickable.closest('.enrollment-page')) return; // Let Alpine handle enrollment form loading
 
-            button.classList.add('is-loading');
-            button.setAttribute('aria-busy', 'true');
-            button.disabled = true;
-
-            if (label && loadingText) {
-                label.textContent = loadingText;
+            if (clickable.tagName === 'A' && clickable.getAttribute('href') && !clickable.getAttribute('href').startsWith('#') && !clickable.getAttribute('target')) {
+                if (
+                    clickable.classList.contains('btn-primary') ||
+                    clickable.classList.contains('family-action-primary') ||
+                    clickable.classList.contains('family-finalize') ||
+                    clickable.classList.contains('family-action-payment') ||
+                    clickable.classList.contains('family-add-yes') ||
+                    clickable.classList.contains('logout-btn') ||
+                    clickable.getAttribute('href').includes('/enroll') ||
+                    clickable.getAttribute('href').includes('/payment') ||
+                    clickable.getAttribute('href').includes('/finalize')
+                ) {
+                    // Show page load loader overlay instead of button spinner
+                    var loader = document.querySelector('.initial-loading-screen');
+                    if (loader) {
+                        loader.style.setProperty('display', 'flex', 'important');
+                        loader.style.opacity = '1';
+                    }
+                }
             }
         });
     </script>
