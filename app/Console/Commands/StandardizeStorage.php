@@ -224,34 +224,63 @@ class StandardizeStorage extends Command
             ];
         }
 
-        // 3. Fallback: Check the repository storage directory
-        $repositoryPath = "/home/amisdavc/repositories/AMIS-enrollment/storage/app/public/{$oldPath}";
-        if (File::exists($repositoryPath)) {
-            return [
-                'source' => 'repository_disk',
-                'path' => $repositoryPath
-            ];
+        // Dynamic detection of cPanel home folder (e.g. /home/amisdavc or /home/username)
+        $homeDir = null;
+        $basePath = base_path();
+        if (preg_match('/^(\/home\/[^\/]+)/', $basePath, $matches)) {
+            $homeDir = $matches[1];
         }
 
-        // 4. Fallback: Check the repository root directory
-        $repositoryRootClean = "/home/amisdavc/repositories/AMIS-enrollment/" . str_replace('documents/', '', $oldPath);
-        if (File::exists($repositoryRootClean)) {
-            return [
-                'source' => 'repository_root',
-                'path' => $repositoryRootClean
-            ];
+        if ($homeDir) {
+            // 3. Fallback: Check the repository storage directory dynamically
+            // Scan for any folder under $homeDir/repositories/
+            $reposPath = $homeDir . '/repositories';
+            if (File::isDirectory($reposPath)) {
+                $repos = File::directories($reposPath);
+                foreach ($repos as $repo) {
+                    $repPath = "{$repo}/storage/app/public/{$oldPath}";
+                    if (File::exists($repPath)) {
+                        return [
+                            'source' => 'repository_disk_dynamic',
+                            'path' => $repPath
+                        ];
+                    }
+
+                    $repRootPath = "{$repo}/" . str_replace('documents/', '', $oldPath);
+                    if (File::exists($repRootPath)) {
+                        return [
+                            'source' => 'repository_root_dynamic',
+                            'path' => $repRootPath
+                        ];
+                    }
+                }
+            }
+
+            // 4. Fallback: Check all other site directories under homeDir (e.g., enrollment.amis.edu.ph, amis.edu.ph, etc.)
+            $homeSubFolders = File::directories($homeDir);
+            foreach ($homeSubFolders as $subFolder) {
+                $subBaseName = basename($subFolder);
+                if (str_contains(strtolower($subBaseName), 'amis') || str_contains(strtolower($subBaseName), 'enrollment')) {
+                    $livePath = "{$subFolder}/storage/app/public/{$oldPath}";
+                    if (File::exists($livePath)) {
+                        return [
+                            'source' => 'site_disk_dynamic',
+                            'path' => $livePath
+                        ];
+                    }
+
+                    $liveRootPath = "{$subFolder}/" . str_replace('documents/', '', $oldPath);
+                    if (File::exists($liveRootPath)) {
+                        return [
+                            'source' => 'site_root_dynamic',
+                            'path' => $liveRootPath
+                        ];
+                    }
+                }
+            }
         }
 
-        // 5. Fallback: Check the live site storage directory
-        $liveSitePath = "/home/amisdavc/enrollment.amis.edu.ph/storage/app/public/{$oldPath}";
-        if (File::exists($liveSitePath)) {
-            return [
-                'source' => 'live_site_disk',
-                'path' => $liveSitePath
-            ];
-        }
-
-        // 6. Check intermediate renamed path (from enrollment:rename-documents command)
+        // 5. Check intermediate renamed path (from enrollment:rename-documents command)
         if ($applicant && $prefix) {
             $lastNameRenamed = strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '', trim($applicant->last_name ?? '')));
             $firstNameRenamed = strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '', trim($applicant->first_name ?? '')));
@@ -276,24 +305,36 @@ class StandardizeStorage extends Command
                 ];
             }
 
-            $liveIntermediatePath = "/home/amisdavc/enrollment.amis.edu.ph/storage/app/public/{$intermediatePath}";
-            if (File::exists($liveIntermediatePath)) {
-                return [
-                    'source' => 'intermediate_live_site',
-                    'path' => $liveIntermediatePath
-                ];
-            }
+            if ($homeDir) {
+                // Check all subfolders of home dir and repos for the intermediate path dynamically!
+                if (isset($repos) && is_array($repos)) {
+                    foreach ($repos as $repo) {
+                        $repInter = "{$repo}/storage/app/public/{$intermediatePath}";
+                        if (File::exists($repInter)) {
+                            return [
+                                'source' => 'intermediate_repository_dynamic',
+                                'path' => $repInter
+                            ];
+                        }
+                    }
+                }
 
-            $repIntermediatePath = "/home/amisdavc/repositories/AMIS-enrollment/storage/app/public/{$intermediatePath}";
-            if (File::exists($repIntermediatePath)) {
-                return [
-                    'source' => 'intermediate_repository',
-                    'path' => $repIntermediatePath
-                ];
+                foreach ($homeSubFolders as $subFolder) {
+                    $subBaseName = basename($subFolder);
+                    if (str_contains(strtolower($subBaseName), 'amis') || str_contains(strtolower($subBaseName), 'enrollment')) {
+                        $liveInter = "{$subFolder}/storage/app/public/{$intermediatePath}";
+                        if (File::exists($liveInter)) {
+                            return [
+                                'source' => 'intermediate_site_dynamic',
+                                'path' => $liveInter
+                            ];
+                        }
+                    }
+                }
             }
         }
 
-        // 7. SMART SEARCH: Scan all directories for matching applicant folder & leading-zero variations
+        // 6. SMART SEARCH: Scan all directories for matching applicant folder & leading-zero variations
         if ($applicant) {
             $applicantId = $applicant->id;
             $filename = basename($oldPath);
@@ -311,13 +352,31 @@ class StandardizeStorage extends Command
                 Storage::disk('public')->path(''),
                 base_path('documents'),
                 base_path(''),
-                "/home/amisdavc/repositories/AMIS-enrollment/storage/app/public/documents",
-                "/home/amisdavc/repositories/AMIS-enrollment/storage/app/public",
-                "/home/amisdavc/repositories/AMIS-enrollment",
-                "/home/amisdavc/enrollment.amis.edu.ph/storage/app/public/documents",
-                "/home/amisdavc/enrollment.amis.edu.ph/storage/app/public",
-                "/home/amisdavc/enrollment.amis.edu.ph",
             ];
+
+            if ($homeDir) {
+                // Dynamically scan any subdirectories inside $homeDir/repositories/
+                if (isset($repos) && is_array($repos)) {
+                    foreach ($repos as $repo) {
+                        $parentDirs[] = $repo . '/storage/app/public/documents';
+                        $parentDirs[] = $repo . '/storage/app/public';
+                        $parentDirs[] = $repo;
+                    }
+                }
+
+                // Scan all folders matching "amis" or "enrollment"
+                foreach ($homeSubFolders as $subFolder) {
+                    $subBaseName = basename($subFolder);
+                    if (str_contains(strtolower($subBaseName), 'amis') || str_contains(strtolower($subBaseName), 'enrollment')) {
+                        $parentDirs[] = $subFolder . '/storage/app/public/documents';
+                        $parentDirs[] = $subFolder . '/storage/app/public';
+                        $parentDirs[] = $subFolder;
+                    }
+                }
+            }
+
+            // Remove duplicates
+            $parentDirs = array_values(array_unique(array_filter($parentDirs)));
 
             foreach ($parentDirs as $parentDir) {
                 if (empty($parentDir) || !File::isDirectory($parentDir)) {
@@ -372,6 +431,114 @@ class StandardizeStorage extends Command
                             }
                         }
                     }
+                }
+            }
+
+            // 7. GLOBAL RECURSIVE SEARCH (Ultimate fallback to find files anywhere in cPanel)
+            $globalPath = $this->findFileGlobally($filename);
+            if ($globalPath) {
+                return [
+                    'source' => 'global_system_search',
+                    'path' => $globalPath
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Globally search for a filename under home web roots recursively, skipping heavy vendor folders.
+     */
+    private function findFileGlobally(string $filename): ?string
+    {
+        $searchRoots = [
+            base_path(),
+        ];
+
+        $homeDir = null;
+        $basePath = base_path();
+        if (preg_match('/^(\/home\/[^\/]+)/', $basePath, $matches)) {
+            $homeDir = $matches[1];
+        }
+
+        if ($homeDir) {
+            $reposPath = $homeDir . '/repositories';
+            if (File::isDirectory($reposPath)) {
+                $repos = File::directories($reposPath);
+                foreach ($repos as $repo) {
+                    $searchRoots[] = $repo;
+                }
+            }
+
+            $homeSubFolders = File::directories($homeDir);
+            foreach ($homeSubFolders as $subFolder) {
+                $subBaseName = basename($subFolder);
+                if (str_contains(strtolower($subBaseName), 'amis') || str_contains(strtolower($subBaseName), 'enrollment')) {
+                    $searchRoots[] = $subFolder;
+                }
+            }
+
+            $searchRoots[] = $homeDir;
+        }
+
+        $searchRoots = array_values(array_unique(array_filter($searchRoots)));
+
+        foreach ($searchRoots as $root) {
+            if (empty($root) || !File::isDirectory($root)) {
+                continue;
+            }
+
+            $foundPath = $this->recursiveSearchFile($root, $filename);
+            if ($foundPath) {
+                return $foundPath;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Recursively find a file skipping heavy directories to prevent timeouts/memory issues.
+     */
+    private function recursiveSearchFile(string $dir, string $filename): ?string
+    {
+        $dir = rtrim($dir, '/\\');
+        
+        $directPath = $dir . DIRECTORY_SEPARATOR . $filename;
+        if (File::exists($directPath)) {
+            return $directPath;
+        }
+
+        try {
+            $files = scandir($dir);
+            if ($files === false) {
+                return null;
+            }
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+
+            $path = $dir . DIRECTORY_SEPARATOR . $file;
+            if (is_dir($path)) {
+                $lowerName = strtolower($file);
+                
+                // Skip heavy directories to protect execution time
+                if (in_array($lowerName, [
+                    'vendor', 'node_modules', '.git', 'cache', 'framework', 'sessions', 
+                    'logs', 'views', 'dompdf', 'mpdf', 'tcpdf', 'socialiteproviders', 'setasign'
+                ])) {
+                    continue;
+                }
+
+                $found = $this->recursiveSearchFile($path, $filename);
+                if ($found) {
+                    return $found;
                 }
             }
         }
