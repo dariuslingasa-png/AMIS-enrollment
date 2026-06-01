@@ -5,7 +5,17 @@
     $invoiceTotal = $invoiceApplicants->count() * $perChildAmount;
     $total = (float) old('amount', $payment->amount ?? $invoiceTotal);
     $invoiceRootId = $applicant->family_application_id ?: $applicant->id;
-    $invoiceNumber = 'INV-ENR-' . str_pad((string) $invoiceRootId, 5, '0', STR_PAD_LEFT);
+    $dbInvoice = \Illuminate\Support\Facades\Schema::hasTable('invoices')
+        ? \Illuminate\Support\Facades\DB::table('invoices')
+            ->where(function($query) use ($applicant) {
+                if ($applicant->family_application_id) {
+                    $query->where('family_application_id', $applicant->family_application_id);
+                } else {
+                    $query->where('user_id', $applicant->user_id)->whereNull('family_application_id');
+                }
+            })->first()
+        : null;
+    $invoiceNumber = $dbInvoice ? $dbInvoice->invoice_no : 'INV-ENR-' . str_pad((string) $invoiceRootId, 5, '0', STR_PAD_LEFT);
     $paymentStatus = strtolower((string) ($payment->status ?? 'pending'));
     $isPaid = $paymentStatus === 'verified';
     $paymentMethodLabel = strtoupper(str_replace('_', '/', (string) ($payment->method ?? 'gcash_maya')));
@@ -13,12 +23,12 @@
         $normalized = strtolower(trim((string) $mode));
 
         return match ($normalized) {
-            'face_to_face', 'face-to-face', 'face to face', 'f2f' => 'FACE TO FACE',
-            'flexible_1st_shift', 'flexible learning - 1st shift', 'flexible 1st shift', '1st shift', 'flexible_learning_1st_shift' => 'FLEXIBLE LEARNING - 1ST SHIFT',
-            'flexible_2nd_shift', 'flexible learning - 2nd shift', 'flexible 2nd shift', '2nd shift', 'flexible_learning_2nd_shift' => 'FLEXIBLE LEARNING - 2ND SHIFT',
-            'flexible_3rd_shift', 'flexible learning - 3rd shift', 'flexible 3rd shift', '3rd shift', 'flexible_learning_3rd_shift' => 'FLEXIBLE LEARNING - 3RD SHIFT',
-            'flexible_4th_shift', 'flexible learning - 4th shift', 'flexible 4th shift', '4th shift', 'flexible_learning_4th_shift' => 'FLEXIBLE LEARNING - 4TH SHIFT',
-            default => $mode ? strtoupper((string) $mode) : 'LEARNING MODE PENDING',
+            'face_to_face', 'face-to-face', 'face to face', 'f2f' => 'F2F',
+            'flexible_1st_shift', 'flexible learning - 1st shift', 'flexible 1st shift', '1st shift', 'flexible_learning_1st_shift', 'fol - 1st shift', 'flexible online learning - 1st shift', 'flexible online learning – 1st shift' => 'FOL - 1ST SHIFT',
+            'flexible_2nd_shift', 'flexible learning - 2nd shift', 'flexible 2nd shift', '2nd shift', 'flexible_learning_2nd_shift', 'fol - 2nd shift', 'flexible online learning - 2nd shift', 'flexible online learning – 2nd shift' => 'FOL - 2ND SHIFT',
+            'flexible_3rd_shift', 'flexible learning - 3rd shift', 'flexible 3rd shift', '3rd shift', 'flexible_learning_3rd_shift', 'fol - 3rd shift', 'flexible online learning - 3rd shift', 'flexible online learning – 3rd shift' => 'FOL - 3RD SHIFT',
+            'flexible_4th_shift', 'flexible learning - 4th shift', 'flexible 4th shift', '4th shift', 'flexible_learning_4th_shift', 'fol - 4th shift', 'flexible online learning - 4th shift', 'flexible online learning – 4th shift' => 'FOL - 4TH SHIFT',
+            default => $mode ? strtoupper(str_replace('flexible online learning', 'FOL', str_replace('flexible learning', 'FOL', (string) $mode))) : 'PENDING',
         };
     };
 @endphp
