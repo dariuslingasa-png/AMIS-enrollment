@@ -14,9 +14,18 @@
 @endphp
 
 <article class="family-child-card">
-    <div class="family-child-photo">
+    <div class="family-child-photo" x-data="{ imgLoaded: false, imgError: false }" style="position: relative; overflow: hidden;">
         @if ($child->photo_2x2_url)
-            <img src="{{ asset('storage/' . $child->photo_2x2_url) }}" alt="{{ $childName }}">
+            <div x-show="!imgLoaded && !imgError" class="family-photo-placeholder animate-pulse" style="position: absolute; inset: 0; background: #e2e8f0;"></div>
+            <img x-show="!imgError"
+                 src="{{ asset('storage/' . \App\Support\ImageHelper::thumb($child->photo_2x2_url, 'medium')) }}" 
+                 alt="{{ $childName }}"
+                 style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s;"
+                 :style="imgLoaded ? 'opacity: 1;' : 'opacity: 0;'"
+                 @load="imgLoaded = true"
+                 x-on:error="imgError = true"
+                 loading="lazy">
+            <span x-show="imgError" class="family-photo-placeholder" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc; color: #64748b; font-size: 11px; font-weight: bold;">No Photo</span>
         @else
             <span class="family-photo-placeholder">No Photo</span>
         @endif

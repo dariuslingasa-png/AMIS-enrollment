@@ -42,6 +42,12 @@ class EnrollmentUploadService
 
             if ($oldPath) {
                 Storage::disk('public')->delete($oldPath);
+                if (str_contains($oldPath, '/optimized/')) {
+                    Storage::disk('public')->delete(str_replace('/optimized/', '/original/', $oldPath));
+                    Storage::disk('public')->delete(str_replace('/optimized/', '/thumbnails/small/', $oldPath));
+                    Storage::disk('public')->delete(str_replace('/optimized/', '/thumbnails/medium/', $oldPath));
+                    Storage::disk('public')->delete(str_replace('/optimized/', '/thumbnails/large/', $oldPath));
+                }
             }
 
             $prefix = match ($key) {
@@ -54,11 +60,40 @@ class EnrollmentUploadService
                 default => $key,
             };
 
-            $extension = $request->file($key)->getClientOriginalExtension() ?: $request->file($key)->guessExtension() ?: 'bin';
-            $filename = $prefix . '_' . $childFolder . '.' . $extension;
+            $file = $request->file($key);
+            $optimizer = new \App\Services\ImageOptimizerService();
+            $isImage = $optimizer->isOptimizable($file->getClientMimeType());
 
-            $path = $request->file($key)->storeAs('documents/' . $familyFolder . '/' . $childFolder, $filename, 'public');
-            $applicant->update([$key . '_url' => $path]);
+            $dir = 'documents/' . $familyFolder . '/' . $childFolder;
+            $filenameWithoutExt = $prefix . '_' . $childFolder;
+
+            if ($key === 'photo_2x2' && $isImage) {
+                $paths = $optimizer->optimize($file, 'public', $dir, $filenameWithoutExt);
+                $applicant->update([$key . '_url' => $paths['optimized']]);
+            } elseif ($isImage) {
+                $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'bin';
+                $originalName = "{$filenameWithoutExt}.{$extension}";
+                $webpName = "{$filenameWithoutExt}.webp";
+
+                Storage::disk('public')->putFileAs("{$dir}/original", $file, $originalName);
+                
+                $optimizedDir = Storage::disk('public')->path("{$dir}/optimized");
+                if (!is_dir($optimizedDir)) {
+                    mkdir($optimizedDir, 0755, true);
+                }
+
+                $absoluteOriginal = Storage::disk('public')->path("{$dir}/original/{$originalName}");
+                $absoluteOptimized = Storage::disk('public')->path("{$dir}/optimized/{$webpName}");
+
+                exec('magick ' . escapeshellarg($absoluteOriginal) . ' -quality 85 ' . escapeshellarg($absoluteOptimized) . ' 2>&1');
+
+                $applicant->update([$key . '_url' => "{$dir}/optimized/{$webpName}"]);
+            } else {
+                $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'bin';
+                $filename = "{$filenameWithoutExt}.{$extension}";
+                $path = $file->storeAs($dir, $filename, 'public');
+                $applicant->update([$key . '_url' => $path]);
+            }
         }
     }
 
