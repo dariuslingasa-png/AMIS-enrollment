@@ -58,7 +58,7 @@ class EnrollmentNotificationService
                 $message->to($email, $name)
                     ->subject('AMIS Enrollment - Application Submitted Successfully');
             });
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to send enrollment confirmation email: ' . $e->getMessage());
         }
     }

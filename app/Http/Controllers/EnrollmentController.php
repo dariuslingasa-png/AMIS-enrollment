@@ -642,7 +642,7 @@ class EnrollmentController extends Controller
                         $notifications->sendSubmissionConfirmation($submittedApplication->parent_email, $submittedApplication);
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 Log::error('Failed to send finalization emails from payment submit: ' . $e->getMessage());
             }
         }
