@@ -9,6 +9,7 @@ class EnrollmentApplicant extends Model
 {
     protected $fillable = [
         'user_id',
+        'family_application_id',
         // Student Info
         'student_type',
         'amis_student_id',

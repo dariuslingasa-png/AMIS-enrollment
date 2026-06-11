@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EnrollmentApplicant;
 use App\Http\Requests\Enrollment\SaveDraftRequest;
 use App\Http\Requests\Enrollment\SubmitEnrollmentRequest;
 use App\Services\Enrollment\AffidavitPdfService;
