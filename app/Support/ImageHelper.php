@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Storage;
+
 class ImageHelper
 {
     /**
@@ -22,11 +24,38 @@ class ImageHelper
             return $path;
         }
 
-        // If path contains '/optimized/', swap it with '/thumbnails/[size]/'
         if (str_contains($path, '/optimized/')) {
-            return str_replace('/optimized/', "/thumbnails/{$size}/", $path);
+            $thumbnail = str_replace('/optimized/', "/thumbnails/{$size}/", $path);
+
+            if (Storage::disk('public')->exists($thumbnail)) {
+                return $thumbnail;
+            }
+
+            if (Storage::disk('public')->exists($path)) {
+                return $path;
+            }
+
+            $original = self::matchingOriginalPath($path);
+
+            if ($original) {
+                return $original;
+            }
         }
 
         return $path;
+    }
+
+    private static function matchingOriginalPath(string $optimizedPath): ?string
+    {
+        $originalDirectory = dirname(str_replace('/optimized/', '/original/', $optimizedPath));
+        $filename = pathinfo($optimizedPath, PATHINFO_FILENAME);
+
+        foreach (Storage::disk('public')->files($originalDirectory) as $file) {
+            if (pathinfo($file, PATHINFO_FILENAME) === $filename) {
+                return $file;
+            }
+        }
+
+        return null;
     }
 }
