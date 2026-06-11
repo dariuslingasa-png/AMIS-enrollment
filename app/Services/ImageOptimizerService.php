@@ -60,15 +60,15 @@ class ImageOptimizerService
         $absoluteLarge = Storage::disk($disk)->path($thumbLargePath);
 
         // 1. Convert and compress optimized main image
-        $this->runCommand([
+        $optimizedCreated = $this->runCommand([
             'magick',
             $absoluteOriginal,
             '-quality', '85',
             $absoluteOptimized
-        ]);
+        ]) && Storage::disk($disk)->exists($optimizedPath);
 
         // 2. Generate Thumbnails (crop center to ensure square profiles)
-        $this->runCommand([
+        $smallCreated = $this->runCommand([
             'magick',
             $absoluteOriginal,
             '-thumbnail', '150x150^',
@@ -76,9 +76,9 @@ class ImageOptimizerService
             '-extent', '150x150',
             '-quality', '80',
             $absoluteSmall
-        ]);
+        ]) && Storage::disk($disk)->exists($thumbSmallPath);
 
-        $this->runCommand([
+        $mediumCreated = $this->runCommand([
             'magick',
             $absoluteOriginal,
             '-thumbnail', '300x300^',
@@ -86,9 +86,9 @@ class ImageOptimizerService
             '-extent', '300x300',
             '-quality', '80',
             $absoluteMedium
-        ]);
+        ]) && Storage::disk($disk)->exists($thumbMediumPath);
 
-        $this->runCommand([
+        $largeCreated = $this->runCommand([
             'magick',
             $absoluteOriginal,
             '-thumbnail', '600x600^',
@@ -96,14 +96,16 @@ class ImageOptimizerService
             '-extent', '600x600',
             '-quality', '80',
             $absoluteLarge
-        ]);
+        ]) && Storage::disk($disk)->exists($thumbLargePath);
+
+        $displayPath = $optimizedCreated ? $optimizedPath : $originalPath;
 
         return [
             'original' => $originalPath,
-            'optimized' => $optimizedPath,
-            'small' => $thumbSmallPath,
-            'medium' => $thumbMediumPath,
-            'large' => $thumbLargePath,
+            'optimized' => $displayPath,
+            'small' => $smallCreated ? $thumbSmallPath : $displayPath,
+            'medium' => $mediumCreated ? $thumbMediumPath : $displayPath,
+            'large' => $largeCreated ? $thumbLargePath : $displayPath,
         ];
     }
 
@@ -125,9 +127,9 @@ class ImageOptimizerService
      * Run a system command securely.
      *
      * @param array $args
-     * @return void
+     * @return bool
      */
-    private function runCommand(array $args): void
+    private function runCommand(array $args): bool
     {
         $escapedArgs = array_map('escapeshellarg', $args);
         $command = implode(' ', $escapedArgs);
@@ -136,6 +138,9 @@ class ImageOptimizerService
 
         if ($resultCode !== 0) {
             Log::error("ImageMagick command failed: {$command}. Code: {$resultCode}. Output: " . implode("\n", $output));
+            return false;
         }
+
+        return true;
     }
 }

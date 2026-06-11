@@ -76,6 +76,7 @@ class EnrollmentUploadService
                 $webpName = "{$filenameWithoutExt}.webp";
 
                 Storage::disk('public')->putFileAs("{$dir}/original", $file, $originalName);
+                $originalPath = "{$dir}/original/{$originalName}";
                 
                 $optimizedDir = Storage::disk('public')->path("{$dir}/optimized");
                 if (!is_dir($optimizedDir)) {
@@ -85,9 +86,14 @@ class EnrollmentUploadService
                 $absoluteOriginal = Storage::disk('public')->path("{$dir}/original/{$originalName}");
                 $absoluteOptimized = Storage::disk('public')->path("{$dir}/optimized/{$webpName}");
 
-                exec('magick ' . escapeshellarg($absoluteOriginal) . ' -quality 85 ' . escapeshellarg($absoluteOptimized) . ' 2>&1');
+                exec('magick ' . escapeshellarg($absoluteOriginal) . ' -quality 85 ' . escapeshellarg($absoluteOptimized) . ' 2>&1', $output, $resultCode);
 
-                $applicant->update([$key . '_url' => "{$dir}/optimized/{$webpName}"]);
+                $optimizedPath = "{$dir}/optimized/{$webpName}";
+                $applicant->update([
+                    $key . '_url' => $resultCode === 0 && Storage::disk('public')->exists($optimizedPath)
+                        ? $optimizedPath
+                        : $originalPath,
+                ]);
             } else {
                 $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'bin';
                 $filename = "{$filenameWithoutExt}.{$extension}";
