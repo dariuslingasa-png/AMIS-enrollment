@@ -459,7 +459,20 @@ class EnrollmentController extends Controller
             ->oldest()
             ->get();
         $applicant = $this->applications->resolveForUser($user, $request) ?? $applicants->first();
-        $payment = $applicant?->payment;
+        
+        $payment = null;
+        if ($applicant) {
+            if (Schema::hasColumn('enrollment_applicants', 'family_application_id') && $applicant->family_application_id) {
+                $payment = \App\Models\Payment::whereIn('enrollment_applicant_id', function ($query) use ($applicant) {
+                    $query->select('id')->from('enrollment_applicants')
+                        ->where('family_application_id', $applicant->family_application_id);
+                })->first();
+            }
+            if (!$payment) {
+                $payment = $applicant->payment;
+            }
+        }
+        
         $student = $applicant?->student;
         $canAddAnotherChild = $this->applications->canAddAnotherChild($user);
         $readyApplications = $this->applications->readyApplications($user);
@@ -488,8 +501,17 @@ class EnrollmentController extends Controller
                 ->with('info', 'Please complete your enrollment application first.');
         }
 
-        $applicant->loadMissing('payment');
-        $payment = $applicant->payment;
+        $payment = null;
+        if (Schema::hasColumn('enrollment_applicants', 'family_application_id') && $applicant->family_application_id) {
+            $payment = \App\Models\Payment::whereIn('enrollment_applicant_id', function ($query) use ($applicant) {
+                $query->select('id')->from('enrollment_applicants')
+                    ->where('family_application_id', $applicant->family_application_id);
+            })->first();
+        }
+        if (!$payment) {
+            $applicant->loadMissing('payment');
+            $payment = $applicant->payment;
+        }
         $invoiceApplicants = collect([$applicant]);
 
         if (Schema::hasColumn('enrollment_applicants', 'family_application_id')) {
@@ -540,7 +562,17 @@ class EnrollmentController extends Controller
                 ->with('info', 'Please complete your enrollment application first.');
         }
 
-        $receiptRule = ($applicant->payment?->receipt_url) ? 'nullable' : 'required';
+        $existingPayment = null;
+        if (Schema::hasColumn('enrollment_applicants', 'family_application_id') && $applicant->family_application_id) {
+            $existingPayment = \App\Models\Payment::whereIn('enrollment_applicant_id', function ($query) use ($applicant) {
+                $query->select('id')->from('enrollment_applicants')
+                    ->where('family_application_id', $applicant->family_application_id);
+            })->first();
+        } else {
+            $existingPayment = $applicant->payment;
+        }
+
+        $receiptRule = ($existingPayment?->receipt_url) ? 'nullable' : 'required';
         $validated = $request->validate([
             'method' => 'required|in:gcash_maya,gcash,maya,bdo',
             'reference_no' => 'nullable|string|max:100',
@@ -548,7 +580,7 @@ class EnrollmentController extends Controller
             'receipt' => $receiptRule . '|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
-        $receiptPath = $applicant->payment?->receipt_url;
+        $receiptPath = $existingPayment?->receipt_url;
         if ($request->hasFile('receipt')) {
             $familyFolder = 'family_' . strtolower(trim($applicant->last_name)) . '_' . str_replace(' ', '_', strtolower(trim($applicant->school_year ?? '2026-2027')));
             $familyFolder = preg_replace('/[^a-z0-9_\-]+/', '', $familyFolder);
@@ -560,7 +592,6 @@ class EnrollmentController extends Controller
             
             $receiptPath = $request->file('receipt')->storeAs('documents/' . $familyFolder, $filename, 'public');
             
-            $existingPayment = $applicant->payment;
             if ($existingPayment?->receipt_url && $existingPayment->receipt_url !== $receiptPath) {
                 Storage::disk('public')->delete($existingPayment->receipt_url);
             }
@@ -581,11 +612,22 @@ class EnrollmentController extends Controller
             $paymentData['reference_no'] = $validated['reference_no'] ?? null;
         }
 
-        $applicant->payment()->updateOrCreate([], $paymentData);
+        if ($existingPayment) {
+            $existingPayment->update($paymentData);
+        } else {
+            $applicant->payment()->create($paymentData);
+        }
 
-        $documentStatuses = $applicant->document_statuses ?? [];
-        $documentStatuses['payment_proof'] = 'pending';
-        $applicant->forceFill(['document_statuses' => $documentStatuses])->save();
+        $familyChildren = collect([$applicant]);
+        if (Schema::hasColumn('enrollment_applicants', 'family_application_id') && $applicant->family_application_id) {
+            $familyChildren = EnrollmentApplicant::where('family_application_id', $applicant->family_application_id)->get();
+        }
+
+        foreach ($familyChildren as $child) {
+            $documentStatuses = $child->document_statuses ?? [];
+            $documentStatuses['payment_proof'] = 'pending';
+            $child->forceFill(['document_statuses' => $documentStatuses])->save();
+        }
 
         if ($applicant->status === 'ready_for_submission') {
             $this->applications->finalizeReadyApplications($user);
