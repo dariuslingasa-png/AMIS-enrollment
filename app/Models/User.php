@@ -102,4 +102,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
         return $username;
     }
+
+    public function setNameAttribute($value)
+    {
+        $this->attributes['name'] = mb_strtoupper($value, 'UTF-8');
+    }
 }
