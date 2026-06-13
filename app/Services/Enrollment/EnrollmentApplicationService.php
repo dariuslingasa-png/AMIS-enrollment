@@ -106,7 +106,6 @@ class EnrollmentApplicationService
     public function saveDraft(User $user, Request $request, array $data): EnrollmentApplicant|array
     {
         $data['user_id'] = $user->id;
-        $data['status'] = self::STATUS_DRAFT;
         $familyId = $this->familyApplicationIdFor($user);
         if ($familyId) {
             $data['family_application_id'] = $familyId;
@@ -128,6 +127,7 @@ class EnrollmentApplicationService
         }
 
         $applicant = $this->resolveEditableApplication($user, $request);
+        $data['status'] = $applicant?->status === 'rejected' ? 'rejected' : self::STATUS_DRAFT;
 
         if ($applicant) {
             $applicant->update($data);
@@ -161,19 +161,19 @@ class EnrollmentApplicationService
 
     public function submit(User $user, Request $request, array $data): EnrollmentApplicant
     {
+        $applicant = $this->resolveEditableApplication($user, $request);
+
         $submitData = array_merge($data, [
             'user_id' => $user->id,
-            'status' => self::STATUS_READY,
+            'status' => $this->submitStatusFor($applicant),
             'last_step' => 7,
-            'document_statuses' => null,
+            'document_statuses' => $this->documentStatusesForResubmission($applicant),
             'review_remarks' => null,
         ]);
         $familyId = $this->familyApplicationIdFor($user);
         if ($familyId) {
             $submitData['family_application_id'] = $familyId;
         }
-
-        $applicant = $this->resolveEditableApplication($user, $request);
 
         if ($applicant) {
             $applicant->update($submitData);
@@ -493,5 +493,48 @@ class EnrollmentApplicationService
             ->whereRaw('LOWER(TRIM(COALESCE(middle_name, \'\'))) = ?', [strtolower($middleName)])
             ->whereDate('date_of_birth', $dob)
             ->first();
+    }
+
+    private function submitStatusFor(?EnrollmentApplicant $applicant): string
+    {
+        if ($applicant?->status !== 'rejected') {
+            return self::STATUS_READY;
+        }
+
+        return $this->hasReusablePayment($applicant)
+            ? self::STATUS_SUBMITTED
+            : self::STATUS_READY;
+    }
+
+    private function hasReusablePayment(EnrollmentApplicant $applicant): bool
+    {
+        $familyId = $applicant->family_application_id ?: $applicant->id;
+
+        return \App\Models\Payment::query()
+            ->whereIn('status', ['pending', 'verified'])
+            ->whereNotNull('receipt_url')
+            ->where(function ($query) use ($applicant, $familyId) {
+                $query->where('enrollment_applicant_id', $applicant->id)
+                    ->orWhereIn('enrollment_applicant_id', function ($subquery) use ($familyId) {
+                        $subquery->select('id')
+                            ->from('enrollment_applicants')
+                            ->where('family_application_id', $familyId)
+                            ->orWhere('id', $familyId);
+                    });
+            })
+            ->exists();
+    }
+
+    private function documentStatusesForResubmission(?EnrollmentApplicant $applicant): ?array
+    {
+        if ($applicant?->status !== 'rejected') {
+            return null;
+        }
+
+        $statuses = collect($applicant->document_statuses ?? [])
+            ->filter(fn ($status, string $key) => $key === 'payment_proof' && in_array($status, ['pending', 'approved'], true))
+            ->all();
+
+        return empty($statuses) ? null : $statuses;
     }
 }

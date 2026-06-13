@@ -160,6 +160,114 @@ class EnrollmentDraftTest extends TestCase
         ]);
     }
 
+    public function test_autosaving_rejected_application_keeps_it_rejected_until_final_submit(): void
+    {
+        $user = User::factory()->create();
+
+        $applicant = EnrollmentApplicant::create([
+            'user_id' => $user->id,
+            'status' => 'rejected',
+            'student_type' => 'New',
+            'first_name' => 'Returned',
+            'last_name' => 'Applicant',
+            'school_year' => '2026-2027',
+            'last_step' => 6,
+            'document_statuses' => ['photo_2x2' => 'rejected'],
+        ]);
+
+        $response = $this->actingAs($user)->postJson('/enroll/draft', [
+            'applicant_id' => $applicant->id,
+            'student_type' => 'New',
+            'first_name' => 'Returned',
+            'last_name' => 'Applicant',
+            'school_year' => '2026-2027',
+            'last_step' => 6,
+        ]);
+
+        $response->assertOk();
+        $this->assertSame('rejected', $applicant->fresh()->status);
+    }
+
+    public function test_rejected_application_with_existing_payment_resubmits_to_review(): void
+    {
+        $user = User::factory()->create();
+
+        $applicant = EnrollmentApplicant::create([
+            'user_id' => $user->id,
+            'family_application_id' => 1001,
+            'status' => 'rejected',
+            'student_type' => 'New',
+            'learning_mode' => 'Face-to-Face',
+            'grade_level' => 'Kinder 2',
+            'first_name' => 'Returned',
+            'last_name' => 'Applicant',
+            'gender' => 'Male',
+            'date_of_birth' => '2020-01-01',
+            'place_of_birth' => 'Davao City',
+            'religion' => 'Islam',
+            'country' => 'Philippines',
+            'street_address' => 'Sample Street',
+            'address' => 'Sample Street, Philippines',
+            'mobile_country_code' => '+63',
+            'mobile_number' => '9123456789',
+            'parent_country_code' => '+63',
+            'parent_mobile' => '9123456789',
+            'medical_has_concern' => 'No',
+            'emergency_name' => 'Parent Applicant',
+            'emergency_relationship' => 'Mother',
+            'emergency_phone' => '9123456789',
+            'photo_2x2_url' => 'documents/old-photo.jpg',
+            'school_year' => '2026-2027',
+            'last_step' => 6,
+            'document_statuses' => [
+                'photo_2x2' => 'rejected',
+                'payment_proof' => 'approved',
+            ],
+            'review_remarks' => 'Please re-upload a clear photo.',
+        ]);
+
+        $applicant->payment()->create([
+            'user_id' => $user->id,
+            'method' => 'gcash',
+            'amount' => 4000,
+            'receipt_url' => 'documents/payment.jpg',
+            'status' => 'verified',
+            'paid_at' => now(),
+            'verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->post('/enroll', [
+            'applicant_id' => $applicant->id,
+            'student_type' => 'New',
+            'learning_mode' => 'Face-to-Face',
+            'grade_level' => 'Kinder 2',
+            'last_name' => 'Applicant',
+            'first_name' => 'Returned',
+            'gender' => 'Male',
+            'date_of_birth' => '2020-01-01',
+            'place_of_birth' => 'Davao City',
+            'religion' => 'Islam',
+            'country' => 'Philippines',
+            'street_address' => 'Sample Street',
+            'mobile_country_code' => '+63',
+            'mobile_number' => '9123456789',
+            'parent_country_code' => '+63',
+            'parent_mobile' => '9123456789',
+            'medical_has_concern' => 'No',
+            'emergency_name' => 'Parent Applicant',
+            'emergency_relationship' => 'Mother',
+            'emergency_phone' => '9123456789',
+            'school_year' => '2026-2027',
+        ]);
+
+        $response->assertRedirect(route('enrollment.dashboard', ['applicant' => $applicant->id], false));
+
+        $freshApplicant = $applicant->fresh();
+        $this->assertSame('submitted', $freshApplicant->status);
+        $this->assertNull($freshApplicant->review_remarks);
+        $this->assertSame(['payment_proof' => 'approved'], $freshApplicant->document_statuses);
+    }
+
     public function test_pdf_document_upload_is_rejected_for_drafts(): void
     {
         $user = User::factory()->create();

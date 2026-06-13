@@ -376,9 +376,12 @@ class EnrollmentController extends Controller
     ) {
         $user = $request->user();
         $applicant = $this->applications->submit($user, $request, $request->enrollmentData());
+        $message = $applicant->status === EnrollmentApplicationService::STATUS_SUBMITTED
+            ? 'Corrected application resubmitted successfully. The admin office will review the updated details.'
+            : 'Child application is ready for submission. You may add another child or finalize enrollment.';
 
         return redirect()->route('enrollment.dashboard', ['applicant' => $applicant->id])
-            ->with('success', 'Child application is ready for submission. You may add another child or finalize enrollment.');
+            ->with('success', $message);
     }
 
     public function showFinalizePreview(Request $request)
