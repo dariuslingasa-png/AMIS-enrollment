@@ -74,11 +74,11 @@
             'Marriage Contract' => $applicant->marriage_contract_url,
             'Medical Record' => $applicant->medical_record_url,
             'Affidavit' => $applicant->affidavit_url,
-            'Payment Proof' => $applicant->payment?->receipt_url,
         ];
         $uploadedDocs = array_filter($docs);
+        $paymentReceipts = $applicant->payment?->receipt_urls ?? [];
     @endphp
-    @if (count($uploadedDocs))
+    @if (count($uploadedDocs) || count($paymentReceipts))
         <div style="padding:0 1.5rem 1.25rem;">
             <div style="font-size:0.75rem;color:#9ca3af;font-weight:500;margin-bottom:0.625rem;">UPLOADED DOCUMENTS</div>
             <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
@@ -86,6 +86,12 @@
                     <a href="{{ asset('storage/' . $docPath) }}" target="_blank" style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.375rem 0.75rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:0.8125rem;color:#065f46;text-decoration:none;font-weight:500;">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         {{ $docLabel }}
+                    </a>
+                @endforeach
+                @foreach ($paymentReceipts as $index => $receiptPath)
+                    <a href="{{ asset('storage/' . $receiptPath) }}" target="_blank" style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.375rem 0.75rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:0.8125rem;color:#065f46;text-decoration:none;font-weight:500;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Payment Proof {{ count($paymentReceipts) > 1 ? '#' . ($index + 1) : '' }}
                     </a>
                 @endforeach
             </div>

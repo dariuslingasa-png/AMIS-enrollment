@@ -448,84 +448,100 @@
                     function registerReceiptComponent(Alpine) {
                         // Define globally on window so Alpine can find it even if initialization races with asset loading
                         window.paymentReceiptUpload = () => ({
-                            preview: null,
-                            fileName: '',
-                            fileSize: '',
+                            files: [], // Array of { name: '', size: '', preview: null, rawFile: File }
                             isProcessing: false,
                             errorMsg: '',
-                            clearFile() {
-                                this.preview = null;
-                                this.fileName = '';
-                                this.fileSize = '';
-                                this.$refs.receiptInput.value = '';
+                            removeFile(index) {
+                                this.files.splice(index, 1);
+                                this.syncInputFiles();
+                            },
+                            syncInputFiles() {
+                                const dt = new DataTransfer();
+                                this.files.forEach(f => {
+                                    if (f.rawFile) {
+                                        dt.items.add(f.rawFile);
+                                    }
+                                });
+                                this.$refs.receiptInput.files = dt.files;
+                                
+                                // update validation state
+                                if (this.files.length === 0) {
+                                    this.$refs.receiptInput.required = {{ !$payment?->receipt_url ? 'true' : 'false' }};
+                                } else {
+                                    this.$refs.receiptInput.removeAttribute('required');
+                                }
                             },
                             async handleReceiptChange(event) {
-                                let file = event.target.files[0];
-                                if (!file) return;
+                                const selectedFiles = Array.from(event.target.files);
+                                if (selectedFiles.length === 0) return;
                                 
                                 this.errorMsg = '';
-                                
-                                const validation = window.AMIS_UploadUtils.validateFile(file, 'image/jpeg,image/jpg,image/png,application/pdf');
-                                if (!validation.valid) {
-                                    this.errorMsg = validation.error;
-                                    this.clearFile();
-                                    return;
-                                }
-                                
                                 const maxSizeMB = 5;
-                                const fileSizeMB = file.size / (1024 * 1024);
-                                const isImage = file.type.startsWith('image/');
                                 
-                                if (!isImage) {
-                                    if (fileSizeMB > maxSizeMB) {
-                                        this.errorMsg = 'File size exceeds the maximum limit of ' + maxSizeMB + 'MB.';
-                                        this.clearFile();
-                                        return;
+                                for (let rawFile of selectedFiles) {
+                                    const validation = window.AMIS_UploadUtils.validateFile(rawFile, 'image/jpeg,image/jpg,image/png,application/pdf');
+                                    if (!validation.valid) {
+                                        this.errorMsg = validation.error;
+                                        continue;
                                     }
-                                } else {
-                                    // Apply light compression for receipts above 2MB to keep references perfectly readable
-                                    if (fileSizeMB > 2) {
-                                        this.isProcessing = true;
-                                        try {
-                                            const originalSize = file.size;
-                                            const optimizedFile = await window.AMIS_UploadUtils.compressImage(file, 0.88);
-                                            if (optimizedFile.size < originalSize) {
-                                                file = optimizedFile;
-                                                const dt = new DataTransfer();
-                                                dt.items.add(optimizedFile);
-                                                this.$refs.receiptInput.files = dt.files;
-                                            }
-                                        } catch(e) {
-                                            console.error('Receipt compression error:', e);
-                                            if (fileSizeMB > maxSizeMB) {
-                                                this.errorMsg = 'Image optimization failed and the file exceeds the maximum limit of ' + maxSizeMB + 'MB.';
-                                                this.clearFile();
+                                    
+                                    const fileSizeMB = rawFile.size / (1024 * 1024);
+                                    const isImage = rawFile.type.startsWith('image/');
+                                    
+                                    if (!isImage) {
+                                        if (fileSizeMB > maxSizeMB) {
+                                            this.errorMsg = `File "${rawFile.name}" exceeds the maximum limit of ${maxSizeMB}MB.`;
+                                            continue;
+                                        }
+                                    } else {
+                                        if (fileSizeMB > 2) {
+                                            this.isProcessing = true;
+                                            try {
+                                                const originalSize = rawFile.size;
+                                                const optimizedFile = await window.AMIS_UploadUtils.compressImage(rawFile, 0.88);
+                                                if (optimizedFile.size < originalSize) {
+                                                    rawFile = optimizedFile;
+                                                }
+                                            } catch(e) {
+                                                console.error('Receipt compression error:', e);
+                                                if (fileSizeMB > maxSizeMB) {
+                                                    this.errorMsg = `Image optimization failed for "${rawFile.name}" and it exceeds the maximum limit of ${maxSizeMB}MB.`;
+                                                    this.isProcessing = false;
+                                                    continue;
+                                                }
+                                            } finally {
                                                 this.isProcessing = false;
-                                                return;
                                             }
-                                        } finally {
-                                            this.isProcessing = false;
                                         }
                                     }
+                                    
+                                    const finalSizeMB = rawFile.size / (1024 * 1024);
+                                    if (finalSizeMB > maxSizeMB) {
+                                        this.errorMsg = `The file "${rawFile.name}" exceeds the maximum allowed limit of ${maxSizeMB}MB.`;
+                                        continue;
+                                    }
+                                    
+                                    // Generate preview
+                                    let preview = null;
+                                    if (rawFile.type.startsWith('image/')) {
+                                        preview = await new Promise(resolve => {
+                                            const reader = new FileReader();
+                                            reader.onload = e => resolve(e.target.result);
+                                            reader.readAsDataURL(rawFile);
+                                        });
+                                    } else {
+                                        preview = 'pdf';
+                                    }
+                                    
+                                    this.files.push({
+                                        name: rawFile.name,
+                                        size: finalSizeMB.toFixed(2) + ' MB',
+                                        preview: preview,
+                                        rawFile: rawFile
+                                    });
                                 }
                                 
-                                const finalSizeMB = file.size / (1024 * 1024);
-                                if (finalSizeMB > maxSizeMB) {
-                                    this.errorMsg = 'The selected receipt exceeds the maximum allowed limit of ' + maxSizeMB + 'MB.';
-                                    this.clearFile();
-                                    return;
-                                }
-                                
-                                this.fileName = file.name;
-                                this.fileSize = finalSizeMB.toFixed(2) + ' MB';
-                                
-                                if (file.type.startsWith('image/')) {
-                                    const reader = new FileReader();
-                                    reader.onload = e => this.preview = e.target.result;
-                                    reader.readAsDataURL(file);
-                                } else {
-                                    this.preview = 'pdf';
-                                }
+                                this.syncInputFiles();
                             }
                         });
 
@@ -550,12 +566,44 @@
                     }
                     </script>
 
-                    <label class="payment-field-label">Upload Payment Receipt @if(!$payment?->receipt_url)<span class="required">*</span>@endif</label>
+                    <label class="payment-field-label">Upload Payment Receipt/s @if(!$payment?->receipt_url)<span class="required">*</span>@endif</label>
 
-                    @if ($payment?->receipt_url)
+                    @if ($payment && count($payment->receipt_urls) > 0)
                         <div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#047857;padding:0.75rem 1rem;border-radius:10px;font-size:0.82rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;font-weight:700;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                            <span>You have already uploaded a payment receipt. Uploading a new file will replace the previous one.</span>
+                            <span>You have already uploaded proof of payment. Uploading a new file will replace all previous ones.</span>
+                        </div>
+
+                        <div class="space-y-2 mb-4">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Previously Uploaded Receipts:</span>
+                            @foreach ($payment->receipt_urls as $index => $receiptPath)
+                                @php
+                                    $url = asset('storage/' . $receiptPath);
+                                    $isPdf = $receiptPath && strtolower(pathinfo($receiptPath, PATHINFO_EXTENSION)) === 'pdf';
+                                @endphp
+                                <div class="payment-preview-card" style="margin-bottom: 0.5rem;">
+                                    @if ($isPdf)
+                                        <div class="payment-preview-pdf">
+                                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.5">
+                                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                                <polyline points="14 2 14 8 20 8"/>
+                                                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                                            </svg>
+                                        </div>
+                                    @else
+                                        <img src="{{ $url }}" alt="Receipt preview" class="payment-preview-img">
+                                    @endif
+                                    <div class="payment-preview-info">
+                                        <div>
+                                            <div class="payment-preview-name">{{ basename($receiptPath) }}</div>
+                                        </div>
+                                        <a href="{{ $url }}" target="_blank" class="payment-preview-remove" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#065f46; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.25rem;">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                            View
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     @endif
 
@@ -581,7 +629,7 @@
                         </button>
                     </div>
 
-                    <div x-show="!preview">
+                    <div>
                         <label class="payment-upload-area !relative !overflow-hidden">
                             <!-- Loading/Processing Overlay -->
                             <div
@@ -613,43 +661,48 @@
                                 <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
                                 <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
                             </svg>
-                            <span class="payment-upload-text">Click to upload</span>
+                            <span class="payment-upload-text">Click to upload files</span>
                             <div style="margin-top:0.35rem; display:flex; flex-direction:column; align-items:center; gap:0.125rem; font-size:11px; font-weight:500; color:#6b7280;">
                                 <span>Accepted Formats: <strong style="color:#374151;">JPG, JPEG, PNG, PDF</strong></span>
-                                <span style="color:#059669; font-weight:600; margin-top:0.25rem;">(Large images optimized automatically)</span>
+                                <span style="color:#059669; font-weight:600; margin-top:0.25rem;">(Multiple files supported, large images compressed)</span>
                             </div>
-                            <input x-ref="receiptInput" type="file" name="receipt" accept="image/jpeg,image/jpg,image/png,application/pdf" style="display:none;" {{ !$payment?->receipt_url ? 'required' : '' }}
+                            <input x-ref="receiptInput" type="file" name="receipts[]" multiple accept="image/jpeg,image/jpg,image/png,application/pdf" style="display:none;" {{ !$payment?->receipt_url ? 'required' : '' }}
                                 @change="handleReceiptChange($event)">
                         </label>
                     </div>
 
-                    {{-- Preview --}}
-                    <div x-show="preview" class="payment-preview-card">
-                        <template x-if="preview && preview !== 'pdf'">
-                            <img :src="preview" alt="Receipt preview" class="payment-preview-img">
-                        </template>
-                        <template x-if="preview === 'pdf'">
-                            <div class="payment-preview-pdf">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.5">
-                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                                    <polyline points="14 2 14 8 20 8"/>
-                                    <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                                </svg>
+                    {{-- Previews list --}}
+                    <div x-show="files.length > 0" class="space-y-3" style="margin-top: 0.75rem;">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Files selected for upload:</span>
+                        <template x-for="(file, index) in files" :key="index">
+                            <div class="payment-preview-card" style="margin-bottom: 0;">
+                                <template x-if="file.preview && file.preview !== 'pdf'">
+                                    <img :src="file.preview" alt="Receipt preview" class="payment-preview-img">
+                                </template>
+                                <template x-if="file.preview === 'pdf'">
+                                    <div class="payment-preview-pdf">
+                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.5">
+                                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                            <polyline points="14 2 14 8 20 8"/>
+                                            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                                        </svg>
+                                    </div>
+                                </template>
+                                <div class="payment-preview-info">
+                                    <div>
+                                        <div class="payment-preview-name" x-text="file.name"></div>
+                                        <div class="payment-preview-size" x-text="file.size"></div>
+                                    </div>
+                                    <button type="button" @click="removeFile(index)"
+                                        class="payment-preview-remove">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                        </svg>
+                                        Remove
+                                    </button>
+                                </div>
                             </div>
                         </template>
-                        <div class="payment-preview-info">
-                            <div>
-                                <div class="payment-preview-name" x-text="fileName"></div>
-                                <div class="payment-preview-size" x-text="fileSize"></div>
-                            </div>
-                            <button type="button" @click="clearFile()"
-                                class="payment-preview-remove">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                                </svg>
-                                Remove
-                            </button>
-                        </div>
                     </div>
                 </div>
 

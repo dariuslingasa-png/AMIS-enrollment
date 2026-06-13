@@ -152,33 +152,47 @@ class StandardizeStorage extends Command
 
             // Process payment proof receipt if exists
             if ($applicant->payment && !empty($applicant->payment->receipt_url)) {
-                $oldPath = $applicant->payment->receipt_url;
-                $extension = strtolower(pathinfo($oldPath, PATHINFO_EXTENSION) ?: 'jpg');
-                $newFilename = 'payment_receipt_' . $childFullNameSlug . '_' . time() . '.' . $extension;
-                $newPath = 'documents/' . $familyFolder . '/' . $newFilename;
+                $oldPaths = $applicant->payment->receipt_urls;
+                $newPaths = [];
+                $timestamp = time();
+                foreach ($oldPaths as $index => $oldPath) {
+                    $extension = strtolower(pathinfo($oldPath, PATHINFO_EXTENSION) ?: 'jpg');
+                    $suffix = count($oldPaths) > 1 ? "_{$index}" : "";
+                    $newFilename = 'payment_receipt_' . $childFullNameSlug . '_' . $timestamp . $suffix . '.' . $extension;
+                    $newPath = 'documents/' . $familyFolder . '/' . $newFilename;
 
-                if ($oldPath !== $newPath) {
-                    $physicalPath = $this->locatePhysicalFile($oldPath, $applicant, 'payment_proof');
-                    if ($physicalPath) {
-                        $this->line("👉 Standardizing: [Child #{$applicant->id}] {$applicant->full_name} (payment_proof)");
-                        $this->line("   Old: {$oldPath} (Found in {$physicalPath['source']})");
-                        $this->line("   New: {$newPath}");
+                    if ($oldPath !== $newPath) {
+                        $physicalPath = $this->locatePhysicalFile($oldPath, $applicant, 'payment_proof');
+                        if ($physicalPath) {
+                            $this->line("👉 Standardizing: [Child #{$applicant->id}] {$applicant->full_name} (payment_proof #{$index})");
+                            $this->line("   Old: {$oldPath} (Found in {$physicalPath['source']})");
+                            $this->line("   New: {$newPath}");
 
-                        if (!$dryRun) {
-                            Storage::disk('public')->makeDirectory('documents/' . $familyFolder);
-                            
-                            if ($physicalPath['source'] === 'public_disk') {
-                                Storage::disk('public')->move($oldPath, $newPath);
-                            } else {
-                                Storage::disk('public')->put($newPath, file_get_contents($physicalPath['path']));
-                                if (File::exists($physicalPath['path'])) {
-                                    File::delete($physicalPath['path']);
+                            if (!$dryRun) {
+                                Storage::disk('public')->makeDirectory('documents/' . $familyFolder);
+                                
+                                if ($physicalPath['source'] === 'public_disk') {
+                                    Storage::disk('public')->move($oldPath, $newPath);
+                                } else {
+                                    Storage::disk('public')->put($newPath, file_get_contents($physicalPath['path']));
+                                    if (File::exists($physicalPath['path'])) {
+                                        File::delete($physicalPath['path']);
+                                    }
                                 }
                             }
-                            $applicant->payment->update(['receipt_url' => $newPath]);
+                            $newPaths[] = $newPath;
+                            $movedCount++;
+                        } else {
+                            $newPaths[] = $oldPath; // Keep old path if file missing
                         }
-                        $movedCount++;
+                    } else {
+                        $newPaths[] = $oldPath; // Keep old path if already standardized
                     }
+                }
+
+                if (!$dryRun && !empty($newPaths)) {
+                    $finalVal = count($newPaths) === 1 ? $newPaths[0] : json_encode($newPaths);
+                    $applicant->payment->update(['receipt_url' => $finalVal]);
                 }
             }
         }

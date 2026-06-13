@@ -71,16 +71,27 @@ class RenameDocuments extends Command
 
             // Process payment proof receipt
             if ($applicant->payment && !empty($applicant->payment->receipt_url)) {
-                $oldPath = $applicant->payment->receipt_url;
-                $result = $this->processPaymentReceipt($applicant, $oldPath, $folderName, $lastName, $firstName, $applicantId, $dryRun);
+                $oldPaths = $applicant->payment->receipt_urls;
+                $newPaths = [];
+                foreach ($oldPaths as $index => $oldPath) {
+                    $result = $this->processPaymentReceipt($applicant, $oldPath, $folderName, $lastName, $firstName, $applicantId, $dryRun, count($oldPaths) > 1 ? $index : null);
+                    
+                    $logs[] = $result['log'];
+                    if ($result['status'] === 'Migrated' || $result['status'] === 'Updated DB Only') {
+                        $migratedCount++;
+                        $newPaths[] = $result['log']['new_path'];
+                    } elseif ($result['status'] === 'Missing') {
+                        $missingCount++;
+                        $newPaths[] = $oldPath;
+                    } else {
+                        $skippedCount++;
+                        $newPaths[] = $result['log']['new_path'];
+                    }
+                }
                 
-                $logs[] = $result['log'];
-                if ($result['status'] === 'Migrated' || $result['status'] === 'Updated DB Only') {
-                    $migratedCount++;
-                } elseif ($result['status'] === 'Missing') {
-                    $missingCount++;
-                } else {
-                    $skippedCount++;
+                if (!$dryRun && !empty($newPaths)) {
+                    $finalVal = count($newPaths) === 1 ? $newPaths[0] : json_encode($newPaths);
+                    $applicant->payment->update(['receipt_url' => $finalVal]);
                 }
             }
         }
@@ -205,13 +216,14 @@ class RenameDocuments extends Command
         ];
     }
 
-    private function processPaymentReceipt($applicant, $oldPath, $folderName, $lastName, $firstName, $applicantId, $dryRun): array
+    private function processPaymentReceipt($applicant, $oldPath, $folderName, $lastName, $firstName, $applicantId, $dryRun, $index = null): array
     {
         $extension = strtolower(pathinfo($oldPath, PATHINFO_EXTENSION) ?: 'jpg');
         $docType = 'payment_proof';
 
         $targetDirectory = "documents/{$folderName}/{$docType}";
-        $newFilename = "{$docType}_{$applicantId}_{$lastName}_{$firstName}.{$extension}";
+        $suffix = $index !== null ? "_{$index}" : "";
+        $newFilename = "{$docType}_{$applicantId}_{$lastName}_{$firstName}{$suffix}.{$extension}";
         $newPath = "{$targetDirectory}/{$newFilename}";
 
         if ($oldPath === $newPath) {
@@ -234,9 +246,6 @@ class RenameDocuments extends Command
         if (!$physicalPath) {
             if (Storage::disk('public')->exists($newPath)) {
                 $this->warn("⚠️ Payment receipt already migrated, updating DB record for Child #{$applicantId} ({$applicant->full_name}) -> {$newPath}");
-                if (!$dryRun) {
-                    $applicant->payment->update(['receipt_url' => $newPath]);
-                }
                 return [
                     'status' => 'Updated DB Only',
                     'log' => [
@@ -287,8 +296,6 @@ class RenameDocuments extends Command
             } else {
                 Storage::disk('public')->put($finalNewPath, file_get_contents($physicalPath['path']));
             }
-
-            $applicant->payment->update(['receipt_url' => $finalNewPath]);
         }
 
         return [

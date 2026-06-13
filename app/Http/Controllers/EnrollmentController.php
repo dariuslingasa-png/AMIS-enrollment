@@ -576,28 +576,46 @@ class EnrollmentController extends Controller
             $existingPayment = $applicant->payment;
         }
 
+        if ($request->hasFile('receipt')) {
+            $request->files->set('receipts', [$request->file('receipt')]);
+        }
+
         $receiptRule = ($existingPayment?->receipt_url) ? 'nullable' : 'required';
         $validated = $request->validate([
             'method' => 'required|in:gcash_maya,gcash,maya,bdo',
             'reference_no' => 'nullable|string|max:100',
             'amount' => 'required|numeric|min:1|max:999999',
-            'receipt' => $receiptRule . '|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'receipts' => $receiptRule . '|array',
+            'receipts.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
-        $receiptPath = $existingPayment?->receipt_url;
-        if ($request->hasFile('receipt')) {
+        // Access raw receipt_url using getRawOriginal if possible, or fallback to direct attribute
+        $receiptPath = $existingPayment ? ($existingPayment->getRawOriginal('receipt_url') ?? $existingPayment->receipt_url) : null;
+
+        if ($request->hasFile('receipts')) {
             $familyFolder = 'family_' . strtolower(trim($applicant->last_name)) . '_' . str_replace(' ', '_', strtolower(trim($applicant->school_year ?? '2026-2027')));
             $familyFolder = preg_replace('/[^a-z0-9_\-]+/', '', $familyFolder);
-            
             $lastnameSlug = preg_replace('/[^a-z0-9]+/', '_', strtolower(trim($applicant->last_name)));
-            $timestamp = time();
-            $ext = $request->file('receipt')->getClientOriginalExtension() ?: $request->file('receipt')->guessExtension() ?: 'bin';
-            $filename = 'payment_receipt_' . $lastnameSlug . '_' . $timestamp . '.' . $ext;
             
-            $receiptPath = $request->file('receipt')->storeAs('documents/' . $familyFolder, $filename, 'public');
-            
-            if ($existingPayment?->receipt_url && $existingPayment->receipt_url !== $receiptPath) {
-                Storage::disk('public')->delete($existingPayment->receipt_url);
+            $newPaths = [];
+            foreach ($request->file('receipts') as $index => $file) {
+                $timestamp = time();
+                $ext = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'bin';
+                $filename = 'payment_receipt_' . $lastnameSlug . '_' . $timestamp . '_' . $index . '.' . $ext;
+                
+                $path = $file->storeAs('documents/' . $familyFolder, $filename, 'public');
+                if ($path) {
+                    $newPaths[] = $path;
+                }
+            }
+
+            if (!empty($newPaths)) {
+                if ($existingPayment) {
+                    foreach ($existingPayment->receipt_urls as $oldUrl) {
+                        Storage::disk('public')->delete($oldUrl);
+                    }
+                }
+                $receiptPath = count($newPaths) === 1 ? $newPaths[0] : json_encode($newPaths);
             }
         }
 
