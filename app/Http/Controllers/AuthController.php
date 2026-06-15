@@ -47,6 +47,7 @@ class AuthController extends Controller
             }
 
             $request->session()->put('verify_email', $email);
+            $request->session()->put('verify_timer_start', time());
 
             return redirect()->route('verify.email.notice')
                 ->with('email', $email)
@@ -69,6 +70,7 @@ class AuthController extends Controller
         }
 
         $request->session()->put('verify_email', $email);
+        $request->session()->put('verify_timer_start', time());
 
         return redirect()->route('verify.email.notice')
             ->with('email', $email)
@@ -201,6 +203,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->forget('verify_email');
+        $request->session()->forget('verify_timer_start');
 
         return redirect()
             ->route('enrollment.dashboard')
@@ -239,6 +242,7 @@ class AuthController extends Controller
         }
 
         $request->session()->put('verify_email', $request->email);
+        $request->session()->put('verify_timer_start', time());
 
         return back()->with('success', 'Verification link resent! Please check your inbox or Spam/Junk folder.');
     }

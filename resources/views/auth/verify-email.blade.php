@@ -11,26 +11,11 @@
                  init() {
                      if (this.email) {
                          const storageKey = 'verify_timer_start_' + btoa(this.email).replace(/=/g, '');
-                         let startTimestamp = localStorage.getItem(storageKey);
-                         if (!startTimestamp) {
-                             startTimestamp = Date.now().toString();
-                             localStorage.setItem(storageKey, startTimestamp);
-                         }
-                         
-                         const elapsed = Math.floor((Date.now() - parseInt(startTimestamp)) / 1000);
-                         const remaining = 300 - elapsed;
-                         
-                         if (remaining <= 0) {
-                             this.timeLeft = 0;
-                             this.isExpired = true;
-                         } else {
-                             this.timeLeft = remaining;
-                             this.isExpired = false;
-                         }
-                     } else {
-                         this.timeLeft = 300;
-                         this.isExpired = false;
+                         localStorage.removeItem(storageKey);
                      }
+                     
+                     this.timeLeft = {{ max(0, 300 - (time() - session('verify_timer_start', time()))) }};
+                     this.isExpired = this.timeLeft <= 0;
                      
                      this.updateText();
                      
