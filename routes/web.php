@@ -81,5 +81,11 @@ Route::middleware(['auth', 'verified', 'applicant'])->group(function () {
     Route::post('/enrollment/finalize', [EnrollmentController::class, 'confirmFinalize'])->name('enrollment.finalize.confirm');
     Route::get('/enrollment/success', [EnrollmentController::class, 'showSuccess'])->name('enrollment.success');
     Route::get('/enrollment/payment', [EnrollmentController::class, 'showPayment'])->name('enrollment.payment');
-    Route::post('/enrollment/payment', [EnrollmentController::class, 'submitPayment'])->name('enrollment.payment.submit');
 });
+
+if (app()->environment('local')) {
+    Route::get('/test-errors/{code}', function ($code) {
+        abort((int) $code);
+    });
+}
+
