@@ -60,7 +60,7 @@
         text-transform: none !important;
     }
 </style>
-<div x-data="{ loaded: false, method: 'gcash_maya', showAgreementModal: false, agreedPrivacy: false, agreedTerms: false, agreedFee: false, amountPaid: {{ $total }}, invoiceTotal: {{ $invoiceTotal }}, submitting: false }" x-init="setTimeout(() => loaded = true, 800)" class="enrollment-page">
+<div x-data="{ loaded: false, method: 'gcash_maya', showAgreementModal: false, agreedPrivacy: false, agreedTerms: false, agreedFee: false, amountPaid: {{ $total }}, invoiceTotal: {{ $invoiceTotal }}, submitting: false, childrenNames: @js($invoiceApplicants->map(fn($c) => strtoupper($c->full_name ?: trim(($c->first_name ?? '') . ' ' . ($c->middle_name ?? '') . ' ' . ($c->last_name ?? ''))))->values()->all()) }" x-init="setTimeout(() => loaded = true, 800)" class="enrollment-page">
 
     {{-- Initial loading --}}
     <x-page-loader
@@ -596,6 +596,12 @@
                                     <div class="payment-preview-info">
                                         <div>
                                             <div class="payment-preview-name">{{ basename($receiptPath) }}</div>
+                                            @if ($invoiceApplicants->has($index))
+                                                @php $matchedChild = $invoiceApplicants->get($index); @endphp
+                                                <div style="font-size: 0.72rem; color: #047857; font-weight: 700; margin-top: 0.25rem; text-transform: uppercase;">
+                                                    FOR: {{ $matchedChild->full_name ?: trim(($matchedChild->first_name ?? '') . ' ' . ($matchedChild->middle_name ?? '') . ' ' . ($matchedChild->last_name ?? '')) }}
+                                                </div>
+                                            @endif
                                         </div>
                                         <a href="{{ $url }}" target="_blank" class="payment-preview-remove" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#065f46; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.25rem;">
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -691,6 +697,11 @@
                                 <div class="payment-preview-info">
                                     <div>
                                         <div class="payment-preview-name" x-text="file.name"></div>
+                                        <template x-if="childrenNames && childrenNames[index]">
+                                            <div style="font-size: 0.72rem; color: #047857; font-weight: 700; margin-top: 0.15rem; text-transform: uppercase; text-align: left;">
+                                                FOR: <span x-text="childrenNames[index]"></span>
+                                            </div>
+                                        </template>
                                         <div class="payment-preview-size" x-text="file.size"></div>
                                     </div>
                                     <button type="button" @click="removeFile(index)"
