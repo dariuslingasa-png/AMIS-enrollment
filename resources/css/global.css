@@ -41,6 +41,10 @@ body {
     width: 100%;
 }
 
+.arabic {
+    font-family: 'Amiri', 'Tajawal', 'Traditional Arabic', 'Times New Roman', 'Tahoma', 'Arial', sans-serif !important;
+}
+
 ::selection { background-color: #2C5530; color: white; }
 
 /* ── Custom Scrollbar ──────────────────────────────────────────────── */

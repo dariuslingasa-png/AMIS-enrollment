@@ -295,8 +295,37 @@ function enrollmentForm() {
             return this.countries
                 .filter(country => {
                     if (!query) return true;
-                    return country.name.toLowerCase().includes(query)
-                        || country.code.toLowerCase().includes(query);
+                    const name = country.name.toLowerCase();
+                    const code = country.code.toLowerCase();
+                    
+                    // Direct match
+                    if (name.includes(query) || code.includes(query)) return true;
+                    
+                    // UAE Aliases
+                    if (code === 'ae') {
+                        const uaeTerms = ['uae', 'united arab', 'united arabs', 'emirate', 'emirates'];
+                        if (uaeTerms.some(term => query.includes(term) || term.includes(query))) return true;
+                    }
+                    
+                    // Saudi Aliases
+                    if (code === 'sa') {
+                        const saudiTerms = ['saudi', 'saudi arabia', 'ksa'];
+                        if (saudiTerms.some(term => query.includes(term) || term.includes(query))) return true;
+                    }
+                    
+                    // US Aliases
+                    if (code === 'us') {
+                        const usaTerms = ['usa', 'united states', 'america'];
+                        if (usaTerms.some(term => query.includes(term) || term.includes(query))) return true;
+                    }
+                    
+                    // UK Aliases
+                    if (code === 'gb') {
+                        const ukTerms = ['uk', 'united kingdom', 'great britain', 'britain'];
+                        if (ukTerms.some(term => query.includes(term) || term.includes(query))) return true;
+                    }
+                    
+                    return false;
                 })
                 .slice(0, 80);
         },
@@ -306,9 +335,38 @@ function enrollmentForm() {
             if (!query) return this.countriesWithCallingCode;
             return this.countriesWithCallingCode
                 .filter(country => {
-                    return country.name.toLowerCase().includes(query)
-                        || country.code.toLowerCase().includes(query)
-                        || country.callingCode.includes(query);
+                    const name = country.name.toLowerCase();
+                    const code = country.code.toLowerCase();
+                    const calling = (country.callingCode || '').toLowerCase();
+                    
+                    // Direct match
+                    if (name.includes(query) || code.includes(query) || calling.includes(query)) return true;
+                    
+                    // UAE Aliases
+                    if (code === 'ae') {
+                        const uaeTerms = ['uae', 'united arab', 'united arabs', 'emirate', 'emirates'];
+                        if (uaeTerms.some(term => query.includes(term) || term.includes(query))) return true;
+                    }
+                    
+                    // Saudi Aliases
+                    if (code === 'sa') {
+                        const saudiTerms = ['saudi', 'saudi arabia', 'ksa'];
+                        if (saudiTerms.some(term => query.includes(term) || term.includes(query))) return true;
+                    }
+                    
+                    // US Aliases
+                    if (code === 'us') {
+                        const usaTerms = ['usa', 'united states', 'america'];
+                        if (usaTerms.some(term => query.includes(term) || term.includes(query))) return true;
+                    }
+                    
+                    // UK Aliases
+                    if (code === 'gb') {
+                        const ukTerms = ['uk', 'united kingdom', 'great britain', 'britain'];
+                        if (ukTerms.some(term => query.includes(term) || term.includes(query))) return true;
+                    }
+                    
+                    return false;
                 });
         },
 

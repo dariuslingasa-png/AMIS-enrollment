@@ -95,7 +95,7 @@
 .auth-hero-arabic {
     margin-bottom: 0.2rem;
     color: rgba(255, 255, 255, 0.88);
-    font-family: "Traditional Arabic", "Times New Roman", "Tahoma", "Arial", sans-serif;
+    font-family: "Amiri", "Tajawal", "Traditional Arabic", "Times New Roman", "Tahoma", "Arial", sans-serif;
     font-size: clamp(1.15rem, 1.8vw, 1.55rem);
     font-weight: 800;
     line-height: 1.15;
@@ -231,7 +231,7 @@
 
 .auth-entry-mobile-arabic {
     color: #047857;
-    font-family: "Traditional Arabic", "Times New Roman", "Tahoma", "Arial", sans-serif;
+    font-family: "Amiri", "Tajawal", "Traditional Arabic", "Times New Roman", "Tahoma", "Arial", sans-serif;
     font-size: 1rem;
     font-weight: 800;
     line-height: 1.2;
@@ -690,7 +690,7 @@ input:-webkit-autofill:active {
 }
 
 .login-splash-arabic {
-    font-family: "Traditional Arabic", "Times New Roman", "Tahoma", "Arial", sans-serif;
+    font-family: "Amiri", "Tajawal", "Traditional Arabic", "Times New Roman", "Tahoma", "Arial", sans-serif;
     font-size: 1.125rem;
     font-weight: 700;
     color: rgba(255,255,255,0.8);
