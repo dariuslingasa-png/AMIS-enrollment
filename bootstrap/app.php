@@ -18,6 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust all proxies (cPanel shared hosting / CloudFlare).
         // This ensures the request scheme is detected correctly for signed URL validation.
         $middleware->trustProxies(at: '*');
+
+        // The public email-start endpoint is already throttled and only accepts
+        // an email address. Excluding it avoids cPanel/browser session-cookie
+        // mismatches causing Page Expired (419) before users can request a link.
+        $middleware->validateCsrfTokens(except: [
+            'register',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

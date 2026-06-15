@@ -48,14 +48,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::get('/verify-email/notice', [AuthController::class, 'showVerificationNotice'])->name('verification.notice');
 Route::get('/verify-email/notice-compat', [AuthController::class, 'showVerificationNotice'])->name('verify.email.notice');
 Route::get('/verify-email/status', [AuthController::class, 'checkVerificationStatus'])
-    ->middleware('throttle:30,1')
+    ->middleware('throttle:120,1')
     ->name('verify.email.status');
-Route::post('/verify-email/resend', [AuthController::class, 'resendVerificationLink'])->middleware('throttle:6,1')->name('verify.email.resend');
+Route::post('/verify-email/resend', [AuthController::class, 'resendVerificationLink'])->middleware('throttle:10,1')->name('verify.email.resend');
 Route::post('/email/verification-notification', [\App\Http\Controllers\Auth\EmailVerificationNotificationController::class, 'store'])
-    ->middleware(['auth', 'throttle:6,1'])
+    ->middleware(['auth', 'throttle:10,1'])
     ->name('verification.send');
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
-    ->middleware(['signed', 'throttle:6,1'])
+    ->middleware(['signed', 'throttle:60,1'])
     ->name('verification.verify');
 
 // Dashboard — accessible to all authenticated and verified users
