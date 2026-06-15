@@ -176,6 +176,18 @@ class AuthController extends Controller
         abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403);
         abort_if(in_array($user->account_status, ['blocked', 'suspended'], true), 403);
 
+        if ($user->hasVerifiedEmail() && $user->account_status === 'verified') {
+            Auth::login($user);
+            $request->session()->regenerate();
+            $request->session()->forget('verify_email');
+            $request->session()->forget('verify_timer_start');
+
+            return redirect()
+                ->route('enrollment.dashboard')
+                ->with('success', 'Email verified! Welcome to AMIS.')
+                ->with('show_beta_notice', true);
+        }
+
         $verificationCode = VerificationCode::where('email', $user->getEmailForVerification())
             ->where('code', (string) $request->query('code'))
             ->latest()
