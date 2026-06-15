@@ -89,6 +89,7 @@
     direction: rtl;
     margin-bottom: 0.125rem;
     text-align: left;
+    letter-spacing: normal !important;
 }
 
 .enrollment-header-text .school {
