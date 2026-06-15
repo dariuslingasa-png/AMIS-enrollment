@@ -79,7 +79,7 @@ function enrollmentForm() {
         rejectionRemarks: REJECTION_REMARKS,
         countriesLoading: true,
         countriesSource: 'api',
-        countryApiUrl: 'https://restcountries.com/v3.1/all?fields=name,cca2,idd,flags,independent&v=2',
+        countryApiUrl: '/countries.json',
         countries: [],
         _debounceTimer: null,
         _submitted: false,
@@ -331,6 +331,16 @@ function enrollmentForm() {
         },
 
         normalizeCountry(country) {
+            if (country.dial_code !== undefined && country.code !== undefined) {
+                const codeUpper = country.code.toUpperCase();
+                return {
+                    name: country.name,
+                    code: codeUpper,
+                    callingCode: country.dial_code,
+                    flagPng: 'https://flagcdn.com/w80/' + codeUpper.toLowerCase() + '.png',
+                };
+            }
+
             const root = country.idd?.root || '';
             const suffixes = country.idd?.suffixes || [];
             let callingCode = '';
