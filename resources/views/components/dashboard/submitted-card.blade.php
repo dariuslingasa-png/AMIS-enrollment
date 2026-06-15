@@ -191,5 +191,14 @@
                 </div>
             </div>
         @endif
+
+        @if ($isAdminReview)
+            <div class="family-child-footer" style="margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid #eef2f7;">
+                <div style="width: 100%; display: flex; align-items: center; gap: 0.5rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 0.5rem 0.75rem; font-size: 0.75rem; color: #b45309; font-weight: 700;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>Pending registrar review. Verification takes 1–2 banking/business days. No action is required.</span>
+                </div>
+            </div>
+        @endif
     </div>
 </article>

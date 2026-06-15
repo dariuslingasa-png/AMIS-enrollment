@@ -206,7 +206,7 @@
                                     @if ($pendingCount > 0)
                                         <div style="display:flex; align-items:center; gap:0.5rem;">
                                             <span style="display:inline-block; width:6px; height:6px; background:#fde68a; border-radius:50%;"></span>
-                                            <span>{{ $pendingCount }} sibling {{ \Illuminate\Support\Str::plural('application', $pendingCount) }}: <strong style="color:#fde68a;">Pending Review by Admin/Registrar</strong>. No action is required. We are currently verifying the details.</span>
+                                            <span>{{ $pendingCount }} sibling {{ \Illuminate\Support\Str::plural('application', $pendingCount) }}: <strong style="color:#fde68a;">Pending Review by Admin/Registrar</strong> (verification takes 1–2 banking/business days). No action is required. We are currently verifying the details.</span>
                                         </div>
                                     @endif
                                     @if ($approvedCount > 0)
@@ -301,7 +301,7 @@
                         <div style="text-align: left;">
                             <h2 style="font-size:1.25rem; font-weight:800; margin:0 0 0.5rem 0; line-height:1.25; color: white; text-transform: uppercase; letter-spacing: 0.05em;">ENROLLMENT APPLICATIONS UNDER REVIEW</h2>
                             <div style="font-size:0.9rem; opacity:0.95; line-height:1.45; margin-bottom:0.75rem;">
-                                <strong>Dear Parents,</strong> your enrollment {{ $totalSiblings > 1 ? 'applications have' : 'application has' }} been successfully submitted and {{ $totalSiblings > 1 ? 'are' : 'is' }} currently pending review by the school registrar and admin office. We will verify your submitted documents and transaction references shortly. No further action is required at this stage.
+                                <strong>Dear Parents,</strong> your enrollment {{ $totalSiblings > 1 ? 'applications have' : 'application has' }} been successfully submitted and {{ $totalSiblings > 1 ? 'are' : 'is' }} currently pending review by the school registrar and admin office. We will verify your submitted documents and transaction references shortly. <strong>Please wait 1–2 banking/business days for verification.</strong> No further action is required at this stage.
                             </div>
 
                             {{-- Dynamic sibling status summary --}}
@@ -312,7 +312,7 @@
                                     @if ($pendingCount > 0)
                                         <div style="display:flex; align-items:center; gap:0.5rem;">
                                             <span style="display:inline-block; width:6px; height:6px; background:#fde68a; border-radius:50%;"></span>
-                                            <span>{{ $pendingCount }} sibling {{ \Illuminate\Support\Str::plural('application', $pendingCount) }}: <strong style="color:#fde68a;">Pending Review by Admin/Registrar</strong>. No action is required. We are currently verifying the details.</span>
+                                            <span>{{ $pendingCount }} sibling {{ \Illuminate\Support\Str::plural('application', $pendingCount) }}: <strong style="color:#fde68a;">Pending Review by Admin/Registrar</strong> (verification takes 1–2 banking/business days). No action is required. We are currently verifying the details.</span>
                                         </div>
                                     @endif
                                     @if ($approvedCount > 0)
