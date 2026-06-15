@@ -42,7 +42,7 @@ body {
 }
 
 .arabic {
-    font-family: 'Amiri', 'Tajawal', 'Traditional Arabic', 'Times New Roman', 'Tahoma', 'Arial', sans-serif !important;
+    font-family: 'Tajawal', 'Amiri', 'Traditional Arabic', 'Times New Roman', 'Tahoma', 'Arial', sans-serif !important;
     letter-spacing: normal !important;
     word-spacing: normal !important;
     text-rendering: optimizeLegibility !important;
