@@ -42,9 +42,13 @@ body {
 }
 
 .arabic {
-    font-family: 'Tajawal', 'Amiri', 'Traditional Arabic', 'Times New Roman', 'Tahoma', 'Arial', sans-serif !important;
-    letter-spacing: normal !important;
+    font-family: 'Amiri', 'Tajawal', 'Traditional Arabic', 'Times New Roman', 'Tahoma', 'Arial', sans-serif !important;
+    direction: rtl;
+    unicode-bidi: isolate;
+    letter-spacing: 0 !important;
     word-spacing: normal !important;
+    font-kerning: normal;
+    font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
     text-rendering: optimizeLegibility !important;
 }
 
