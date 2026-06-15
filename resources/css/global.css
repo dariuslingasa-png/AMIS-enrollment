@@ -2,7 +2,7 @@
    AMIS Enrollment System - Global Styles
    ══════════════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
 
 /* ── CSS Variables ─────────────────────────────────────────────────── */
 :root {
@@ -42,12 +42,14 @@ body {
 }
 
 .arabic {
-    font-family: 'Amiri', 'Tajawal', 'Traditional Arabic', 'Times New Roman', 'Tahoma', 'Arial', sans-serif !important;
+    font-family: 'Noto Naskh Arabic', 'Amiri', 'Traditional Arabic', 'Tahoma', 'Arial', sans-serif !important;
     direction: rtl;
     unicode-bidi: isolate;
     letter-spacing: 0 !important;
     word-spacing: normal !important;
+    text-transform: none !important;
     font-kerning: normal;
+    font-variant-ligatures: common-ligatures contextual;
     font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
     text-rendering: optimizeLegibility !important;
 }

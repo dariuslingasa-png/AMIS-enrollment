@@ -83,7 +83,7 @@
 
 .enrollment-header-text .arabic {
     display: inline-block;
-    font-family: "Amiri", "Tajawal", "Traditional Arabic", "Times New Roman", "Tahoma", "Arial", sans-serif;
+    font-family: "Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Tahoma", "Arial", sans-serif !important;
     font-size: 1.2rem;
     font-weight: 700;
     opacity: 0.95;
@@ -94,7 +94,9 @@
     white-space: nowrap;
     letter-spacing: 0 !important;
     word-spacing: normal !important;
+    text-transform: none !important;
     font-kerning: normal;
+    font-variant-ligatures: common-ligatures contextual;
     font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
     text-rendering: optimizeLegibility;
 }
