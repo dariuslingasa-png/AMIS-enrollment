@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\VerificationCode;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -39,7 +40,11 @@ class AuthController extends Controller
                     ->withErrors(['email' => 'This account is not available. Please contact AMIS support.']);
             }
 
-            $user->sendEmailVerificationNotification();
+            if (! $this->sendVerificationLink($user, $request)) {
+                return back()
+                    ->withInput($request->only('email'))
+                    ->withErrors(['email' => 'We could not send the verification link right now. Please contact AMIS support or try again later.']);
+            }
 
             $request->session()->put('verify_email', $email);
 
@@ -57,8 +62,11 @@ class AuthController extends Controller
             'account_status' => 'pending',
         ]);
 
-        // Sends a signed activation link; clicking it verifies and logs the user in.
-        event(new Registered($user));
+        if (! $this->sendVerificationLink($user, $request)) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => 'We could not send the verification link right now. Please contact AMIS support or try again later.']);
+        }
 
         $request->session()->put('verify_email', $email);
 
@@ -223,11 +231,31 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if ($user && !in_array($user->account_status, ['blocked', 'suspended'], true)) {
-            $user->sendEmailVerificationNotification();
+            if (! $this->sendVerificationLink($user, $request)) {
+                return back()
+                    ->withInput($request->only('email'))
+                    ->withErrors(['email' => 'We could not resend the verification link right now. Please try again later.']);
+            }
         }
 
         $request->session()->put('verify_email', $request->email);
 
         return back()->with('success', 'Verification link resent! Please check your inbox or Spam/Junk folder.');
+    }
+
+    private function sendVerificationLink(User $user, Request $request): bool
+    {
+        try {
+            $user->sendEmailVerificationNotification();
+            return true;
+        } catch (Throwable $exception) {
+            Log::error('Failed to send enrollment verification link.', [
+                'email' => $user->email,
+                'ip' => $request->ip(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }
