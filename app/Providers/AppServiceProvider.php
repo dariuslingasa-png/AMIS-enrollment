@@ -24,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
         // Without this, signed URL verification fails with 403 on cPanel/proxy setups.
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
+            
+            if (!$this->app->runningInConsole()) {
+                $_SERVER['HTTPS'] = 'on';
+                request()->server->set('HTTPS', 'on');
+            }
         }
     }
 }
