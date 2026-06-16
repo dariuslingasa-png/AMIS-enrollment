@@ -54,9 +54,13 @@ Route::post('/verify-email/resend', [AuthController::class, 'resendVerificationL
 Route::post('/email/verification-notification', [\App\Http\Controllers\Auth\EmailVerificationNotificationController::class, 'store'])
     ->middleware(['auth', 'throttle:10,1'])
     ->name('verification.send');
-Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'showVerifyConfirm'])
     ->middleware(['throttle:60,1'])
     ->name('verification.verify');
+
+Route::post('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware(['throttle:60,1'])
+    ->name('verification.verify.post');
 
 // Dashboard — accessible to all authenticated and verified users
 Route::middleware(['auth', 'verified'])->group(function () {

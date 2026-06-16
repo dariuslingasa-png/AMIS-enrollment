@@ -207,7 +207,7 @@ class AuthController extends Controller
         return view('auth.verify-email');
     }
 
-    public function verifyEmail(Request $request, int $id, string $hash)
+    public function showVerifyConfirm(Request $request, int $id, string $hash)
     {
         $token = $request->query('token');
         $ip = $request->ip();
@@ -216,7 +216,7 @@ class AuthController extends Controller
 
         // 1. Check if token exists in request
         if (!$token) {
-            $this->logVerificationAttempt(null, 'invalid_link', 'No token provided in verification request', $ip, $userAgent, $timestamp);
+            $this->logVerificationAttempt(null, 'invalid_link', 'No token provided in verification GET request', $ip, $userAgent, $timestamp);
             return view('auth.verify-result', [
                 'status' => 'error',
                 'message' => 'Invalid Link',
@@ -228,7 +228,7 @@ class AuthController extends Controller
 
         // 2. Check if token exists in DB
         if (!$magicLink) {
-            $this->logVerificationAttempt(null, 'invalid_link', 'Magic link token not found', $ip, $userAgent, $timestamp);
+            $this->logVerificationAttempt(null, 'invalid_link', 'Magic link token not found on GET', $ip, $userAgent, $timestamp);
             return view('auth.verify-result', [
                 'status' => 'error',
                 'message' => 'Invalid Link',
@@ -237,7 +237,7 @@ class AuthController extends Controller
 
         // 3. Check if token is expired
         if ($magicLink->expires_at->isPast()) {
-            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_expired', "Token expired at {$magicLink->expires_at}", $ip, $userAgent, $timestamp);
+            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_expired', "Token expired at {$magicLink->expires_at} on GET", $ip, $userAgent, $timestamp);
             return view('auth.verify-result', [
                 'status' => 'error',
                 'message' => 'Link Expired',
@@ -246,17 +246,82 @@ class AuthController extends Controller
 
         // 4. Check if token is already used
         if ($magicLink->used_at !== null) {
-            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_reused_attempt', 'Attempted reuse of already used magic link', $ip, $userAgent, $timestamp);
+            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_reused_attempt', 'Attempted reuse of already used magic link on GET', $ip, $userAgent, $timestamp);
             return view('auth.verify-result', [
                 'status' => 'error',
                 'message' => 'Link Already Used',
             ]);
         }
 
-        // 5. Check if user matches token and hash matches
+        // 5. Check if user matches token
         $user = User::find($id);
         if (!$user || $magicLink->user_id !== $user->id || !hash_equals(sha1($user->getEmailForVerification()), $hash)) {
-            $this->logVerificationAttempt($magicLink->user_id, 'invalid_link', 'User mismatch or invalid email hash', $ip, $userAgent, $timestamp);
+            $this->logVerificationAttempt($magicLink->user_id, 'invalid_link', 'User mismatch or invalid email hash on GET', $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Invalid Link',
+            ]);
+        }
+
+        // Token is valid! Render the landing page with confirmation form
+        return view('auth.verify-confirm', [
+            'id' => $id,
+            'hash' => $hash,
+            'token' => $token,
+            'email' => $user->email,
+        ]);
+    }
+
+    public function verifyEmail(Request $request, int $id, string $hash)
+    {
+        $token = $request->query('token') ?? $request->input('token');
+        $ip = $request->ip();
+        $userAgent = Str::limit((string) $request->userAgent(), 1000, '');
+        $timestamp = now();
+
+        // 1. Check if token exists
+        if (!$token) {
+            $this->logVerificationAttempt(null, 'invalid_link', 'No token provided in verification POST request', $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Invalid Link',
+            ]);
+        }
+
+        $tokenHash = hash('sha256', $token);
+        $magicLink = MagicLink::where('token_hash', $tokenHash)->first();
+
+        // 2. Check if token exists in DB
+        if (!$magicLink) {
+            $this->logVerificationAttempt(null, 'invalid_link', 'Magic link token not found on POST', $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Invalid Link',
+            ]);
+        }
+
+        // 3. Check if token is expired
+        if ($magicLink->expires_at->isPast()) {
+            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_expired', "Token expired at {$magicLink->expires_at} on POST", $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Link Expired',
+            ]);
+        }
+
+        // 4. Check if token is already used
+        if ($magicLink->used_at !== null) {
+            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_reused_attempt', 'Attempted reuse of magic link on POST', $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Link Already Used',
+            ]);
+        }
+
+        // 5. Check if user matches token
+        $user = User::find($id);
+        if (!$user || $magicLink->user_id !== $user->id || !hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+            $this->logVerificationAttempt($magicLink->user_id, 'invalid_link', 'User mismatch or invalid hash on POST', $ip, $userAgent, $timestamp);
             return view('auth.verify-result', [
                 'status' => 'error',
                 'message' => 'Invalid Link',
