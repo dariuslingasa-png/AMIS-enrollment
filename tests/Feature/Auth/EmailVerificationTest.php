@@ -88,7 +88,7 @@ class EmailVerificationTest extends TestCase
         ])->save();
 
         $response3 = $this->actingAs($user)->withSession(['verify_email' => $user->email])->getJson('/verify-email/status');
-        $response3->assertOk()->assertJson(['verified' => true]);
+        $response3->assertOk()->assertJson(['verified' => false]);
     }
 
     public function test_email_verification_status_polling_stays_false_without_pending_email_session(): void

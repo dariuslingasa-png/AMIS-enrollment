@@ -26,8 +26,11 @@
                              } else {
                                  this.isExpired = true;
                                  clearInterval(this.interval);
+                                 window.location.href = '{{ route('login') }}';
                              }
                          }, 1000);
+                     } else {
+                         window.location.href = '{{ route('login') }}';
                      }
                  },
                  updateText() {
