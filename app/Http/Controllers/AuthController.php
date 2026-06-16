@@ -192,7 +192,10 @@ class AuthController extends Controller
             if (Auth::check()) {
                 Auth::guard('web')->logout();
             }
-            return view('auth.verify-email');
+            return response()
+                ->view('auth.verify-email')
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache');
         }
 
         // No verify_email in session — the user landed here without going
@@ -206,7 +209,10 @@ class AuthController extends Controller
             }
 
             // Authenticated but not verified (edge case)
-            return view('auth.verify-email');
+            return response()
+                ->view('auth.verify-email')
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache');
         }
 
         // Guest with no verify_email session → back to login
