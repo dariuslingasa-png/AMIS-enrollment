@@ -38,7 +38,7 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
     ->name('auth.google.callback');
 
 // Auth routes
-Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:20,1')->name('register.store');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:100,1')->name('register.store');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:20,1')->name('login.store');
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -48,9 +48,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::get('/verify-email/notice', [AuthController::class, 'showVerificationNotice'])->name('verification.notice');
 Route::get('/verify-email/notice-compat', [AuthController::class, 'showVerificationNotice'])->name('verify.email.notice');
 Route::get('/verify-email/status', [AuthController::class, 'checkVerificationStatus'])
-    ->middleware('throttle:120,1')
+    ->middleware('throttle:600,1')
     ->name('verify.email.status');
-Route::post('/verify-email/resend', [AuthController::class, 'resendVerificationLink'])->middleware('throttle:10,1')->name('verify.email.resend');
+Route::post('/verify-email/resend', [AuthController::class, 'resendVerificationLink'])->middleware('throttle:100,1')->name('verify.email.resend');
 Route::post('/email/verification-notification', [\App\Http\Controllers\Auth\EmailVerificationNotificationController::class, 'store'])
     ->middleware(['auth', 'throttle:10,1'])
     ->name('verification.send');

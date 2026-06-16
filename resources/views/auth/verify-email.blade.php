@@ -31,7 +31,7 @@
                          }, 1000);
                      }
 
-                     // Poll verification status every 3 seconds to auto-redirect if they verify in another tab
+                     // Poll verification status every 10 seconds to auto-redirect if they verify in another tab
                      this.pollInterval = setInterval(async () => {
                          try {
                              const response = await fetch('{{ route('verify.email.status') }}');
@@ -47,7 +47,7 @@
                          } catch (error) {
                              console.error('Error polling verification status:', error);
                          }
-                     }, 3000);
+                     }, 10000);
                  },
                  updateText() {
                      const mins = Math.floor(this.timeLeft / 60);

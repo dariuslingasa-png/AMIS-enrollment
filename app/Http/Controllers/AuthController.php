@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -30,6 +31,17 @@ class AuthController extends Controller
         ]);
 
         $email = Str::lower(trim($validated['email']));
+
+        // Rate limit registration attempts per email address to 2 per 60 seconds
+        $limiterKey = 'register-email:' . $email;
+        if (RateLimiter::tooManyAttempts($limiterKey, 2)) {
+            $seconds = RateLimiter::availableIn($limiterKey);
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => "Too many verification requests. Please wait {$seconds} seconds."]);
+        }
+        
+        RateLimiter::hit($limiterKey, 60);
 
         $user = User::where('email', $email)->first();
 
@@ -239,14 +251,28 @@ class AuthController extends Controller
 
         $request->validate(['email' => 'required|email|exists:users,email']);
 
-        if (strtolower(trim($request->email)) !== strtolower(trim($sessionEmail))) {
+        $email = strtolower(trim($request->email));
+        if ($email !== strtolower(trim($sessionEmail))) {
             abort(403, 'Unauthorized verification resend request.');
         }
+
+        // Rate limit resending to 2 requests per 60 seconds per email address
+        $limiterKey = 'resend-verification:' . $email;
+        if (RateLimiter::tooManyAttempts($limiterKey, 2)) {
+            $seconds = RateLimiter::availableIn($limiterKey);
+            return back()->withErrors([
+                'email' => "Please wait {$seconds} seconds before requesting another verification link."
+            ]);
+        }
+        
+        RateLimiter::hit($limiterKey, 60);
 
         $user = User::where('email', $request->email)->first();
 
         if ($user && !in_array($user->account_status, ['blocked', 'suspended'], true)) {
             if (! $this->sendVerificationLink($user, $request)) {
+                // Clear rate limit attempt so they can try again immediately if it failed to send
+                RateLimiter::clear($limiterKey);
                 return back()
                     ->withInput($request->only('email'))
                     ->withErrors(['email' => 'We could not resend the verification link right now. Please try again later.']);
