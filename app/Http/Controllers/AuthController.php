@@ -187,7 +187,20 @@ class AuthController extends Controller
     {
         if (Auth::check()) {
             if ($request->session()->has('verify_email')) {
+                // Preserve verification session data before logout, because
+                // Auth::guard('web')->logout() internally calls session()->invalidate()
+                // which destroys ALL session data including verify_email & verify_timer_start.
+                $verifyEmail = $request->session()->get('verify_email');
+                $verifyTimerStart = $request->session()->get('verify_timer_start');
+
                 Auth::guard('web')->logout();
+
+                // Restore the verification session data so the countdown page
+                // continues to work on this request and any subsequent refresh.
+                $request->session()->put('verify_email', $verifyEmail);
+                if ($verifyTimerStart) {
+                    $request->session()->put('verify_timer_start', $verifyTimerStart);
+                }
             } elseif (Auth::user()->hasVerifiedEmail()) {
                 return redirect()->route('enrollment.dashboard');
             }
