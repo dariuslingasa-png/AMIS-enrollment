@@ -185,36 +185,32 @@ class AuthController extends Controller
 
     public function showVerificationNotice(Request $request)
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-
-            // Already verified → go straight to dashboard
-            if ($user->hasVerifiedEmail() && $user->account_status === 'verified') {
-                // Clean up verification session data if present
-                $request->session()->forget(['verify_email', 'verify_timer_start']);
-                return redirect()->route('enrollment.dashboard');
-            }
-
-            if ($request->session()->has('verify_email')) {
-                // Preserve verification data, then log out so the waiting
-                // page doesn't appear "authenticated" to other middleware.
-                $verifyEmail = $request->session()->get('verify_email');
-                $verifyTimerStart = $request->session()->get('verify_timer_start');
-
+        // If the user just requested a verification link, always show the
+        // waiting page — even if they are still authenticated from a
+        // previous session.  Log them out so the timer page works cleanly.
+        if ($request->session()->has('verify_email')) {
+            if (Auth::check()) {
                 Auth::guard('web')->logout();
-
-                $request->session()->put('verify_email', $verifyEmail);
-                if ($verifyTimerStart) {
-                    $request->session()->put('verify_timer_start', $verifyTimerStart);
-                }
             }
             return view('auth.verify-email');
         }
 
-        if (!$request->session()->has('verify_email')) {
-            return redirect()->route('login');
+        // No verify_email in session — the user landed here without going
+        // through the registration flow.
+        if (Auth::check()) {
+            $user = Auth::user();
+
+            // Already verified → dashboard
+            if ($user->hasVerifiedEmail() && $user->account_status === 'verified') {
+                return redirect()->route('enrollment.dashboard');
+            }
+
+            // Authenticated but not verified (edge case)
+            return view('auth.verify-email');
         }
-        return view('auth.verify-email');
+
+        // Guest with no verify_email session → back to login
+        return redirect()->route('login');
     }
 
     public function showVerifyConfirm(Request $request, int $id, string $hash)
