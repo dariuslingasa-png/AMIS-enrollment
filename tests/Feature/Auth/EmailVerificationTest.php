@@ -108,7 +108,7 @@ class EmailVerificationTest extends TestCase
             'account_status' => 'verified',
         ])->save();
 
-        $response3 = $this->withSession(['verify_email' => $user->email])->getJson('/verify-email/status');
+        $response3 = $this->actingAs($user)->withSession(['verify_email' => $user->email])->getJson('/verify-email/status');
         $response3->assertOk()->assertJson(['verified' => true]);
     }
 }

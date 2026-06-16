@@ -174,18 +174,7 @@ class AuthController extends Controller
 
     public function checkVerificationStatus(Request $request)
     {
-        $email = $request->session()->get('verify_email');
-        
-        if (Auth::check()) {
-            $email = Auth::user()->email;
-        }
-
-        if (!$email) {
-            return response()->json(['verified' => false]);
-        }
-
-        $user = User::where('email', $email)->first();
-        $isVerified = $user && $user->hasVerifiedEmail() && $user->account_status === 'verified';
+        $isVerified = Auth::check() && Auth::user()->hasVerifiedEmail() && Auth::user()->account_status === 'verified';
 
         return response()->json([
             'verified' => $isVerified,
