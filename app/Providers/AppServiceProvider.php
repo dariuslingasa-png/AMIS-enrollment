@@ -22,7 +22,11 @@ class AppServiceProvider extends ServiceProvider
     {
         // Force HTTPS scheme in production so signed URLs match the actual domain.
         // Without this, signed URL verification fails with 403 on cPanel/proxy setups.
-        if ($this->app->environment('production')) {
+        $isProduction = $this->app->environment('production') 
+            || str_contains(config('app.url'), 'amis.edu.ph')
+            || (!app()->runningInConsole() && str_contains(request()->getHost(), 'amis.edu.ph'));
+
+        if ($isProduction) {
             URL::forceScheme('https');
             URL::forceRootUrl('https://enrollment.amis.edu.ph');
             
