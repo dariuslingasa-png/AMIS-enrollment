@@ -34,7 +34,20 @@ return [
 
     'lifetime' => (int) env('SESSION_LIFETIME', 120),
 
-    'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
+    'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Idle Timeout (minutes)
+    |--------------------------------------------------------------------------
+    |
+    | Maximum number of minutes a user can remain idle (no requests) before
+    | being automatically logged out.  This is checked by the IdleTimeout
+    | middleware on every request.  Set to 0 to disable.
+    |
+    */
+
+    'idle_timeout' => (int) env('IDLE_TIMEOUT', 30),
 
     /*
     |--------------------------------------------------------------------------

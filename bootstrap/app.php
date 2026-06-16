@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(\App\Http\Middleware\TrustCloudflareHeaders::class);
+        $middleware->append(\App\Http\Middleware\IdleTimeout::class);
 
         $middleware->alias([
             'applicant' => \App\Http\Middleware\ApplicantOnly::class,
