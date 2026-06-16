@@ -7,7 +7,6 @@
                  timerText: '05:00', 
                  isExpired: false, 
                  interval: null,
-                 pollInterval: null,
                  init() {
                      if (this.email) {
                          const storageKey = 'verify_timer_start_' + btoa(this.email).replace(/=/g, '');
@@ -30,24 +29,6 @@
                              }
                          }, 1000);
                      }
-
-                     // Poll verification status every 10 seconds to auto-redirect if they verify in another tab
-                     this.pollInterval = setInterval(async () => {
-                         try {
-                             const response = await fetch('{{ route('verify.email.status') }}');
-                             if (response.ok) {
-                                 const data = await response.json();
-                                 if (data.verified) {
-                                     clearInterval(this.pollInterval);
-                                     if (this.interval) clearInterval(this.interval);
-                                     this.resetTimer();
-                                     window.location.href = '{{ route('enrollment.dashboard') }}';
-                                 }
-                             }
-                         } catch (error) {
-                             console.error('Error polling verification status:', error);
-                         }
-                     }, 10000);
                  },
                  updateText() {
                      const mins = Math.floor(this.timeLeft / 60);

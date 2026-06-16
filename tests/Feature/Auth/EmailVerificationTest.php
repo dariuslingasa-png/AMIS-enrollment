@@ -3,11 +3,11 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use App\Models\VerificationCode;
+use App\Models\MagicLink;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class EmailVerificationTest extends TestCase
@@ -29,51 +29,34 @@ class EmailVerificationTest extends TestCase
 
         Event::fake();
 
-        $verificationUrl = URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1($user->email), 'code' => '123456']
-        );
+        $verificationUrl = $this->magicLinkUrl($user);
 
-        VerificationCode::create([
-            'email' => $user->email,
-            'code' => '123456',
-            'expires_at' => now()->addMinutes(60),
-        ]);
+        $this->get($verificationUrl)
+            ->assertOk()
+            ->assertSee('Confirm Verification');
 
-        $response = $this->get($verificationUrl);
+        $response = $this->post($verificationUrl);
 
         Event::assertDispatched(Verified::class);
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
         $this->assertAuthenticatedAs($user);
         $this->assertSame('verified', $user->fresh()->account_status);
-        $response->assertRedirect(route('enrollment.dashboard', absolute: false));
-        $response->assertSessionHas('show_beta_notice', true);
-        $this->assertTrue(VerificationCode::where('email', $user->email)->first()->used);
+        $response->assertOk()->assertSee('Verification Successful');
+        $this->assertNotNull(MagicLink::firstWhere('user_id', $user->id)->used_at);
     }
 
     public function test_email_verification_link_can_not_be_reused_after_logout(): void
     {
         $user = User::factory()->unverified()->create();
 
-        $verificationUrl = URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1($user->email), 'code' => '654321']
-        );
+        $verificationUrl = $this->magicLinkUrl($user);
 
-        VerificationCode::create([
-            'email' => $user->email,
-            'code' => '654321',
-            'expires_at' => now()->addMinutes(60),
-        ]);
-
-        $this->get($verificationUrl)->assertRedirect(route('enrollment.dashboard', absolute: false));
+        $this->post($verificationUrl)->assertOk()->assertSee('Verification Successful');
         $this->post('/logout');
 
         $this->get($verificationUrl)
-            ->assertRedirect(route('login', absolute: false))
-            ->assertSessionHasErrors('email');
+            ->assertOk()
+            ->assertSee('Link Already Used');
 
         $this->assertGuest();
     }
@@ -82,11 +65,7 @@ class EmailVerificationTest extends TestCase
     {
         $user = User::factory()->unverified()->create();
 
-        $verificationUrl = URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1('wrong-email')]
-        );
+        $verificationUrl = $this->magicLinkUrl($user, sha1('wrong-email'));
 
         $this->get($verificationUrl);
 
@@ -110,5 +89,34 @@ class EmailVerificationTest extends TestCase
 
         $response3 = $this->actingAs($user)->withSession(['verify_email' => $user->email])->getJson('/verify-email/status');
         $response3->assertOk()->assertJson(['verified' => true]);
+    }
+
+    public function test_email_verification_status_polling_stays_false_without_pending_email_session(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+            'account_status' => 'verified',
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/verify-email/status');
+
+        $response->assertOk()->assertJson(['verified' => false]);
+    }
+
+    private function magicLinkUrl(User $user, ?string $hash = null): string
+    {
+        $token = Str::random(40);
+
+        MagicLink::create([
+            'user_id' => $user->id,
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => now()->addMinutes(5),
+        ]);
+
+        return route('verification.verify', [
+            'id' => $user->id,
+            'hash' => $hash ?? sha1($user->email),
+            'token' => $token,
+        ]);
     }
 }

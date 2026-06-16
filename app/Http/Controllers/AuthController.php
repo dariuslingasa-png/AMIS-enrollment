@@ -24,15 +24,17 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        if (Auth::check()) {
-            return redirect()->route('enrollment.dashboard');
-        }
-
         $validated = $request->validate([
             'email' => ['required', 'string', 'email', 'max:255'],
         ]);
 
         $email = Str::lower(trim($validated['email']));
+
+        if (Auth::check()) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         // Rate limit registration attempts per email address to 2 per 60 seconds
         $limiterKey = 'register-email:' . $email;
@@ -174,7 +176,14 @@ class AuthController extends Controller
 
     public function checkVerificationStatus(Request $request)
     {
-        $isVerified = Auth::check() && Auth::user()->hasVerifiedEmail() && Auth::user()->account_status === 'verified';
+        $user = Auth::user();
+        $pendingEmail = $request->session()->get('verify_email');
+
+        $isVerified = $user
+            && $pendingEmail
+            && hash_equals(Str::lower($user->email), Str::lower($pendingEmail))
+            && $user->hasVerifiedEmail()
+            && $user->account_status === 'verified';
 
         return response()->json([
             'verified' => $isVerified,

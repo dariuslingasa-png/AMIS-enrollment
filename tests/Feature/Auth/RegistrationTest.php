@@ -60,4 +60,23 @@ class RegistrationTest extends TestCase
         $response->assertRedirect(route('verify.email.notice', absolute: false));
         Notification::assertSentTo($user, AmisVerifyEmail::class);
     }
+
+    public function test_authenticated_browser_still_receives_secure_link_instead_of_dashboard_redirect(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
+            'email' => 'parent@gmail.com',
+            'account_status' => 'verified',
+        ]);
+
+        $response = $this->actingAs($user)->post('/register', [
+            'email' => 'parent@gmail.com',
+        ]);
+
+        $this->assertGuest();
+        $response->assertRedirect(route('verify.email.notice', absolute: false));
+        $response->assertSessionHas('verify_email', 'parent@gmail.com');
+        Notification::assertSentTo($user, AmisVerifyEmail::class);
+    }
 }
