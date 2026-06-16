@@ -132,6 +132,30 @@ class AuthController extends Controller
                 ->with('show_beta_notice', true);
         }
 
+        // Log failed attempt to admin_audit_logs and warn in log file
+        $email = Str::lower(trim($request->input('email')));
+        try {
+            \Illuminate\Support\Facades\DB::table('admin_audit_logs')->insert([
+                'user_id' => null,
+                'event' => 'login_failed',
+                'email' => $email,
+                'ip_address' => $request->ip(),
+                'user_agent' => Str::limit((string) $request->userAgent(), 1000, ''),
+                'successful' => false,
+                'message' => "Failed login attempt for account: {$email}",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            // Ignore
+        }
+
+        Log::warning('Failed login attempt', [
+            'ip' => $request->ip(),
+            'email' => $email,
+            'user_agent' => $request->userAgent(),
+        ]);
+
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->withInput($request->only('email', 'auth_mode'));

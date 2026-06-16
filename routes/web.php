@@ -40,7 +40,7 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
 // Auth routes
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:100,1')->name('register.store');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:20,1')->name('login.store');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.store');
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
@@ -72,7 +72,7 @@ Route::middleware(['auth', 'verified', 'applicant'])->group(function () {
     Route::post('/enroll/affidavit', [EnrollmentController::class, 'storeAffidavit'])->name('enrollment.affidavit.store');
     Route::get('/enroll/{applicant}', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form.child');
     Route::get('/enroll', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form');
-    Route::post('/enroll', [EnrollmentController::class, 'submitEnrollment'])->name('enrollment.submit');
+    Route::post('/enroll', [EnrollmentController::class, 'submitEnrollment'])->middleware('throttle:20,1')->name('enrollment.submit');
     Route::post('/enroll/draft', [EnrollmentController::class, 'saveDraft'])->name('enrollment.draft');
     Route::get('/enroll/shifts/{grade}', [EnrollmentController::class, 'getShiftsForGrade'])->name('enrollment.shifts');
     Route::delete('/enroll/draft', [EnrollmentController::class, 'discardDraft'])->name('enrollment.draft.discard');

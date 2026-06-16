@@ -1,3 +1,12 @@
+@php
+    $retryAfter = 60;
+    if (isset($exception) && method_exists($exception, 'getHeaders')) {
+        $headers = $exception->getHeaders();
+        if (isset($headers['Retry-After'])) {
+            $retryAfter = (int) $headers['Retry-After'];
+        }
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -424,7 +433,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let timeLeft = 60; // 60 seconds
+            let timeLeft = {{ $retryAfter }};
             const countdownEl = document.getElementById('countdown');
             const btnBack = document.getElementById('btn-back');
             const labelEl = document.getElementById('timer-label');

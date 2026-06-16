@@ -11,6 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\TrustCloudflareHeaders::class);
+
         $middleware->alias([
             'applicant' => \App\Http\Middleware\ApplicantOnly::class,
         ]);
@@ -27,7 +29,42 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->reportable(function (\Throwable $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException && $e->getStatusCode() === 429) {
+                $request = request();
+                $email = $request->input('email') ?? $request->session()->get('verify_email');
+                $userId = auth()->id() ?? ($request->user()?->id);
+                $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
+                
+                try {
+                    \Illuminate\Support\Facades\DB::table('admin_audit_logs')->insert([
+                        'user_id' => $userId,
+                        'event' => 'rate_limit_exceeded',
+                        'email' => $email,
+                        'ip_address' => $request->ip(),
+                        'user_agent' => \Illuminate\Support\Str::limit((string) $request->userAgent(), 1000, ''),
+                        'successful' => false,
+                        'message' => "Rate limit exceeded at: " . $request->path() . " (Method: " . $request->method() . ")",
+                        'metadata' => json_encode([
+                            'retry_after' => $retryAfter,
+                            'route' => $request->route()?->getName(),
+                        ]),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } catch (\Throwable $tblException) {
+                    // Fail silently if DB connection is unavailable
+                }
+
+                \Illuminate\Support\Facades\Log::warning('Rate Limit Exceeded (429)', [
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'endpoint' => $request->fullUrl(),
+                    'email' => $email,
+                    'retry_after' => $retryAfter,
+                ]);
+            }
+        });
     })
     ->withProviders([
         \SocialiteProviders\Manager\ServiceProvider::class,
