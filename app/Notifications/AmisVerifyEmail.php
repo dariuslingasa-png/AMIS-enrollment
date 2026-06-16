@@ -2,40 +2,57 @@
 
 namespace App\Notifications;
 
-use App\Models\VerificationCode;
+use App\Models\MagicLink;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AmisVerifyEmail extends VerifyEmail
 {
     protected function verificationUrl($notifiable): string
     {
-        $expiresAt = now()->addMinutes(Config::get('auth.verification.expire', 60));
+        $expiresAt = now()->addMinutes(Config::get('auth.verification.expire', 5));
         $email = $notifiable->getEmailForVerification();
 
-        VerificationCode::where('email', $email)
-            ->where('used', false)
-            ->update(['used' => true]);
+        // Expire any existing magic links for this user to enforce single active link
+        MagicLink::where('user_id', $notifiable->id)
+            ->whereNull('used_at')
+            ->update(['expires_at' => now()]);
 
-        $code = (string) random_int(100000, 999999);
+        $token = Str::random(40);
+        $tokenHash = hash('sha256', $token);
 
-        VerificationCode::create([
-            'email' => $email,
-            'code' => $code,
+        MagicLink::create([
+            'user_id' => $notifiable->id,
+            'token_hash' => $tokenHash,
             'expires_at' => $expiresAt,
         ]);
 
-        return URL::temporarySignedRoute(
-            'verification.verify',
-            $expiresAt,
-            [
-                'id' => $notifiable->getKey(),
-                'hash' => sha1($email),
-                'code' => $code,
-            ]
-        );
+        // Audit Log: Magic Link Generated
+        try {
+            DB::table('admin_audit_logs')->insert([
+                'user_id' => $notifiable->id,
+                'event' => 'magic_link_generated',
+                'email' => $email,
+                'ip_address' => request()->ip(),
+                'user_agent' => Str::limit((string) request()->userAgent(), 1000, ''),
+                'successful' => true,
+                'message' => 'Magic link generated for verification',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to log magic link generation', ['error' => $e->getMessage()]);
+        }
+
+        return route('verification.verify', [
+            'id' => $notifiable->getKey(),
+            'hash' => sha1($email),
+            'token' => $token,
+        ]);
     }
 
     public function toMail($notifiable): MailMessage

@@ -55,7 +55,7 @@ Route::post('/email/verification-notification', [\App\Http\Controllers\Auth\Emai
     ->middleware(['auth', 'throttle:10,1'])
     ->name('verification.send');
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
-    ->middleware(['signed', 'throttle:60,1'])
+    ->middleware(['throttle:60,1'])
     ->name('verification.verify');
 
 // Dashboard — accessible to all authenticated and verified users

@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\VerificationCode;
+use App\Models\MagicLink;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -207,39 +209,66 @@ class AuthController extends Controller
 
     public function verifyEmail(Request $request, int $id, string $hash)
     {
-        $user = User::findOrFail($id);
+        $token = $request->query('token');
+        $ip = $request->ip();
+        $userAgent = Str::limit((string) $request->userAgent(), 1000, '');
+        $timestamp = now();
 
-        abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403);
-        abort_if(in_array($user->account_status, ['blocked', 'suspended'], true), 403);
-
-        if ($user->hasVerifiedEmail() && $user->account_status === 'verified') {
-            Auth::login($user);
-            $request->session()->regenerate();
-            $request->session()->forget('verify_email');
-            $request->session()->forget('verify_timer_start');
-
-            return redirect()
-                ->route('enrollment.dashboard')
-                ->with('success', 'Email verified! Welcome to AMIS.')
-                ->with('show_beta_notice', true);
+        // 1. Check if token exists in request
+        if (!$token) {
+            $this->logVerificationAttempt(null, 'invalid_link', 'No token provided in verification request', $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Invalid Link',
+            ]);
         }
 
-        $verificationCode = VerificationCode::where('email', $user->getEmailForVerification())
-            ->where('code', (string) $request->query('code'))
-            ->latest()
-            ->first();
+        $tokenHash = hash('sha256', $token);
+        $magicLink = MagicLink::where('token_hash', $tokenHash)->first();
 
-        if (!$verificationCode || !$verificationCode->isValid()) {
-            return redirect()
-                ->route('login')
-                ->withErrors(['email' => 'This email link has already been used or expired. Please request a new secure link.']);
+        // 2. Check if token exists in DB
+        if (!$magicLink) {
+            $this->logVerificationAttempt(null, 'invalid_link', 'Magic link token not found', $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Invalid Link',
+            ]);
         }
 
-        $verificationCode->update(['used' => true]);
+        // 3. Check if token is expired
+        if ($magicLink->expires_at->isPast()) {
+            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_expired', "Token expired at {$magicLink->expires_at}", $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Link Expired',
+            ]);
+        }
+
+        // 4. Check if token is already used
+        if ($magicLink->used_at !== null) {
+            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_reused_attempt', 'Attempted reuse of already used magic link', $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Link Already Used',
+            ]);
+        }
+
+        // 5. Check if user matches token and hash matches
+        $user = User::find($id);
+        if (!$user || $magicLink->user_id !== $user->id || !hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+            $this->logVerificationAttempt($magicLink->user_id, 'invalid_link', 'User mismatch or invalid email hash', $ip, $userAgent, $timestamp);
+            return view('auth.verify-result', [
+                'status' => 'error',
+                'message' => 'Invalid Link',
+            ]);
+        }
+
+        // Verification successful! Mark as used and update user status
+        $magicLink->update(['used_at' => $timestamp]);
 
         if (!$user->hasVerifiedEmail()) {
             $user->forceFill([
-                'email_verified_at' => now(),
+                'email_verified_at' => $timestamp,
                 'account_status' => 'verified',
             ])->save();
 
@@ -248,15 +277,56 @@ class AuthController extends Controller
             $user->update(['account_status' => 'verified']);
         }
 
+        // Log Magic Link Verified event
+        $this->logVerificationAttempt($user->id, 'magic_link_verified', 'Verification Successful', $ip, $userAgent, $timestamp);
+
+        // Authenticate the user
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->forget('verify_email');
         $request->session()->forget('verify_timer_start');
 
-        return redirect()
-            ->route('enrollment.dashboard')
-            ->with('success', 'Email verified! Welcome to AMIS.')
-            ->with('show_beta_notice', true);
+        return view('auth.verify-result', [
+            'status' => 'success',
+            'message' => 'Verification Successful',
+            'redirectUrl' => route('enrollment.dashboard'),
+        ]);
+    }
+
+    private function logVerificationAttempt(?int $userId, string $event, string $message, string $ip, string $userAgent, $timestamp): void
+    {
+        try {
+            $email = null;
+            if ($userId) {
+                $user = User::find($userId);
+                $email = $user?->email;
+            } else {
+                $email = request()->input('email') ?? request()->session()->get('verify_email');
+            }
+
+            DB::table('admin_audit_logs')->insert([
+                'user_id' => $userId,
+                'event' => $event,
+                'email' => $email,
+                'ip_address' => $ip,
+                'user_agent' => $userAgent,
+                'successful' => ($event === 'magic_link_verified'),
+                'message' => $message,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to log verification attempt in audit logs', [
+                'error' => $e->getMessage(),
+                'event' => $event,
+                'message' => $message,
+            ]);
+        }
+
+        Log::info("Verification attempt: {$event} - {$message}", [
+            'user_id' => $userId,
+            'ip' => $ip,
+        ]);
     }
 
     public function resendVerificationLink(Request $request)
