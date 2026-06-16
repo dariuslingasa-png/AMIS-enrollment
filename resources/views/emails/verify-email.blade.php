@@ -59,7 +59,7 @@
                             </table>
 
                             <div style="text-align:center;margin:28px 0;">
-                                <a href="{{ $verificationUrl }}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 24px;font-size:15px;font-weight:800;box-shadow:0 10px 20px rgba(5,150,105,0.22);">
+                                <a href="{{ $verificationUrl }}" target="_blank" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 24px;font-size:15px;font-weight:800;box-shadow:0 10px 20px rgba(5,150,105,0.22);">
                                     Verify Email Address
                                 </a>
                             </div>
@@ -73,11 +73,11 @@
                     <tr>
                         <td style="padding:22px 32px;background:#f8fafc;border-top:1px solid #e5e7eb;">
                             <p style="margin:0 0 10px;font-size:12px;line-height:1.6;color:#6b7280;">
-                                If the button does not work, copy and paste this link into your browser:
+                                If the button does not work, click the link below or copy and paste it into your browser:
                             </p>
-                            <p style="margin:0;font-size:12px;line-height:1.6;color:#047857;word-break:break-all;">
+                            <a href="{{ $verificationUrl }}" target="_blank" style="color:#047857;text-decoration:underline;word-break:break-all;font-size:12px;line-height:1.6;font-weight:500;">
                                 {{ $verificationUrl }}
-                            </p>
+                            </a>
                         </td>
                     </tr>
 
