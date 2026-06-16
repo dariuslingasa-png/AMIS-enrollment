@@ -186,23 +186,27 @@ class AuthController extends Controller
     public function showVerificationNotice(Request $request)
     {
         if (Auth::check()) {
+            $user = Auth::user();
+
+            // Already verified → go straight to dashboard
+            if ($user->hasVerifiedEmail() && $user->account_status === 'verified') {
+                // Clean up verification session data if present
+                $request->session()->forget(['verify_email', 'verify_timer_start']);
+                return redirect()->route('enrollment.dashboard');
+            }
+
             if ($request->session()->has('verify_email')) {
-                // Preserve verification session data before logout, because
-                // Auth::guard('web')->logout() internally calls session()->invalidate()
-                // which destroys ALL session data including verify_email & verify_timer_start.
+                // Preserve verification data, then log out so the waiting
+                // page doesn't appear "authenticated" to other middleware.
                 $verifyEmail = $request->session()->get('verify_email');
                 $verifyTimerStart = $request->session()->get('verify_timer_start');
 
                 Auth::guard('web')->logout();
 
-                // Restore the verification session data so the countdown page
-                // continues to work on this request and any subsequent refresh.
                 $request->session()->put('verify_email', $verifyEmail);
                 if ($verifyTimerStart) {
                     $request->session()->put('verify_timer_start', $verifyTimerStart);
                 }
-            } elseif (Auth::user()->hasVerifiedEmail()) {
-                return redirect()->route('enrollment.dashboard');
             }
             return view('auth.verify-email');
         }

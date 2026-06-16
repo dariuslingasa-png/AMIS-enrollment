@@ -8,14 +8,32 @@
                  isExpired: false, 
                  interval: null,
                  init() {
-                     if (this.email) {
-                         const storageKey = 'verify_timer_start_' + btoa(this.email).replace(/=/g, '');
-                         localStorage.removeItem(storageKey);
+                     const serverTimeLeft = {{ max(0, 300 - (time() - session('verify_timer_start', time()))) }};
+                     
+                     // Use localStorage to persist timer across page navigations
+                     // (e.g. user clicks verify link in email, then comes back)
+                     const storageKey = this.email 
+                         ? 'amis_verify_expires_' + btoa(this.email).replace(/=/g, '') 
+                         : null;
+                     
+                     let expiresAt = null;
+                     if (storageKey) {
+                         expiresAt = localStorage.getItem(storageKey);
                      }
                      
-                     this.timeLeft = {{ max(0, 300 - (time() - session('verify_timer_start', time()))) }};
-                     this.isExpired = this.timeLeft <= 0;
+                     if (expiresAt) {
+                         // Resume timer from localStorage
+                         const remaining = Math.max(0, Math.floor((parseInt(expiresAt, 10) - Date.now()) / 1000));
+                         this.timeLeft = remaining;
+                     } else {
+                         // First load — use server-computed time and store expiry
+                         this.timeLeft = serverTimeLeft;
+                         if (storageKey && serverTimeLeft > 0) {
+                             localStorage.setItem(storageKey, String(Date.now() + (serverTimeLeft * 1000)));
+                         }
+                     }
                      
+                     this.isExpired = this.timeLeft <= 0;
                      this.updateText();
                      
                      if (!this.isExpired) {
@@ -26,11 +44,8 @@
                              } else {
                                  this.isExpired = true;
                                  clearInterval(this.interval);
-                                 window.location.href = '{{ route('login') }}';
                              }
                          }, 1000);
-                     } else {
-                         window.location.href = '{{ route('login') }}';
                      }
                  },
                  updateText() {
@@ -39,8 +54,9 @@
                      this.timerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
                  },
                  resetTimer() {
+                     // Clear localStorage timer so resend starts fresh
                      if (this.email) {
-                         const storageKey = 'verify_timer_start_' + btoa(this.email).replace(/=/g, '');
+                         const storageKey = 'amis_verify_expires_' + btoa(this.email).replace(/=/g, '');
                          localStorage.removeItem(storageKey);
                      }
                  }
