@@ -59,9 +59,25 @@
                             </table>
 
                             <div style="text-align:center;margin:28px 0;">
-                                <a href="{{ $verificationUrl }}" target="_blank" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 24px;font-size:15px;font-weight:800;box-shadow:0 10px 20px rgba(5,150,105,0.22);">
-                                    Verify Email Address
-                                </a>
+                                <!--[if mso]>
+                                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $verificationUrl }}" style="height:48px;v-text-anchor:middle;width:260px;" arcsize="21%" strokecolor="#059669" fillcolor="#059669">
+                                    <w:anchorlock/>
+                                    <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">Verify Email Address</center>
+                                </v:roundrect>
+                                <![endif]-->
+                                <!--[if !mso]><!-->
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
+                                    <tr>
+                                        <td align="center" valign="middle" style="background:#059669;border-radius:10px;box-shadow:0 10px 20px rgba(5,150,105,0.22);">
+                                            <a href="{{ $verificationUrl }}" target="_blank" style="display:block;background:#059669;color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 32px;font-size:15px;font-weight:800;font-family:Arial,Helvetica,sans-serif;line-height:1.2;text-align:center;mso-padding-alt:0;border:1px solid #059669;">
+                                                <!--[if mso]><i style="mso-text-raise:8pt;mso-font-width:150%" hidden>&emsp;</i><![endif]-->
+                                                <span style="mso-text-raise:8pt;">Verify Email Address</span>
+                                                <!--[if mso]><i style="mso-font-width:150%" hidden>&emsp;&#8203;</i><![endif]-->
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <!--<![endif]-->
                             </div>
 
                             <p style="margin:0;font-size:13px;line-height:1.7;color:#6b7280;">
