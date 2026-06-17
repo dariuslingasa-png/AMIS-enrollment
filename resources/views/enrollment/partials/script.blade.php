@@ -28,9 +28,9 @@ document.addEventListener('input', function (e) {
                 // Determine cursor position
                 let start = e.target.selectionStart;
                 let end = e.target.selectionEnd;
-                
+
                 e.target.value = upperVal;
-                
+
                 // Preserve selection range for text fields that support it
                 if (start !== null && end !== null) {
                     try {
@@ -39,7 +39,7 @@ document.addEventListener('input', function (e) {
                         // ignore error for inputs that don't support setSelectionRange
                     }
                 }
-                
+
                 // Trigger a bubbling input event to update AlpineJS's x-model reactive state
                 if (!e.target._uppercasing) {
                     e.target._uppercasing = true;
@@ -90,6 +90,14 @@ function enrollmentForm() {
             marriage_contract: {{ $applicant?->marriage_contract_url ? 'true' : 'false' }},
             medical_record: {{ $applicant?->medical_record_url ? 'true' : 'false' }},
             affidavit: {{ $applicant?->affidavit_url ? 'true' : 'false' }},
+        },
+        filePreparation: {
+            photo_2x2: false,
+            birth_cert: false,
+            report_card: false,
+            marriage_contract: false,
+            medical_record: false,
+            affidavit: false,
         },
         completedSteps: @json($completedSteps),
         visitedSteps: @json($completedSteps ? array_values(array_unique(array_merge([1], $completedSteps))) : [1]),
@@ -235,6 +243,10 @@ function enrollmentForm() {
             return g.includes('kinder');
         },
 
+        hasFilePreparationPending() {
+            return Object.values(this.filePreparation).some(Boolean);
+        },
+
         toggleStudentType(value) {
             this.form.student_type = this.form.student_type === value ? '' : value;
             if (this.form.student_type !== 'Old') {
@@ -297,34 +309,34 @@ function enrollmentForm() {
                     if (!query) return true;
                     const name = country.name.toLowerCase();
                     const code = country.code.toLowerCase();
-                    
+
                     // Direct match
                     if (name.includes(query) || code.includes(query)) return true;
-                    
+
                     // UAE Aliases
                     if (code === 'ae') {
                         const uaeTerms = ['uae', 'united arab', 'united arabs', 'emirate', 'emirates'];
                         if (uaeTerms.some(term => query.includes(term) || term.includes(query))) return true;
                     }
-                    
+
                     // Saudi Aliases
                     if (code === 'sa') {
                         const saudiTerms = ['saudi', 'saudi arabia', 'ksa'];
                         if (saudiTerms.some(term => query.includes(term) || term.includes(query))) return true;
                     }
-                    
+
                     // US Aliases
                     if (code === 'us') {
                         const usaTerms = ['usa', 'united states', 'america'];
                         if (usaTerms.some(term => query.includes(term) || term.includes(query))) return true;
                     }
-                    
+
                     // UK Aliases
                     if (code === 'gb') {
                         const ukTerms = ['uk', 'united kingdom', 'great britain', 'britain'];
                         if (ukTerms.some(term => query.includes(term) || term.includes(query))) return true;
                     }
-                    
+
                     return false;
                 })
                 .slice(0, 80);
@@ -338,34 +350,34 @@ function enrollmentForm() {
                     const name = country.name.toLowerCase();
                     const code = country.code.toLowerCase();
                     const calling = (country.callingCode || '').toLowerCase();
-                    
+
                     // Direct match
                     if (name.includes(query) || code.includes(query) || calling.includes(query)) return true;
-                    
+
                     // UAE Aliases
                     if (code === 'ae') {
                         const uaeTerms = ['uae', 'united arab', 'united arabs', 'emirate', 'emirates'];
                         if (uaeTerms.some(term => query.includes(term) || term.includes(query))) return true;
                     }
-                    
+
                     // Saudi Aliases
                     if (code === 'sa') {
                         const saudiTerms = ['saudi', 'saudi arabia', 'ksa'];
                         if (saudiTerms.some(term => query.includes(term) || term.includes(query))) return true;
                     }
-                    
+
                     // US Aliases
                     if (code === 'us') {
                         const usaTerms = ['usa', 'united states', 'america'];
                         if (usaTerms.some(term => query.includes(term) || term.includes(query))) return true;
                     }
-                    
+
                     // UK Aliases
                     if (code === 'gb') {
                         const ukTerms = ['uk', 'united kingdom', 'great britain', 'britain'];
                         if (ukTerms.some(term => query.includes(term) || term.includes(query))) return true;
                     }
-                    
+
                     return false;
                 });
         },
@@ -684,6 +696,10 @@ function enrollmentForm() {
                 if (!this.form.emergency_phone.trim()) return 'Emergency contact phone is required.';
             }
             if (this.step === 6) {
+                if (this.hasFilePreparationPending()) {
+                    return 'Please wait until the selected file finishes preparing.';
+                }
+
                 const hasDocument = (name) => {
                     if (this.uploadedFiles[name]) return true;
                     const input = document.querySelector('input[name="' + name + '"]');
@@ -847,6 +863,14 @@ function enrollmentForm() {
         },
 
         handleSubmit(e) {
+            if (this.loading || this.hasFilePreparationPending() || this.draftSaving) {
+                e.preventDefault();
+                this.error = this.hasFilePreparationPending()
+                    ? 'Please wait until the selected file finishes preparing.'
+                    : (this.draftSaving ? 'Please wait until the selected file finishes saving.' : '');
+                return;
+            }
+
             const err = this.validateStep();
             if (err) { e.preventDefault(); this.error = err; return; }
             this._submitted = true;
@@ -1042,7 +1066,7 @@ function enrollmentForm() {
                 this.useSiblingSchedule = true;
                 this.useSiblingAddress = true;
                 this.useSiblingParent = true;
-                
+
                 this.applySiblingSchedule(true);
                 this.applySiblingAddress(true);
                 this.applySiblingParent(true);
@@ -1121,9 +1145,26 @@ function enrollmentForm() {
                 this.saveFileSelection();
             });
 
+            window.addEventListener('enrollment:file-processing-started', (event) => {
+                const name = event.detail?.name;
+                if (name && Object.prototype.hasOwnProperty.call(this.filePreparation, name)) {
+                    this.filePreparation[name] = true;
+                }
+            });
+
+            window.addEventListener('enrollment:file-processing-finished', (event) => {
+                const name = event.detail?.name;
+                if (name && Object.prototype.hasOwnProperty.call(this.filePreparation, name)) {
+                    this.filePreparation[name] = false;
+                }
+            });
+
             window.addEventListener('enrollment:file-removed', (event) => {
                 const name = event.detail?.name;
                 if (name) this.uploadedFiles[name] = false;
+                if (name && Object.prototype.hasOwnProperty.call(this.filePreparation, name)) {
+                    this.filePreparation[name] = false;
+                }
             });
 
             // Restore from localStorage if backend has no draft yet

@@ -183,9 +183,9 @@
                             </svg>
                         </button>
                         <button type="submit" x-show="step === totalSteps" class="btn-primary"
-                            :disabled="loading"
-                            :class="{ 'is-disabled': loading }">
-                            <span>Submit Application</span>
+                            :disabled="loading || hasFilePreparationPending() || draftSaving"
+                            :class="{ 'is-disabled': loading || hasFilePreparationPending() || draftSaving }">
+                            <span x-text="hasFilePreparationPending() ? 'Preparing files...' : (draftSaving ? 'Saving files...' : 'Submit Application')"></span>
                         </button>
                     </div>
                 </div>

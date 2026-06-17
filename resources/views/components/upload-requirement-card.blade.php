@@ -55,7 +55,7 @@ if (!window.AMIS_UploadUtils) {
             const allowed = acceptStr.split(',').map(s => s.trim().toLowerCase());
             const fileName = file.name.toLowerCase();
             const fileType = file.type.toLowerCase();
-            
+
             let match = false;
             for (const item of allowed) {
                 if (item.startsWith('.')) {
@@ -67,7 +67,7 @@ if (!window.AMIS_UploadUtils) {
                     if (fileType === item) { match = true; break; }
                 }
             }
-            
+
             if (!match) {
                 const readableTypes = allowed.map(item => {
                     if (item.startsWith('.')) return item.substring(1).toUpperCase();
@@ -96,7 +96,7 @@ if (!window.AMIS_UploadUtils) {
                             const canvas = document.createElement('canvas');
                             let width = img.width;
                             let height = img.height;
-                            
+
                             // High print resolution cap (2048px on the longest side)
                             const maxDim = 2048;
                             if (width > maxDim || height > maxDim) {
@@ -108,17 +108,17 @@ if (!window.AMIS_UploadUtils) {
                                     height = maxDim;
                                 }
                             }
-                            
+
                             canvas.width = width;
                             canvas.height = height;
-                            
+
                             const ctx = canvas.getContext('2d');
                             // Paint canvas with a solid white background (converting transparent PNGs cleanly to JPEG)
                             ctx.fillStyle = '#FFFFFF';
                             ctx.fillRect(0, 0, width, height);
-                            
+
                             ctx.drawImage(img, 0, 0, width, height);
-                            
+
                             canvas.toBlob((blob) => {
                                 if (!blob) {
                                     reject(new Error('Optimizing image canvas conversion failed.'));
@@ -138,6 +138,31 @@ if (!window.AMIS_UploadUtils) {
                 };
                 reader.onerror = () => reject(new Error('Selected file reader error.'));
             });
+        },
+
+        cloneFile(file) {
+            if (file.arrayBuffer) {
+                return file.arrayBuffer().then((buffer) => new File([buffer], file.name, {
+                    type: file.type || 'application/octet-stream',
+                    lastModified: Date.now()
+                }));
+            }
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(new File([reader.result], file.name, {
+                    type: file.type || 'application/octet-stream',
+                    lastModified: Date.now()
+                }));
+                reader.onerror = () => reject(new Error('Selected file could not be read.'));
+                reader.readAsArrayBuffer(file);
+            });
+        },
+
+        replaceInputFile(input, file) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
         }
     };
 }
@@ -212,92 +237,108 @@ function registerUploadComponent(Alpine) {
         async handleFileChange(event) {
             let file = event.target.files[0];
             if (!file) return;
-            
+
             this.errorMsg = '';
-            
-            const validation = window.AMIS_UploadUtils.validateFile(file, config.accept);
-            if (!validation.valid) {
-                this.errorMsg = validation.error;
-                this.clearSelected();
-                return;
-            }
-            
-            const maxSizeMB = config.maxSizeMB;
             const name = config.name;
-            const fileSizeMB = file.size / (1024 * 1024);
-            const isImage = file.type.startsWith('image/');
-            
-            if (!isImage) {
-                if (fileSizeMB > maxSizeMB) {
-                    this.errorMsg = 'File size exceeds the maximum limit of ' + maxSizeMB + 'MB.';
+
+            this.isProcessing = true;
+            window.dispatchEvent(new CustomEvent('enrollment:file-processing-started', {
+                detail: { name: name }
+            }));
+
+            try {
+                const validation = window.AMIS_UploadUtils.validateFile(file, config.accept);
+                if (!validation.valid) {
+                    this.errorMsg = validation.error;
                     this.clearSelected();
                     return;
                 }
-            } else {
-                let needsCompression = false;
-                let quality = 0.82;
-                
-                if (name === 'photo_2x2') {
-                    if (fileSizeMB > 2) {
-                        needsCompression = true;
-                        quality = 0.80;
+
+                try {
+                    file = await window.AMIS_UploadUtils.cloneFile(file);
+                    window.AMIS_UploadUtils.replaceInputFile(this.$refs.input, file);
+                } catch (e) {
+                    console.error('Stable upload copy failed:', e);
+                    this.errorMsg = 'Selected file could not be accessed. Please choose it again from your gallery or file manager.';
+                    this.clearSelected();
+                    return;
+                }
+
+                const maxSizeMB = config.maxSizeMB;
+                const fileSizeMB = file.size / (1024 * 1024);
+                const isImage = file.type.startsWith('image/');
+
+                if (!isImage) {
+                    if (fileSizeMB > maxSizeMB) {
+                        this.errorMsg = 'File size exceeds the maximum limit of ' + maxSizeMB + 'MB.';
+                        this.clearSelected();
+                        return;
                     }
                 } else {
-                    if (fileSizeMB > maxSizeMB) {
-                        needsCompression = true;
-                        quality = 0.88;
-                    } else if (fileSizeMB > 3) {
-                        needsCompression = true;
-                        quality = 0.90;
-                    }
-                }
-                
-                if (needsCompression) {
-                    this.isProcessing = true;
-                    try {
-                        const originalSize = file.size;
-                        const optimizedFile = await window.AMIS_UploadUtils.compressImage(file, quality);
-                        if (optimizedFile.size < originalSize) {
-                            file = optimizedFile;
-                            const dt = new DataTransfer();
-                            dt.items.add(optimizedFile);
-                            this.$refs.input.files = dt.files;
+                    let needsCompression = false;
+                    let quality = 0.82;
+
+                    if (name === 'photo_2x2') {
+                        if (fileSizeMB > 2) {
+                            needsCompression = true;
+                            quality = 0.80;
                         }
-                    } catch (e) {
-                        console.error('Image compression error:', e);
+                    } else {
                         if (fileSizeMB > maxSizeMB) {
-                            this.errorMsg = 'Image optimization failed and the file exceeds the maximum limit of ' + maxSizeMB + 'MB.';
-                            this.clearSelected();
-                            this.isProcessing = false;
-                            return;
+                            needsCompression = true;
+                            quality = 0.88;
+                        } else if (fileSizeMB > 3) {
+                            needsCompression = true;
+                            quality = 0.90;
                         }
-                    } finally {
-                        this.isProcessing = false;
+                    }
+
+                    if (needsCompression) {
+                        try {
+                            const originalSize = file.size;
+                            const optimizedFile = await window.AMIS_UploadUtils.compressImage(file, quality);
+                            if (optimizedFile.size < originalSize) {
+                                file = optimizedFile;
+                                window.AMIS_UploadUtils.replaceInputFile(this.$refs.input, optimizedFile);
+                            }
+                        } catch (e) {
+                            console.error('Image compression error:', e);
+                            if (fileSizeMB > maxSizeMB) {
+                                this.errorMsg = 'Image optimization failed and the file exceeds the maximum limit of ' + maxSizeMB + 'MB.';
+                                this.clearSelected();
+                                return;
+                            }
+                        }
                     }
                 }
+
+                const finalSizeMB = file.size / (1024 * 1024);
+                if (finalSizeMB > maxSizeMB) {
+                    this.errorMsg = 'The selected file exceeds the maximum allowed limit of ' + maxSizeMB + 'MB.';
+                    this.clearSelected();
+                    return;
+                }
+
+                this.fileName = file.name;
+                this.hasUploaded = false;
+
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => this.preview = e.target.result;
+                    reader.readAsDataURL(file);
+                } else {
+                    this.preview = '';
+                }
+
+                window.dispatchEvent(new CustomEvent('enrollment:file-selected', {
+                    detail: { name: name }
+                }));
+            } finally {
+                this.isProcessing = false;
+                window.dispatchEvent(new CustomEvent('enrollment:file-processing-finished', {
+                    detail: { name: name }
+                }));
             }
-            
-            const finalSizeMB = file.size / (1024 * 1024);
-            if (finalSizeMB > maxSizeMB) {
-                this.errorMsg = 'The selected file exceeds the maximum allowed limit of ' + maxSizeMB + 'MB.';
-                this.clearSelected();
-                return;
-            }
-            
-            this.fileName = file.name;
-            this.hasUploaded = false;
-            
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (e) => this.preview = e.target.result;
-                reader.readAsDataURL(file);
-            } else {
-                this.preview = '';
-            }
-            
-            window.dispatchEvent(new CustomEvent('enrollment:file-selected', {
-                detail: { name: name }
-            }));
         }
     });
 
