@@ -30,6 +30,20 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Illuminate\Routing\Exceptions\InvalidSignatureException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('email/verify/*')) {
+                return response()
+                    ->view('auth.verify-result', [
+                        'status' => 'error',
+                        'message' => 'Invalid or Expired Link',
+                    ], 403)
+                    ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                    ->header('Pragma', 'no-cache');
+            }
+
+            return null;
+        });
+
         $exceptions->reportable(function (\Throwable $e) {
             if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException && $e->getStatusCode() === 429) {
                 $request = request();
