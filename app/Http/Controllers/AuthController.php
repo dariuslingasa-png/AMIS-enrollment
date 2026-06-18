@@ -176,8 +176,32 @@ class AuthController extends Controller
 
     public function checkVerificationStatus(Request $request)
     {
-        // Legacy endpoint for older cached verification pages. Never report true,
-        // because cached polling scripts must not auto-open dashboard.
+        $email = $request->session()->get('verify_email');
+        if (!$email) {
+            if (Auth::check() && Auth::user()->hasVerifiedEmail() && Auth::user()->account_status === 'verified') {
+                return response()->json([
+                    'verified' => true,
+                    'redirectUrl' => route('enrollment.dashboard'),
+                ]);
+            }
+            return response()->json([
+                'verified' => false,
+            ]);
+        }
+
+        $user = User::where('email', $email)->first();
+        if ($user && $user->hasVerifiedEmail() && $user->account_status === 'verified') {
+            Auth::login($user);
+            $request->session()->regenerate();
+            $request->session()->forget('verify_email');
+            $request->session()->forget('verify_timer_start');
+
+            return response()->json([
+                'verified' => true,
+                'redirectUrl' => route('enrollment.dashboard'),
+            ]);
+        }
+
         return response()->json([
             'verified' => false,
         ]);

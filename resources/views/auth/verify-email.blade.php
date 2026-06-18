@@ -37,10 +37,15 @@
                      this.updateText();
                      
                      if (!this.isExpired) {
+                         this.checkStatus();
                          this.interval = setInterval(() => {
                              if (this.timeLeft > 0) {
                                  this.timeLeft--;
                                  this.updateText();
+                                 
+                                 if (this.timeLeft % 3 === 0) {
+                                     this.checkStatus();
+                                 }
                              } else {
                                  this.isExpired = true;
                                  clearInterval(this.interval);
@@ -52,6 +57,20 @@
                      const mins = Math.floor(this.timeLeft / 60);
                      const secs = this.timeLeft % 60;
                      this.timerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                 },
+                 async checkStatus() {
+                     try {
+                         const response = await fetch('{{ route("verify.email.status") }}');
+                         if (response.ok) {
+                             const data = await response.json();
+                             if (data.verified && data.redirectUrl) {
+                                 this.resetTimer();
+                                 window.location.href = data.redirectUrl;
+                             }
+                         }
+                     } catch (e) {
+                         console.error('Verification status check failed:', e);
+                     }
                  },
                  resetTimer() {
                      // Clear localStorage timer so resend starts fresh
