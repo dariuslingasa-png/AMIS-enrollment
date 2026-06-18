@@ -200,8 +200,8 @@
 
                     <div class="form-group">
                         <label for="email" class="premium-input-label">Email address</label>
-                        <div class="input-with-icon premium-input-wrapper">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #64748b; margin-right: 10px; flex-shrink: 0;">
+                        <div class="premium-input-wrapper">
+                            <svg class="premium-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                                 <polyline points="22,6 12,13 2,6"/>
                             </svg>
