@@ -83,8 +83,8 @@
 
                 <div class="auth-option-divider"><span>or</span></div>
 
-                <div class="auth-coming-soon-option auth-google-soon" aria-disabled="true">
-                    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                <a href="{{ route('auth.google') }}" class="auth-coming-soon-option auth-google-soon" style="border-style: solid; background: white; cursor: pointer; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8';" onmouseout="this.style.background='white'; this.style.borderColor='#cbd5e1';">
+                    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" style="justify-self: center;">
                         <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
                         <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.2 4 9.5 8.5 6.3 14.7z"/>
                         <path fill="#4CAF50" d="M24 44c5.1 0 9.8-2 13.3-5.2l-6.1-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.3 39.5 16.1 44 24 44z"/>
@@ -92,10 +92,9 @@
                     </svg>
                     <div>
                         <strong>Continue with Google</strong>
-                        <span>We will enable Google sign-in later.</span>
+                        <span>Sign in quickly with your Google account.</span>
                     </div>
-                    <em>Coming soon</em>
-                </div>
+                </a>
 
                 <p class="auth-entry-note">
                     Open the link in your email to continue. This keeps existing and new accounts on the same secure flow.
