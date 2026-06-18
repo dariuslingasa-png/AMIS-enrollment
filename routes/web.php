@@ -77,7 +77,7 @@ Route::middleware(['auth', 'verified', 'applicant'])->group(function () {
     Route::get('/enroll/{applicant}', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form.child');
     Route::get('/enroll', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form');
     Route::post('/enroll', [EnrollmentController::class, 'submitEnrollment'])->middleware('throttle:20,1')->name('enrollment.submit');
-    Route::post('/enroll/draft', [EnrollmentController::class, 'saveDraft'])->name('enrollment.draft');
+    Route::post('/enroll/draft', [EnrollmentController::class, 'saveDraft'])->middleware('throttle:30,1')->name('enrollment.draft');
     Route::get('/enroll/shifts/{grade}', [EnrollmentController::class, 'getShiftsForGrade'])->name('enrollment.shifts');
     Route::delete('/enroll/draft', [EnrollmentController::class, 'discardDraft'])->name('enrollment.draft.discard');
     Route::delete('/enroll/draft/document/{document}', [EnrollmentController::class, 'removeDraftDocument'])->name('enrollment.draft.document.remove');

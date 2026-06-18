@@ -83,6 +83,7 @@ function enrollmentForm() {
         countries: [],
         _debounceTimer: null,
         _submitted: false,
+        _savingInflight: false,
         uploadedFiles: {
             photo_2x2: {{ $applicant?->photo_2x2_url ? 'true' : 'false' }},
             birth_cert: {{ $applicant?->birth_cert_url ? 'true' : 'false' }},
@@ -339,7 +340,7 @@ function enrollmentForm() {
 
                     return false;
                 })
-                .slice(0, 80);
+                .slice(0, query ? 80 : 250);
         },
 
         filteredCallingCountries(search) {
@@ -547,10 +548,12 @@ function enrollmentForm() {
 
         // ── Core draft save (localStorage + backend) ──────────────────
         async saveDraft({ force = false, checkDuplicate = false, showStatus = true, fromStep = null } = {}) {
+            if (this._savingInflight) return null;
             if (this.isDiscarding || this.draftDiscarded) return;
             if (this._submitted || this.leavingWithoutSaving) return;
             if (!force && !this.hasUserEdited) return;
             if (showStatus) this.draftSaving = true;
+            this._savingInflight = true;
 
             // 1. Always save to localStorage first (instant, no network needed)
             const snapshot = { ...this.form, last_step: this.step };
@@ -581,13 +584,21 @@ function enrollmentForm() {
                     await response.json().catch(() => ({}));
                     this.error = '';
                     this.showDuplicateModal = true;
+                    this._savingInflight = false;
                     if (showStatus) this.draftSaving = false;
                     return { success: false, duplicate: true };
+                }
+                if (response.status === 429) {
+                    // Too many requests — data already in localStorage, silently retry later
+                    this._savingInflight = false;
+                    if (showStatus) this.draftSaving = false;
+                    return null;
                 }
                 if (!response.ok) throw new Error('Draft save failed');
 
                 const data = await response.json();
                 if (data.applicant_id) this.savedApplicantId = data.applicant_id;
+                this._savingInflight = false;
                 if (showStatus) {
                     this.draftSaving = false;
                     this.draftSaved = true;
@@ -596,6 +607,7 @@ function enrollmentForm() {
                 return data;
             } catch (_) { /* network error — localStorage already saved */ }
 
+            this._savingInflight = false;
             if (showStatus) this.draftSaving = false;
             if (force) return { success: false };
             return null;
@@ -620,7 +632,7 @@ function enrollmentForm() {
             if (this.leavingWithoutSaving) return;
             if (!this.hasUserEdited) return;
             clearTimeout(this._debounceTimer);
-            this._debounceTimer = setTimeout(() => this.saveDraft(), 2000);
+            this._debounceTimer = setTimeout(() => this.saveDraft(), 5000);
         },
 
         // ── Synchronous save for beforeunload (no await) ──────────────
