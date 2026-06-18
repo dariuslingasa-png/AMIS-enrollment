@@ -31,6 +31,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'role',
         'account_status',
         'email_verified_at',
+        'last_active_at',
     ];
 
     /**
@@ -52,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_active_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -106,5 +108,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function setNameAttribute($value)
     {
         $this->attributes['name'] = $value !== null ? mb_strtoupper($value, 'UTF-8') : null;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->last_active_at && $this->last_active_at->gt(now()->subMinutes(5));
     }
 }

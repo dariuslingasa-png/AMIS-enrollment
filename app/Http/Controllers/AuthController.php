@@ -129,6 +129,8 @@ class AuthController extends Controller
                 ])->withInput($request->only('email', 'auth_mode'));
             }
 
+            $user->forceFill(['last_active_at' => now()])->save();
+
             $request->session()->regenerate();
 
             return redirect()
@@ -192,6 +194,7 @@ class AuthController extends Controller
         $user = User::where('email', $email)->first();
         if ($user && $user->hasVerifiedEmail() && $user->account_status === 'verified') {
             Auth::login($user);
+            $user->forceFill(['last_active_at' => now()])->save();
             $request->session()->regenerate();
             $request->session()->forget('verify_email');
             $request->session()->forget('verify_timer_start');
@@ -380,6 +383,8 @@ class AuthController extends Controller
 
         // Log Magic Link Verified event
         $this->logVerificationAttempt($user->id, 'magic_link_verified', 'Verification Successful', $ip, $userAgent, $timestamp);
+
+        $user->forceFill(['last_active_at' => now()])->save();
 
         // Authenticate the user
         Auth::login($user);

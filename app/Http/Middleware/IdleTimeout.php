@@ -32,6 +32,14 @@ class IdleTimeout
 
             // Update last activity timestamp on every request
             $request->session()->put('last_activity', time());
+
+            // Update user last active timestamp in database, throttled to 1 minute
+            $user = Auth::user();
+            if ($user) {
+                if (!$user->last_active_at || $user->last_active_at->diffInMinutes(now()) >= 1) {
+                    $user->forceFill(['last_active_at' => now()])->save();
+                }
+            }
         }
 
         return $next($request);

@@ -1,4 +1,11 @@
 <x-guest-layout>
+    <style>
+        @keyframes active-pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.25); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+    </style>
     <div class="dashboard-page" x-data="{ loading: true }" x-init="setTimeout(() => loading = false, 1200)">
         <!-- Loading Skeleton -->
         <div x-show="loading" x-cloak>
@@ -13,7 +20,39 @@
                     <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS Logo">
                     <div>
                         <h1>AMIS Enrollment Portal</h1>
-                        <p>Welcome, {{ $user->name }}</p>
+                        <p style="margin-bottom: 4px;">Welcome, {{ $user->name }}</p>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; align-items: center;">
+                            <!-- Activity Status Badge -->
+                            @if($user->isActive())
+                                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 2.5px 10px; border-radius: 999px; background: #ecfdf5; border: 1.5px solid #a7f3d0; color: #047857; font-size: 11px; font-weight: 700; line-height: 1; text-transform: uppercase; tracking-wider;">
+                                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10b981; animation: active-pulse 1.5s infinite;"></span>
+                                    Active Session
+                                </span>
+                            @else
+                                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 2.5px 10px; border-radius: 999px; background: #f1f5f9; border: 1.5px solid #cbd5e1; color: #475569; font-size: 11px; font-weight: 700; line-height: 1; text-transform: uppercase; tracking-wider;">
+                                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #64748b;"></span>
+                                    Inactive Session
+                                </span>
+                            @endif
+
+                            <!-- Last Active Time Badge -->
+                            <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2.5px 10px; border-radius: 999px; background: #f8fafc; border: 1.5px solid #e2e8f0; color: #64748b; font-size: 11px; font-weight: 600; line-height: 1;">
+                                Last active: {{ $user->last_active_at ? $user->last_active_at->diffForHumans() : 'Never' }}
+                            </span>
+
+                            <!-- Email Verified Badge -->
+                            @if($user->hasVerifiedEmail() && $user->account_status === 'verified')
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2.5px 10px; border-radius: 999px; background: #ecfdf5; border: 1.5px solid #a7f3d0; color: #047857; font-size: 11px; font-weight: 700; line-height: 1; text-transform: uppercase; tracking-wider;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Email Verified
+                                </span>
+                            @else
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2.5px 10px; border-radius: 999px; background: #fffbeb; border: 1.5px solid #fde68a; color: #b45309; font-size: 11px; font-weight: 700; line-height: 1; text-transform: uppercase; tracking-wider;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                    Email Unverified
+                                </span>
+                            @endif
+                        </div>
                     </div>
                 </div>
                 <form method="POST" action="{{ route('logout') }}">
