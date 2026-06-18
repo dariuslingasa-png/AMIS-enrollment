@@ -173,6 +173,9 @@ function registerUploadComponent(Alpine) {
         fileName: '',
         preview: '',
         hasUploaded: !!config.uploaded,
+        uploadedUrl: config.uploaded ? '{{ asset('storage') }}/' + config.uploaded : '',
+        uploadedIsPdf: config.uploaded ? {{ str_ends_with(strtolower($uploaded ?? ''), '.pdf') ? 'true' : 'false' }} : false,
+        selectedIsPdf: false,
         showUpload: !config.deferUpload,
         removingUploaded: false,
         supportModal: null,
@@ -184,6 +187,12 @@ function registerUploadComponent(Alpine) {
                 if (event.detail?.name === config.name) {
                     this.hasUploaded = true;
                     this.uploadedName = this.fileName || this.uploadedName;
+                    this.uploadedIsPdf = this.selectedIsPdf;
+                    if (!this.uploadedIsPdf) {
+                        this.uploadedUrl = this.preview;
+                    } else {
+                        this.uploadedUrl = '';
+                    }
                     this.fileName = '';
                     this.$refs.input.value = '';
                 }
@@ -209,6 +218,11 @@ function registerUploadComponent(Alpine) {
                 });
                 if (!response.ok) throw new Error('Unable to remove file');
                 this.hasUploaded = false;
+                this.uploadedUrl = '';
+                this.uploadedIsPdf = false;
+                this.preview = '';
+                this.selectedIsPdf = false;
+                this.uploadedName = 'Saved file';
                 window.dispatchEvent(new CustomEvent('enrollment:file-removed', {
                     detail: { name: config.name }
                 }));
@@ -223,6 +237,7 @@ function registerUploadComponent(Alpine) {
         clearSelected() {
             this.fileName = '';
             this.preview = '';
+            this.selectedIsPdf = false;
             this.$refs.input.value = '';
             window.dispatchEvent(new CustomEvent('enrollment:file-removed', {
                 detail: { name: config.name }
@@ -263,6 +278,9 @@ function registerUploadComponent(Alpine) {
                     this.clearSelected();
                     return;
                 }
+
+                const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+                this.selectedIsPdf = isPdf;
 
                 try {
                     file = await window.AMIS_UploadUtils.cloneFile(file);
@@ -527,9 +545,13 @@ if (!window.AMIS_UploadComponentRegistered) {
 
             <template x-if="currentState === 'uploaded'">
                 <div class="!relative !flex !h-full !w-full !items-center !justify-center !p-4">
-                    @if ($uploaded && !$uploadedIsPdf)
-                        <img src="{{ asset('storage/' . $uploaded) }}" alt="{{ $title }}" class="!absolute !inset-0 !h-full !w-full !object-contain !p-3">
-                    @else
+                    <!-- Dynamic image display (from server path or local session preview) -->
+                    <template x-if="uploadedUrl && !uploadedIsPdf">
+                        <img :src="uploadedUrl" alt="{{ $title }}" class="!absolute !inset-0 !h-full !w-full !object-contain !p-3">
+                    </template>
+                    
+                    <!-- File icon fallback for PDFs or missing images -->
+                    <template x-if="uploadedIsPdf || !uploadedUrl">
                         <div class="!flex !flex-col !items-center !justify-center !gap-3 !text-emerald-700">
                             <div class="!flex !h-16 !w-16 !items-center !justify-center !rounded-2xl !bg-white">
                                 <svg class="!h-8 !w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -541,7 +563,7 @@ if (!window.AMIS_UploadComponentRegistered) {
                             </div>
                             <p class="!m-0 !text-sm !font-semibold">Saved file</p>
                         </div>
-                    @endif
+                    </template>
                     <div class="!absolute !inset-x-0 !bottom-0 !bg-white/90 !px-3 !py-2 !backdrop-blur-sm">
                         <p class="!m-0 !truncate !text-sm !font-semibold !leading-5 !text-slate-900" x-text="uploadedName"></p>
                         <p class="!m-0 !text-xs !leading-4 !text-emerald-700">Uploaded</p>
