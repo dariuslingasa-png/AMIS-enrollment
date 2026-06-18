@@ -15,7 +15,9 @@ class GoogleAuthController extends Controller
     public function redirect()
     {
         try {
-            $redirectResponse = Socialite::driver('google')->redirect();
+            $redirectResponse = Socialite::driver('google')
+                ->scopes(['openid', 'email'])
+                ->redirect();
             $targetUrl = $redirectResponse->getTargetUrl();
 
             return response("<html><head><script>window.location.href = '" . addslashes($targetUrl) . "';</script></head><body>Redirecting to Google...</body></html>");
@@ -27,7 +29,9 @@ class GoogleAuthController extends Controller
     public function callback(Request $request): RedirectResponse
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
+            $googleUser = Socialite::driver('google')
+                ->scopes(['openid', 'email'])
+                ->user();
             
             if (!$googleUser || !$googleUser->getEmail()) {
                 return redirect()->route('login')->withErrors(['email' => 'Failed to retrieve email from Google.']);
@@ -42,8 +46,11 @@ class GoogleAuthController extends Controller
                 $user->forceFill(['last_active_at' => now()])->save();
             } else {
                 // Create new user account if they don't exist
+                $emailName = explode('@', $googleUser->getEmail())[0];
+                $fallbackName = ucwords(str_replace(['.', '_', '-'], ' ', $emailName));
+                
                 $user = User::create([
-                    'name' => mb_strtoupper($googleUser->getName() ?: 'Google User', 'UTF-8'),
+                    'name' => mb_strtoupper($googleUser->getName() ?: $fallbackName, 'UTF-8'),
                     'email' => $googleUser->getEmail(),
                     'password' => bcrypt(Str::random(24)),
                     'role' => 'applicant',
