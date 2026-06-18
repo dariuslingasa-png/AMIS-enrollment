@@ -500,4 +500,14 @@ class AuthController extends Controller
             return false;
         }
     }
+
+    public function setOffline(Request $request)
+    {
+        $user = Auth::user();
+        if ($user) {
+            $user->forceFill(['last_active_at' => now()->subMinutes(10)])->save();
+        }
+
+        return response()->json(['status' => 'success']);
+    }
 }

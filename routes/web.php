@@ -66,6 +66,7 @@ Route::post('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/enrollment/dashboard', [EnrollmentController::class, 'showDashboard'])->name('enrollment.dashboard');
     Route::get('/enrollment/status', [EnrollmentController::class, 'checkApplicationStatus'])->name('enrollment.status');
+    Route::post('/activity/offline', [AuthController::class, 'setOffline'])->name('activity.offline');
 });
 
 // Enrollment routes (applicant role only, must be verified)
