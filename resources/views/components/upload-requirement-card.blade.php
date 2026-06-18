@@ -179,6 +179,16 @@ function registerUploadComponent(Alpine) {
         uploadedName: config.uploadedName || 'Saved file',
         isProcessing: false,
         errorMsg: '',
+        init() {
+            window.addEventListener('enrollment:file-uploaded', (event) => {
+                if (event.detail?.name === config.name) {
+                    this.hasUploaded = true;
+                    this.uploadedName = this.fileName || this.uploadedName;
+                    this.fileName = '';
+                    this.$refs.input.value = '';
+                }
+            });
+        },
         get currentState() {
             if (this.fileName) return 'selected';
             if (this.hasUploaded) return 'uploaded';

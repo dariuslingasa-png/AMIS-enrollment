@@ -575,9 +575,13 @@ function enrollmentForm() {
                 fd.append('last_step', this.step);
                 fd.append('school_year', '2026-2027');
                 if (this.savedApplicantId) fd.append('applicant_id', this.savedApplicantId);
+                const uploadedNames = [];
                 ['photo_2x2','birth_cert','report_card','marriage_contract','medical_record','affidavit'].forEach(name => {
                     const input = document.querySelector('input[name="' + name + '"]');
-                    if (input && input.files.length) fd.append(name, input.files[0]);
+                    if (input && input.files.length) {
+                        fd.append(name, input.files[0]);
+                        uploadedNames.push(name);
+                    }
                 });
                 const response = await fetch('{{ route("enrollment.draft") }}', { method: 'POST', body: fd });
                 if (response.status === 409) {
@@ -599,6 +603,14 @@ function enrollmentForm() {
                 const data = await response.json();
                 if (data.applicant_id) this.savedApplicantId = data.applicant_id;
                 this._savingInflight = false;
+
+                // Dispatch event so upload cards clear their file input and set hasUploaded = true
+                uploadedNames.forEach(name => {
+                    window.dispatchEvent(new CustomEvent('enrollment:file-uploaded', {
+                        detail: { name: name }
+                    }));
+                });
+
                 if (showStatus) {
                     this.draftSaving = false;
                     this.draftSaved = true;
