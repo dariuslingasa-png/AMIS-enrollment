@@ -7,6 +7,13 @@ use Illuminate\View\View;
 
 class GuestLayout extends Component
 {
+    public bool $showLoader;
+
+    public function __construct(bool $showLoader = true)
+    {
+        $this->showLoader = $showLoader;
+    }
+
     /**
      * Get the view / contents that represents the component.
      */
