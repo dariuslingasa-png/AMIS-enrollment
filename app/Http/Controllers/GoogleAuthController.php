@@ -12,9 +12,16 @@ use Exception;
 
 class GoogleAuthController extends Controller
 {
-    public function redirect(): RedirectResponse
+    public function redirect()
     {
-        return Socialite::driver('google')->redirect();
+        try {
+            $redirectResponse = Socialite::driver('google')->redirect();
+            $targetUrl = $redirectResponse->getTargetUrl();
+
+            return response("<html><head><script>window.location.href = '" . addslashes($targetUrl) . "';</script></head><body>Redirecting to Google...</body></html>");
+        } catch (Exception $e) {
+            return redirect()->route('login')->withErrors(['email' => 'Failed to initialize Google redirect: ' . $e->getMessage()]);
+        }
     }
 
     public function callback(Request $request): RedirectResponse
