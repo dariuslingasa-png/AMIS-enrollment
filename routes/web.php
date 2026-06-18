@@ -30,10 +30,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Google OAuth
-Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])
+Route::get('/login/google', [GoogleAuthController::class, 'redirect'])
     ->middleware('throttle:10,1')
     ->name('auth.google');
-Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
+Route::get('/login/google/callback', [GoogleAuthController::class, 'callback'])
     ->middleware('throttle:10,1')
     ->name('auth.google.callback');
 
