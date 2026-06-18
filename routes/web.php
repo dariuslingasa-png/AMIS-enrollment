@@ -44,6 +44,10 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+// OTP Verification routes
+Route::post('/auth/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:10,1')->name('auth.send-otp');
+Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:20,1')->name('auth.verify-otp');
+
 // Email verification — signed link (replaces OTP)
 Route::get('/verify-email/notice', [AuthController::class, 'showVerificationNotice'])->name('verification.notice');
 Route::get('/verify-email/notice-compat', [AuthController::class, 'showVerificationNotice'])->name('verify.email.notice');
