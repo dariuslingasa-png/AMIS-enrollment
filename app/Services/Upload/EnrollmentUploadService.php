@@ -86,7 +86,14 @@ class EnrollmentUploadService
                 $absoluteOriginal = Storage::disk('public')->path("{$dir}/original/{$originalName}");
                 $absoluteOptimized = Storage::disk('public')->path("{$dir}/optimized/{$webpName}");
 
-                exec('magick ' . escapeshellarg($absoluteOriginal) . ' -quality 85 ' . escapeshellarg($absoluteOptimized) . ' 2>&1', $output, $resultCode);
+                $resultCode = -1;
+                if (function_exists('exec')) {
+                    try {
+                        @exec('magick ' . escapeshellarg($absoluteOriginal) . ' -quality 85 ' . escapeshellarg($absoluteOptimized) . ' 2>&1', $output, $resultCode);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error("Failed to run magick command in EnrollmentUploadService: " . $e->getMessage());
+                    }
+                }
 
                 $optimizedPath = "{$dir}/optimized/{$webpName}";
                 $applicant->update([

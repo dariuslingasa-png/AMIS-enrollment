@@ -131,16 +131,28 @@ class ImageOptimizerService
      */
     private function runCommand(array $args): bool
     {
-        $escapedArgs = array_map('escapeshellarg', $args);
-        $command = implode(' ', $escapedArgs);
-        
-        exec($command . ' 2>&1', $output, $resultCode);
-
-        if ($resultCode !== 0) {
-            Log::error("ImageMagick command failed: {$command}. Code: {$resultCode}. Output: " . implode("\n", $output));
+        if (!function_exists('exec')) {
+            Log::warning("exec() function is disabled. ImageMagick command skipped.");
             return false;
         }
 
-        return true;
+        try {
+            $escapedArgs = array_map('escapeshellarg', $args);
+            $command = implode(' ', $escapedArgs);
+            
+            $resultCode = -1;
+            $output = [];
+            @exec($command . ' 2>&1', $output, $resultCode);
+
+            if ($resultCode !== 0) {
+                Log::error("ImageMagick command failed: {$command}. Code: {$resultCode}. Output: " . implode("\n", $output));
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to run ImageMagick command: " . $e->getMessage());
+            return false;
+        }
     }
 }
