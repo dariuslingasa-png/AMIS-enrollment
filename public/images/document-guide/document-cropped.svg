@@ -13,8 +13,9 @@
     <text x="118" y="63" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="800" fill="#ea580c">Cropped</text>
   </g>
   <rect x="92" y="188" width="716" height="626" rx="24" fill="#fff" stroke="#fed7aa"/>
-  <clipPath id="crop"><rect x="170" y="238" width="520" height="518" rx="10"/></clipPath>
-  <g clip-path="url(#crop)">
+  
+  <!-- Nested SVG container acting as a highly compatible crop box -->
+  <svg x="170" y="238" width="520" height="518" viewBox="170 238 520 518">
     <rect x="104" y="238" width="616" height="518" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/>
     <text x="412" y="306" text-anchor="middle" font-family="Arial,sans-serif" font-size="30" font-weight="800" fill="#111827">SCHOOL DOCUMENT</text>
     <g stroke="#334155" stroke-width="4">
@@ -27,6 +28,7 @@
       <text x="164" y="538">School Year</text><text x="326" y="538">2026-2027</text>
       <text x="164" y="602">Remarks</text><text x="326" y="602">Missing edge</text>
     </g>
-  </g>
+  </svg>
+  
   <path d="M170 238h520v518H170z" fill="none" stroke="#fb923c" stroke-width="5" stroke-dasharray="18 14"/>
 </svg>

@@ -19,11 +19,11 @@
             guide-notice-gender="Female"
             :support-panel-groups="[
                 'Female' => [
-                    ['src' => 'images/2x2-guide/non-hijab-guidelines.png', 'label' => 'Non-hijab guidelines', 'alt' => 'Non-hijab photo guidelines for elementary and high school students'],
-                    ['src' => 'images/2x2-guide/hijab-guidelines.png', 'label' => 'Hijab guidelines', 'alt' => 'Hijab photo guidelines for elementary and high school students'],
+                    ['src' => 'images/2x2-guide/non-hijab-guidelines.webp', 'label' => 'Non-hijab guidelines', 'alt' => 'Non-hijab photo guidelines for elementary and high school students'],
+                    ['src' => 'images/2x2-guide/hijab-guidelines.webp', 'label' => 'Hijab guidelines', 'alt' => 'Hijab photo guidelines for elementary and high school students'],
                 ],
                 'Male' => [
-                    ['src' => 'images/2x2-guide/boys-guidelines.png', 'label' => 'Boys guidelines', 'alt' => 'Boys photo guidelines for elementary and high school students'],
+                    ['src' => 'images/2x2-guide/boys-guidelines.webp', 'label' => 'Boys guidelines', 'alt' => 'Boys photo guidelines for elementary and high school students'],
                 ],
             ]"
             :show-photo-sample="true"
