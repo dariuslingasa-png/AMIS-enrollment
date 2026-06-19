@@ -21,6 +21,7 @@ class GoogleAuthController extends Controller
         try {
             $redirectResponse = Socialite::driver('google')
                 ->scopes(['openid', 'email'])
+                ->with(['response_mode' => 'form_post'])
                 ->redirect();
             $targetUrl = $redirectResponse->getTargetUrl();
 
@@ -66,6 +67,7 @@ class GoogleAuthController extends Controller
                 // Fallback to standard redirect code exchange flow
                 $googleUser = Socialite::driver('google')
                     ->scopes(['openid', 'email'])
+                    ->stateless()
                     ->user();
 
                 if (!$googleUser || !$googleUser->getEmail()) {
