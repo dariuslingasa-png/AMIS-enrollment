@@ -300,12 +300,7 @@
                 }
             });
 
-            // Set user status to offline when unloading the page
-            window.addEventListener('pagehide', function () {
-                var formData = new FormData();
-                formData.append('_token', '{{ csrf_token() }}');
-                navigator.sendBeacon('{{ route('activity.offline') }}', formData);
-            });
+
 
             // Start
             resetTimers();
