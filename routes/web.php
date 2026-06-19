@@ -33,7 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/g-signin', [GoogleAuthController::class, 'redirect'])
     ->middleware('throttle:10,1')
     ->name('auth.google');
-Route::get('/g-callback', [GoogleAuthController::class, 'callback'])
+Route::match(['get', 'post'], '/g-callback', [GoogleAuthController::class, 'callback'])
     ->middleware('throttle:10,1')
     ->name('auth.google.callback');
 

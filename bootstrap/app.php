@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // mismatches causing Page Expired (419) before users can request a link.
         $middleware->validateCsrfTokens(except: [
             'register',
+            'g-callback',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
