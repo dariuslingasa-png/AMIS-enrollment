@@ -959,3 +959,45 @@ input:-webkit-autofill:active {
     to { transform: rotate(360deg); }
 }
 
+/* ── Google Sign In responsive wrapper ── */
+.google-gis-wrapper {
+    width: 366px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+
+.google-gis-wrapper .g_id_signin {
+    transform: scale(1.35);
+    transform-origin: center;
+}
+
+/* Mobile optimizations for small screens (iPhones and Androids) */
+@media (max-width: 480px) {
+    .auth-entry-mobile-logo {
+        width: 60px !important;
+        height: 60px !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .auth-entry-mobile-arabic {
+        font-size: 0.9rem !important;
+    }
+    .auth-entry-mobile-school {
+        font-size: 0.85rem !important;
+    }
+    .auth-entry-card {
+        padding: 1.5rem 1.15rem !important;
+    }
+    .google-gis-wrapper {
+        width: 100%;
+        max-width: 284px;
+        height: 34px;
+    }
+    .google-gis-wrapper .g_id_signin {
+        transform: scale(1.05);
+    }
+}
+
+
