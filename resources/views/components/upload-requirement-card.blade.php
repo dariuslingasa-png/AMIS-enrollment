@@ -173,8 +173,8 @@ function registerUploadComponent(Alpine) {
         fileName: '',
         preview: '',
         hasUploaded: !!config.uploaded,
-        uploadedUrl: config.uploaded ? '{{ asset('storage') }}/' + config.uploaded : '',
-        uploadedIsPdf: config.uploaded ? {{ str_ends_with(strtolower($uploaded ?? ''), '.pdf') ? 'true' : 'false' }} : false,
+        uploadedUrl: config.uploadedPath ? '{{ asset('storage') }}/' + config.uploadedPath : '',
+        uploadedIsPdf: config.uploadedPath ? {{ str_ends_with(strtolower($uploaded ?? ''), '.pdf') ? 'true' : 'false' }} : false,
         selectedIsPdf: false,
         showUpload: !config.deferUpload,
         removingUploaded: false,
@@ -395,6 +395,7 @@ if (!window.AMIS_UploadComponentRegistered) {
     x-data="uploadRequirementCard({
         name: '{{ $name }}',
         uploaded: {{ $uploaded ? 'true' : 'false' }},
+        uploadedPath: @js($uploaded),
         deferUpload: {{ $deferUpload ? 'true' : 'false' }},
         uploadedName: @js($uploadedBasename),
         removeUrl: '{{ route('enrollment.draft.document.remove', ['document' => $name]) }}',

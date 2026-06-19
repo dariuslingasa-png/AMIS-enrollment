@@ -78,12 +78,12 @@
                 </div>
                 <div class="!border-t !border-slate-200 !pt-3 !space-y-2">
                     <p class="!m-0 !text-xs !font-bold !text-slate-800">Don't have a report card yet?</p>
-                    <p class="!m-0 !text-xs !leading-5 !text-slate-600">Please download the blank affidavit PDF, fill and sign it, then upload the signed copy using the upload area below.</p>
+                    <p class="!m-0 !text-xs !leading-5 !text-slate-600">Please download the affidavit template, fill and sign it, then upload the signed copy using the upload area below.</p>
                     <div class="!pt-1">
                         <a 
                             href="{{ asset('docs/Affidavit_enrollee.pdf') }}" 
                             target="_blank" 
-                            style="display: inline-flex; align-items: center; gap: 8px; border-radius: 12px; background-color: #059669; padding: 10px 16px; font-size: 12px; font-weight: 700; color: #ffffff; text-decoration: none; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: background-color 0.2s;"
+                            style="display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; background-color: #059669; padding: 10px 16px; font-size: 12px; font-weight: 700; color: #ffffff; text-decoration: none; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: background-color 0.2s; width: 100%; box-sizing: border-box;"
                             onmouseover="this.style.backgroundColor='#047857'"
                             onmouseout="this.style.backgroundColor='#059669'"
                         >
@@ -92,7 +92,7 @@
                                 <polyline points="7 10 12 15 17 10"/>
                                 <line x1="12" y1="15" x2="12" y2="3"/>
                             </svg>
-                            Download Blank Affidavit PDF
+                            Download Affidavit Template
                         </a>
                     </div>
                 </div>
