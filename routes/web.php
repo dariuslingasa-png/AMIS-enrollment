@@ -109,6 +109,14 @@ Route::get('/debug-env', function () {
         'public_build_manifest' => file_exists(public_path('build/manifest.json')) ? json_decode(file_get_contents(public_path('build/manifest.json')), true) : null,
     ];
     
+    // Read root .htaccess and index.php if they exist
+    if (file_exists(base_path('.htaccess'))) {
+        $info['root_htaccess'] = file_get_contents(base_path('.htaccess'));
+    }
+    if (file_exists(base_path('index.php'))) {
+        $info['root_index_php'] = file_get_contents(base_path('index.php'));
+    }
+
     // Check files in public/build/assets
     $assetsPath = public_path('build/assets');
     $info['assets_dir_exists'] = is_dir($assetsPath);
