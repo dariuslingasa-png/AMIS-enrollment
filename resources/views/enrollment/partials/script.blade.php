@@ -513,6 +513,25 @@ function enrollmentForm() {
             }
         },
 
+        getPhonePlaceholder(countryCode) {
+            let code = (countryCode || '').trim();
+            if (code === '+63') {
+                return '912 345 6789';
+            } else if (code === '+966') {
+                return '50 123 4567';
+            } else if (code === '+971') {
+                return '50 123 4567';
+            } else if (code === '+974' || code === '+965' || code === '+973') {
+                return '3333 4444';
+            } else if (code === '+1') {
+                return '305 555 0123';
+            } else if (code === '+60') {
+                return '12 345 6789';
+            } else {
+                return '912 345 6789';
+            }
+        },
+
         syncCountryChoice() {
             if (!this.form.country) {
                 this.form.country_choice = '';

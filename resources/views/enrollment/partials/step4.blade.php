@@ -98,7 +98,7 @@
                         </div>
                     </div>
                     <input type="hidden" name="parent_country_code" :value="form.parent_country_code">
-                    <input type="tel" name="parent_mobile" class="plain-input phone-number-input" placeholder="Parent mobile number" x-model="form.parent_mobile"
+                    <input type="tel" name="parent_mobile" class="plain-input phone-number-input" :placeholder="getPhonePlaceholder(form.parent_country_code)" x-model="form.parent_mobile"
                         @input="form.parent_mobile = formatPhoneNumber($event.target.value, form.parent_country_code)">
                 </div>
             </div>

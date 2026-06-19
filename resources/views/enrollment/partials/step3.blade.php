@@ -62,7 +62,7 @@
                 </div>
             </div>
             <input type="hidden" name="mobile_country_code" :value="form.mobile_country_code">
-            <input type="tel" name="mobile_number" class="plain-input phone-number-input" placeholder="9123456789" x-model="form.mobile_number"
+            <input type="tel" name="mobile_number" class="plain-input phone-number-input" :placeholder="getPhonePlaceholder(form.mobile_country_code)" x-model="form.mobile_number"
                 @input="form.mobile_number = formatPhoneNumber($event.target.value, form.mobile_country_code)">
         </div>
         <span class="field-hint">Country code is based on country of residence, but you can change it.</span>
