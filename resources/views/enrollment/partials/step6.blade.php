@@ -71,15 +71,28 @@
                     ['src' => 'images/document-guide/document-correct.svg', 'label' => 'Correct', 'tone' => 'success', 'alt' => 'Correct readable report card upload example'],
                 ]"
             >
-            <div class="!mt-4 !rounded-xl !bg-slate-50 !p-4">
-                <p class="!m-0 !text-sm !font-semibold !leading-6 !text-slate-800">No Report Card yet?</p>
-                <div class="!mt-2 !space-y-1.5 !text-sm !leading-6 !text-slate-600">
-                    <p class="!m-0">If the report card is not yet available, please:</p>
-                    <ol class="!m-0 !list-decimal !space-y-1.5 !pl-5">
-                        <li>Download the <a href="{{ asset('docs/Affidavit_enrollee.pdf') }}" target="_blank" class="!text-emerald-700 !font-semibold !underline">blank affidavit PDF</a>.</li>
-                        <li>Print, fill out, and sign the document.</li>
-                        <li>Upload the signed affidavit here in this card.</li>
-                    </ol>
+            <div class="!mt-2 !rounded-xl !bg-slate-50 !p-4 !space-y-3">
+                <div>
+                    <p class="!m-0 !text-sm !font-bold !leading-6 !text-slate-800">Upload your report card or affidavit</p>
+                    <p class="!mt-1 !m-0 !text-xs !leading-5 !text-slate-600">Please upload a copy of the student's report card or transcript below.</p>
+                </div>
+                <div class="!border-t !border-slate-200 !pt-3 !space-y-2">
+                    <p class="!m-0 !text-xs !font-bold !text-slate-800">Don't have a report card yet?</p>
+                    <p class="!m-0 !text-xs !leading-5 !text-slate-600">Please download the blank affidavit PDF, fill and sign it, then upload the signed copy using the upload area below.</p>
+                    <div class="!pt-1">
+                        <a 
+                            href="{{ asset('docs/Affidavit_enrollee.pdf') }}" 
+                            target="_blank" 
+                            class="!inline-flex !items-center !gap-2 !rounded-xl !bg-emerald-600 !px-4 !py-2.5 !text-xs !font-bold !text-white !shadow-sm hover:!bg-emerald-700 !transition"
+                        >
+                            <svg class="!h-4 !w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Download Blank Affidavit PDF
+                        </a>
+                    </div>
                 </div>
             </div>
             </x-upload-requirement-card>
