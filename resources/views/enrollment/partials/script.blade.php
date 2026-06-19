@@ -464,6 +464,55 @@ function enrollmentForm() {
             }
         },
 
+        formatPhoneNumber(value, countryCode) {
+            let digits = value.replace(/\D/g, '');
+            let code = (countryCode || '').trim();
+
+            if (code === '+63') {
+                if (digits.length > 10) digits = digits.slice(0, 10);
+                let formatted = '';
+                if (digits.length > 0) formatted += digits.substring(0, 3);
+                if (digits.length > 3) formatted += ' ' + digits.substring(3, 6);
+                if (digits.length > 6) formatted += ' ' + digits.substring(6, 10);
+                return formatted;
+            } else if (code === '+966' || code === '+971') {
+                if (digits.length > 9) digits = digits.slice(0, 9);
+                let formatted = '';
+                if (digits.length > 0) formatted += digits.substring(0, 2);
+                if (digits.length > 2) formatted += ' ' + digits.substring(2, 5);
+                if (digits.length > 5) formatted += ' ' + digits.substring(5, 9);
+                return formatted;
+            } else if (code === '+974' || code === '+965' || code === '+973') {
+                if (digits.length > 8) digits = digits.slice(0, 8);
+                let formatted = '';
+                if (digits.length > 0) formatted += digits.substring(0, 4);
+                if (digits.length > 4) formatted += ' ' + digits.substring(4, 8);
+                return formatted;
+            } else if (code === '+1') {
+                if (digits.length > 10) digits = digits.slice(0, 10);
+                let formatted = '';
+                if (digits.length > 0) formatted += digits.substring(0, 3);
+                if (digits.length > 3) formatted += ' ' + digits.substring(3, 6);
+                if (digits.length > 6) formatted += ' ' + digits.substring(6, 10);
+                return formatted;
+            } else if (code === '+60') {
+                if (digits.length > 10) digits = digits.slice(0, 10);
+                let formatted = '';
+                if (digits.length > 0) formatted += digits.substring(0, 2);
+                if (digits.length > 2) formatted += ' ' + digits.substring(2, 5);
+                if (digits.length > 5) formatted += ' ' + digits.substring(5, 10);
+                return formatted;
+            } else {
+                if (digits.length > 15) digits = digits.slice(0, 15);
+                let formatted = '';
+                for (let i = 0; i < digits.length; i += 3) {
+                    if (i > 0) formatted += ' ';
+                    formatted += digits.substring(i, i + 3);
+                }
+                return formatted;
+            }
+        },
+
         syncCountryChoice() {
             if (!this.form.country) {
                 this.form.country_choice = '';
@@ -693,12 +742,12 @@ function enrollmentForm() {
                 if (!this.form.street_address.trim()) return 'Street address is required.';
                 if (!this.form.mobile_country_code) return 'Mobile country code is required.';
                 if (!this.form.mobile_number.trim()) return 'Mobile number is required.';
-                if (this.form.mobile_number.length < 7) return 'Mobile number must be at least 7 digits.';
+                if (this.form.mobile_number.replace(/\D/g, '').length < 7) return 'Mobile number must be at least 7 digits.';
             }
             if (this.step === 4) {
                 if (!this.form.parent_country_code) return 'Parent mobile country code is required.';
                 if (!this.form.parent_mobile.trim()) return 'Parent mobile number is required.';
-                if (this.form.parent_mobile.length < 7) return 'Parent mobile number must be at least 7 digits.';
+                if (this.form.parent_mobile.replace(/\D/g, '').length < 7) return 'Parent mobile number must be at least 7 digits.';
             }
             if (this.step === 5) {
                 if (!this.form.medical_has_concern) return 'Please answer if the student has any medical concern.';
@@ -765,11 +814,11 @@ function enrollmentForm() {
                 return !!this.form.country
                     && !!this.form.street_address.trim()
                     && !!this.form.mobile_country_code
-                    && this.form.mobile_number.trim().length >= 7;
+                    && this.form.mobile_number.replace(/\D/g, '').length >= 7;
             }
             if (num === 4) {
                 return !!this.form.parent_country_code
-                    && this.form.parent_mobile.trim().length >= 7;
+                    && this.form.parent_mobile.replace(/\D/g, '').length >= 7;
             }
             if (num === 5) {
                 const hasMedicalDetails = [
@@ -1155,6 +1204,12 @@ function enrollmentForm() {
 
             // Initial setup also changes form values, so autosave is gated until real user input/change.
             this.$watch('form', () => this.scheduleDraft(), { deep: true });
+            this.$watch('form.mobile_country_code', (code) => {
+                this.form.mobile_number = this.formatPhoneNumber(this.form.mobile_number, code);
+            });
+            this.$watch('form.parent_country_code', (code) => {
+                this.form.parent_mobile = this.formatPhoneNumber(this.form.parent_mobile, code);
+            });
             // Save on page unload: close tab, close window, F5, navigate away
             const unloadHandler = () => this.saveDraftSync();
             window.addEventListener('beforeunload', unloadHandler);
@@ -1214,6 +1269,14 @@ function enrollmentForm() {
                 } catch (_) {}
             }
             @endif
+
+            // Apply initial formatting to phone numbers on load (if values exist)
+            if (this.form.mobile_number) {
+                this.form.mobile_number = this.formatPhoneNumber(this.form.mobile_number, this.form.mobile_country_code);
+            }
+            if (this.form.parent_mobile) {
+                this.form.parent_mobile = this.formatPhoneNumber(this.form.parent_mobile, this.form.parent_country_code);
+            }
 
             document.querySelectorAll('[data-clear-draft-form]').forEach(form => {
                 form.addEventListener('submit', () => {
