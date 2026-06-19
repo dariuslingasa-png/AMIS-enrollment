@@ -203,14 +203,17 @@
                              data-auto_select="false"
                              data-auto_prompt="false">
                         </div>
-                        <div class="g_id_signin"
-                             data-type="standard"
-                             data-shape="pill"
-                             data-theme="outline"
-                             data-text="signin_with"
-                             data-size="medium"
-                             data-logo_alignment="left"
-                             data-width="366">
+                        <div style="width: 366px; height: 42px; display: flex; align-items: center; justify-content: center; overflow: visible;">
+                            <div class="g_id_signin"
+                                 data-type="standard"
+                                 data-shape="pill"
+                                 data-theme="outline"
+                                 data-text="signin_with"
+                                 data-size="medium"
+                                 data-logo_alignment="left"
+                                 data-width="282"
+                                 style="transform: scale(1.3); transform-origin: center;">
+                            </div>
                         </div>
                     </div>
 
