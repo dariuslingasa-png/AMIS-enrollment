@@ -107,7 +107,7 @@ Route::get('/debug-mail-test', function () {
         'AmisEnroll2026'
     ];
     
-    $hosts = ['mail.amis.edu.ph', 'localhost', '127.0.0.1'];
+    $hosts = ['mail.amis.edu.ph', 'box2493.bluehost.com', 'localhost', '127.0.0.1'];
     $ports = [
         ['port' => 465, 'tls' => true],
         ['port' => 587, 'tls' => false],
