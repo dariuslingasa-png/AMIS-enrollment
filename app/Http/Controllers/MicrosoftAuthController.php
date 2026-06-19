@@ -37,9 +37,15 @@ class MicrosoftAuthController extends Controller
             $user = User::where('email', $email)->first();
 
             if ($user) {
-                // If user exists, log them in
-                Auth::login($user);
+                // If user exists, log them in and ensure they are verified
+                if (!$user->hasVerifiedEmail() || $user->account_status !== 'verified') {
+                    $user->forceFill([
+                        'email_verified_at' => now(),
+                        'account_status' => 'verified',
+                    ]);
+                }
                 $user->forceFill(['last_active_at' => now()])->save();
+                Auth::login($user);
             } else {
                 // Create new user account if they don't exist
                 $emailName = explode('@', $email)[0];

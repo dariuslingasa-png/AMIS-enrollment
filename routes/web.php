@@ -46,8 +46,9 @@ Route::match(['get', 'post'], '/m-callback', [\App\Http\Controllers\MicrosoftAut
     ->name('auth.microsoft.callback');
 
 // Auth routes
-Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:100,1')->name('register.store');
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::get('/register', function () {
+    return redirect()->route('login');
+})->name('register');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.store');
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
@@ -56,23 +57,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::post('/auth/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:10,1')->name('auth.send-otp');
 Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:20,1')->name('auth.verify-otp');
 
-// Email verification — signed link (replaces OTP)
-Route::get('/verify-email/notice', [AuthController::class, 'showVerificationNotice'])->name('verification.notice');
-Route::get('/verify-email/notice-compat', [AuthController::class, 'showVerificationNotice'])->name('verify.email.notice');
-Route::get('/verify-email/status', [AuthController::class, 'checkVerificationStatus'])
-    ->middleware('throttle:600,1')
-    ->name('verify.email.status');
-Route::post('/verify-email/resend', [AuthController::class, 'resendVerificationLink'])->middleware('throttle:100,1')->name('verify.email.resend');
-Route::post('/email/verification-notification', [\App\Http\Controllers\Auth\EmailVerificationNotificationController::class, 'store'])
-    ->middleware(['auth', 'throttle:10,1'])
-    ->name('verification.send');
-Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'showVerifyConfirm'])
-    ->middleware(['throttle:60,1'])
-    ->name('verification.verify');
-
-Route::post('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
-    ->middleware(['throttle:60,1'])
-    ->name('verification.verify.post');
+// Verification notice route fallback (safeguard for standard verified middleware)
+Route::get('/verify-email/notice', function () {
+    return redirect()->route('login');
+})->name('verification.notice');
 
 // Dashboard — accessible to all authenticated and verified users
 Route::middleware(['auth', 'verified'])->group(function () {
