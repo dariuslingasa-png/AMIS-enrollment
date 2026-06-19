@@ -207,8 +207,8 @@
                              data-type="standard"
                              data-shape="pill"
                              data-theme="outline"
-                             data-text="continue_with"
-                             data-size="large"
+                             data-text="signin_with"
+                             data-size="medium"
                              data-logo_alignment="left"
                              data-width="366">
                         </div>
