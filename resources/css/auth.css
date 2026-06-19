@@ -961,17 +961,19 @@ input:-webkit-autofill:active {
 
 /* ── Google Sign In responsive wrapper ── */
 .google-gis-wrapper {
-    width: 366px;
-    height: 42px;
+    width: 270px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: visible;
-}
-
-.google-gis-wrapper .g_id_signin {
     transform: scale(1.35);
     transform-origin: center;
+    margin: 8px 0; /* Add visual spacing to account for scaled height */
+}
+
+.google-gis-wrapper iframe {
+    max-width: none !important;
 }
 
 /* Mobile optimizations for small screens (iPhones and Androids) */
@@ -991,12 +993,11 @@ input:-webkit-autofill:active {
         padding: 1.5rem 1.15rem !important;
     }
     .google-gis-wrapper {
-        width: 100%;
-        max-width: 284px;
-        height: 34px;
-    }
-    .google-gis-wrapper .g_id_signin {
+        width: 270px;
+        height: 32px;
         transform: scale(1.05);
+        transform-origin: center;
+        margin: 2px 0;
     }
 }
 

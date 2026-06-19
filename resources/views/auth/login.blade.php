@@ -194,15 +194,15 @@
                         }
                     </script>
                     <script src="https://accounts.google.com/gsi/client" onload="gisLoaded()" async defer></script>
+                    <div id="g_id_onload"
+                         data-client_id="{{ config('services.google.client_id') }}"
+                         data-context="signin"
+                         data-ux_mode="redirect"
+                         data-login_uri="{{ route('auth.google.callback') }}"
+                         data-auto_select="false"
+                         data-auto_prompt="false">
+                    </div>
                     <div class="google-gis-button-container" style="display: flex; justify-content: center; width: 100%; margin-bottom: 1.25rem;">
-                        <div id="g_id_onload"
-                             data-client_id="{{ config('services.google.client_id') }}"
-                             data-context="signin"
-                             data-ux_mode="redirect"
-                             data-login_uri="{{ route('auth.google.callback') }}"
-                             data-auto_select="false"
-                             data-auto_prompt="false">
-                        </div>
                         <div class="google-gis-wrapper">
                             <div class="g_id_signin"
                                  data-type="standard"
