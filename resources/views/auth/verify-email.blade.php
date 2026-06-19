@@ -3,12 +3,12 @@
         <div class="auth-card verify-email-card" 
              x-data="{ 
                  email: '{{ addslashes(auth()->check() ? auth()->user()->email : session('email', session('verify_email', ''))) }}',
-                 timeLeft: 300, 
-                 timerText: '05:00', 
+                 timeLeft: 120, 
+                 timerText: '02:00', 
                  isExpired: false, 
                  interval: null,
                  init() {
-                     const serverTimeLeft = {{ max(0, 300 - (time() - session('verify_timer_start', time()))) }};
+                     const serverTimeLeft = {{ max(0, 120 - (time() - session('verify_timer_start', time()))) }};
                      
                      // Use localStorage to persist timer across page navigations
                      // (e.g. user clicks verify link in email, then comes back)
@@ -104,9 +104,9 @@
                 <div style="flex: 1; min-width: 0;">
                     <div style="font-weight: 800; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; margin-bottom: 0.15rem;">Verification Expiry</div>
                     <div x-show="!isExpired">
-                        Verification link expires in <strong style="color: #b45309;">5 minutes</strong>.
+                        Verification link expires in <strong style="color: #b45309;">2 minutes</strong>.
                         <div style="margin-top: 0.15rem; font-weight: 750;">
-                            Time remaining: <span x-text="timerText" style="font-family: monospace; font-size: 0.9rem; color: #dc2626; font-weight: 900;">05:00</span>
+                            Time remaining: <span x-text="timerText" style="font-family: monospace; font-size: 0.9rem; color: #dc2626; font-weight: 900;">02:00</span>
                         </div>
                     </div>
                     <div x-show="isExpired" x-cloak style="color: #dc2626; font-weight: 800; text-transform: uppercase; font-size: 0.76rem; letter-spacing: 0.03em;">

@@ -36,16 +36,17 @@ class AuthController extends Controller
             $request->session()->regenerateToken();
         }
 
-        // Rate limit registration attempts per email address to 2 per 60 seconds
+        // Rate limit registration attempts per email address to 2 per 120 seconds
         $limiterKey = 'register-email:' . $email;
         if (RateLimiter::tooManyAttempts($limiterKey, 2)) {
             $seconds = RateLimiter::availableIn($limiterKey);
+            $waitText = $seconds <= 120 ? "{$seconds} second(s)" : (floor($seconds / 60) . " minute(s) and " . ($seconds % 60) . " second(s)");
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors(['email' => "Too many verification requests. Please wait {$seconds} seconds."]);
+                ->withErrors(['email' => "Too many verification requests. Please wait {$waitText}."]);
         }
         
-        RateLimiter::hit($limiterKey, 60);
+        RateLimiter::hit($limiterKey, 120);
 
         $user = User::where('email', $email)->first();
 
@@ -111,9 +112,10 @@ class AuthController extends Controller
         $limiterKey = 'send-otp:' . $email;
         if (RateLimiter::tooManyAttempts($limiterKey, 3)) {
             $seconds = RateLimiter::availableIn($limiterKey);
+            $waitText = "{$seconds} second(s)";
             return response()->json([
                 'status' => 'error',
-                'message' => "Too many verification requests. Please wait {$seconds} seconds."
+                'message' => "Too many verification requests. Please wait {$waitText}."
             ], 429);
         }
         RateLimiter::hit($limiterKey, 60);
@@ -200,16 +202,17 @@ class AuthController extends Controller
         $email = Str::lower(trim($validated['email']));
         $code = trim($validated['code']);
 
-        // Rate limit OTP code verification attempts to 5 per 60 seconds per email
+        // Rate limit OTP code verification attempts to 5 per 600 seconds per email (10 minutes)
         $limiterKey = 'verify-otp:' . $email;
         if (RateLimiter::tooManyAttempts($limiterKey, 5)) {
             $seconds = RateLimiter::availableIn($limiterKey);
+            $waitText = $seconds <= 120 ? "{$seconds} second(s)" : (floor($seconds / 60) . " minute(s) and " . ($seconds % 60) . " second(s)");
             return response()->json([
                 'status' => 'error',
-                'message' => "Too many verification attempts. Please wait {$seconds} seconds."
+                'message' => "Too many verification attempts. Please wait {$waitText} before trying again."
             ], 429);
         }
-        RateLimiter::hit($limiterKey, 60);
+        RateLimiter::hit($limiterKey, 600);
 
         // Retrieve the latest valid unused, unexpired verification code
         $verifyCode = VerificationCode::where('email', $email)
@@ -655,16 +658,17 @@ class AuthController extends Controller
             abort(403, 'Unauthorized verification resend request.');
         }
 
-        // Rate limit resending to 2 requests per 60 seconds per email address
+        // Rate limit resending to 2 requests per 120 seconds per email address
         $limiterKey = 'resend-verification:' . $email;
         if (RateLimiter::tooManyAttempts($limiterKey, 2)) {
             $seconds = RateLimiter::availableIn($limiterKey);
+            $waitText = $seconds <= 120 ? "{$seconds} second(s)" : (floor($seconds / 60) . " minute(s) and " . ($seconds % 60) . " second(s)");
             return back()->withErrors([
-                'email' => "Please wait {$seconds} seconds before requesting another verification link."
+                'email' => "Please wait {$waitText} before requesting another verification link."
             ]);
         }
         
-        RateLimiter::hit($limiterKey, 60);
+        RateLimiter::hit($limiterKey, 120);
 
         $user = User::where('email', $request->email)->first();
 

@@ -51,6 +51,19 @@
                 loading: false, 
                 errorMessage: '', 
                 successMessage: '',
+                otpResendCooldown: 0,
+                otpResendInterval: null,
+                startOtpResendCooldown() {
+                    this.otpResendCooldown = 60;
+                    if (this.otpResendInterval) clearInterval(this.otpResendInterval);
+                    this.otpResendInterval = setInterval(() => {
+                        if (this.otpResendCooldown > 0) {
+                            this.otpResendCooldown--;
+                        } else {
+                            clearInterval(this.otpResendInterval);
+                        }
+                    }, 1000);
+                },
                 submitEmail() {
                     if (!this.email || !this.email.includes('@')) {
                         this.errorMessage = 'Please enter a valid email address.';
@@ -74,6 +87,7 @@
                         if (res.status === 200 && res.data.status === 'success') {
                             this.step = 'otp';
                             this.successMessage = res.data.message;
+                            this.startOtpResendCooldown();
                             this.$nextTick(() => {
                                 this.$refs.otp0.focus();
                             });
@@ -159,6 +173,7 @@
                         if (res.status === 200 && res.data.status === 'success') {
                             this.successMessage = 'A new 4-digit code has been sent!';
                             this.otp = ['', '', '', ''];
+                            this.startOtpResendCooldown();
                             this.$nextTick(() => {
                                 this.$refs.otp0.focus();
                             });
@@ -247,7 +262,10 @@
 
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; font-size:0.85rem;">
                         <a href="#" @click.prevent="step = 'email'; errorMessage = ''; successMessage = '';" class="otp-back-link">&larr; Back to email</a>
-                        <a href="#" @click.prevent="resendOtpCode()" class="otp-resend-link" :style="loading ? 'pointer-events:none; opacity:0.5;' : ''">Resend Code</a>
+                        <a href="#" @click.prevent="if (otpResendCooldown === 0) resendOtpCode()" class="otp-resend-link" :style="loading || otpResendCooldown > 0 ? 'pointer-events:none; opacity:0.5;' : ''">
+                            <span x-show="otpResendCooldown === 0">Resend Code</span>
+                            <span x-show="otpResendCooldown > 0" x-text="'Resend Code (' + otpResendCooldown + 's)'"></span>
+                        </a>
                     </div>
                 </div>
 
