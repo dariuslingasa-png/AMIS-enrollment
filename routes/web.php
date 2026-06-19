@@ -99,3 +99,15 @@ if (app()->environment('local')) {
     });
 }
 
+Route::get('/debug-mail', function () {
+    try {
+        \Illuminate\Support\Facades\Mail::raw('Test email from AMIS', function ($message) {
+            $message->to('zhairel.lingasa@gmail.com')
+                    ->subject('Test Email');
+        });
+        return 'Email sent successfully!';
+    } catch (\Throwable $e) {
+        return response('<pre>Error: ' . e($e->getMessage()) . "\n\n" . e($e->getTraceAsString()) . '</pre>', 500);
+    }
+});
+
