@@ -197,22 +197,16 @@
                         <span>Sign in with Google</span>
                     </a>
 
-                    <!-- Microsoft Sign In (Coming Soon) -->
-                    <div class="auth-coming-soon-option" style="margin-top: 0; margin-bottom: 1.25rem;">
-                        <div class="auth-coming-soon-icon" style="background: #f1f5f9;">
-                            <svg width="18" height="18" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="10.5" height="10.5" fill="#F25022"/>
-                                <rect x="12.5" width="10.5" height="10.5" fill="#7FBA00"/>
-                                <rect y="12.5" width="10.5" height="10.5" fill="#00A4EF"/>
-                                <rect x="12.5" y="12.5" width="10.5" height="10.5" fill="#FFB900"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <strong>Sign in with Microsoft</strong>
-                            <span>Coming soon</span>
-                        </div>
-                        <em>Soon</em>
-                    </div>
+                    <!-- Microsoft Sign In Button -->
+                    <a href="{{ route('auth.microsoft') }}" class="btn-microsoft-auth-premium" style="margin-bottom: 1.25rem;">
+                        <svg class="auth-microsoft-logo" width="18" height="18" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 12px; flex-shrink: 0;">
+                            <rect width="10.5" height="10.5" fill="#F25022"/>
+                            <rect x="12.5" width="10.5" height="10.5" fill="#7FBA00"/>
+                            <rect y="12.5" width="10.5" height="10.5" fill="#00A4EF"/>
+                            <rect x="12.5" y="12.5" width="10.5" height="10.5" fill="#FFB900"/>
+                        </svg>
+                        <span>Sign in with Microsoft</span>
+                    </a>
 
                     <div class="auth-option-divider"><span>or</span></div>
 

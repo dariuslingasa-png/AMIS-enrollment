@@ -37,6 +37,14 @@ Route::match(['get', 'post'], '/g-callback', [GoogleAuthController::class, 'call
     ->middleware('throttle:10,1')
     ->name('auth.google.callback');
 
+// Microsoft OAuth
+Route::get('/m-signin', [\App\Http\Controllers\MicrosoftAuthController::class, 'redirect'])
+    ->middleware('throttle:10,1')
+    ->name('auth.microsoft');
+Route::match(['get', 'post'], '/m-callback', [\App\Http\Controllers\MicrosoftAuthController::class, 'callback'])
+    ->middleware('throttle:10,1')
+    ->name('auth.microsoft.callback');
+
 // Auth routes
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:100,1')->name('register.store');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');

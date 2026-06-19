@@ -20,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+            $event->extendSocialite('microsoft', \SocialiteProviders\Microsoft\Provider::class);
+        });
+
         // Force HTTPS scheme in production so signed URLs match the actual domain.
         // Without this, signed URL verification fails with 403 on cPanel/proxy setups.
         $isProduction = $this->app->environment('production') 

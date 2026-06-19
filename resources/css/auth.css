@@ -786,7 +786,8 @@ input:-webkit-autofill:active {
 }
 
 /* ── Premium Redesign & 4-Digit OTP Styles ────────────────────────── */
-.btn-google-auth-premium {
+.btn-google-auth-premium,
+.btn-microsoft-auth-premium {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -803,7 +804,8 @@ input:-webkit-autofill:active {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.btn-google-auth-premium:hover {
+.btn-google-auth-premium:hover,
+.btn-microsoft-auth-premium:hover {
     background: #f8fafc;
     border-color: #94a3b8;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
