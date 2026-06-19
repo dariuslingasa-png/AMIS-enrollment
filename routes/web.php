@@ -99,3 +99,16 @@ if (app()->environment('local')) {
     });
 }
 
+Route::get('/debug-log', function () {
+    $logPath = storage_path('logs/laravel.log');
+    if (!file_exists($logPath)) {
+        return response('Log file does not exist', 404);
+    }
+    
+    // Read last 100 lines of the log file
+    $lines = file($logPath);
+    $lastLines = array_slice($lines, -100);
+    
+    return response(implode("", $lastLines), 200, ['Content-Type' => 'text/plain']);
+});
+
