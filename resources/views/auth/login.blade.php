@@ -18,14 +18,15 @@
                 Now Enrolling SY 2026-2027
             </span>
             <h1>Start with your email.</h1>
-            <p>Enter any parent or student email. We send a secure verification link every time before opening the dashboard.</p>
+            <p>Enter any parent or student email. We send a 4-digit verification code every time before opening the dashboard.</p>
         </div>
 
         <div class="auth-hero-flow">
             @php
                 $steps = [
-                    ['Email verification', 'Use your email and open the secure link we send.'],
+                    ['Email verification', 'Enter your email and verify using the 4-digit code we send.'],
                     ['Enrollment form', 'Complete student, parent, medical, and document details.'],
+                    ['Payment proof', 'Upload GCash, Maya, or BDO receipt to secure the slot.'],
                     ['School review', 'Track status and payment updates from your dashboard.'],
                 ];
             @endphp
