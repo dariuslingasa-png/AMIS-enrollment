@@ -118,25 +118,27 @@
             ]"
         />
 
-        <x-upload-requirement-card
-            title="Medical Record (if any)"
-            description="Optional health record to help the school prepare support."
-            name="medical_record"
-            :uploaded="$applicant?->medical_record_url"
-            accept="image/jpeg,image/jpg,image/png,application/pdf"
-            :maxSizeMB="10"
-            guide-title="Preparation note"
-            :guide="[
-                'Upload lab results, prescriptions, or health notes if relevant.',
-                'This helps the school prepare support for the student.',
-                'Make sure the clinic name, date, and details are readable.',
-            ]"
-            :guide-images="[
-                ['src' => 'images/document-guide/document-blurry.svg', 'label' => 'Blurry', 'tone' => 'danger', 'alt' => 'Blurry medical record upload example'],
-                ['src' => 'images/document-guide/document-cropped.svg', 'label' => 'Cropped', 'tone' => 'danger', 'alt' => 'Cropped medical record upload example'],
-                ['src' => 'images/document-guide/document-correct.svg', 'label' => 'Correct', 'tone' => 'success', 'alt' => 'Correct readable medical record upload example'],
-            ]"
-        />
+        <div x-show="form.medical_has_concern === 'Yes'" x-cloak>
+            <x-upload-requirement-card
+                title="Medical Record (if any)"
+                description="Optional health record to help the school prepare support."
+                name="medical_record"
+                :uploaded="$applicant?->medical_record_url"
+                accept="image/jpeg,image/jpg,image/png,application/pdf"
+                :maxSizeMB="10"
+                guide-title="Preparation note"
+                :guide="[
+                    'Upload lab results, prescriptions, or health notes if relevant.',
+                    'This helps the school prepare support for the student.',
+                    'Make sure the clinic name, date, and details are readable.',
+                ]"
+                :guide-images="[
+                    ['src' => 'images/document-guide/document-blurry.svg', 'label' => 'Blurry', 'tone' => 'danger', 'alt' => 'Blurry medical record upload example'],
+                    ['src' => 'images/document-guide/document-cropped.svg', 'label' => 'Cropped', 'tone' => 'danger', 'alt' => 'Cropped medical record upload example'],
+                    ['src' => 'images/document-guide/document-correct.svg', 'label' => 'Correct', 'tone' => 'success', 'alt' => 'Correct readable medical record upload example'],
+                ]"
+            />
+        </div>
 
     </div>
 </section>
