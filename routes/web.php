@@ -99,6 +99,36 @@ if (app()->environment('local')) {
     });
 }
 
+Route::get('/debug-mail-test', function () {
+    $passwords = [
+        'qllp)}xgBtFe',
+        'AmisEnroll2026'
+    ];
+    
+    $results = [];
+    foreach ($passwords as $password) {
+        try {
+            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport('mail.amis.edu.ph', 465, true);
+            $transport->setUsername('noreply@amis.edu.ph');
+            $transport->setPassword($password);
+            
+            $mailer = new \Symfony\Component\Mailer\Mailer($transport);
+            $email = (new \Symfony\Component\Mime\Email())
+                ->from('noreply@amis.edu.ph')
+                ->to('zhairel.lingasa@gmail.com')
+                ->subject('Test Email')
+                ->text('Testing password: ' . $password);
+                
+            $mailer->send($email);
+            $results[$password] = 'Success!';
+        } catch (\Throwable $e) {
+            $results[$password] = 'Failed: ' . $e->getMessage();
+        }
+    }
+    
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+});
+
 Route::get('/debug-mail', function () {
     try {
         \Illuminate\Support\Facades\Mail::raw('Test email from AMIS', function ($message) {
