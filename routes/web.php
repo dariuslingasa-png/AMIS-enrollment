@@ -100,34 +100,105 @@ if (app()->environment('local')) {
 }
 
 Route::get('/debug-mail-test', function () {
+    $to = request('to', 'zhairel.lingasa@gmail.com');
+    
     $passwords = [
         'qllp)}xgBtFe',
         'AmisEnroll2026'
     ];
     
+    $hosts = ['mail.amis.edu.ph', 'localhost', '127.0.0.1'];
+    $ports = [
+        ['port' => 465, 'tls' => true],
+        ['port' => 587, 'tls' => false],
+        ['port' => 25, 'tls' => false],
+        ['port' => 26, 'tls' => false],
+    ];
+    
     $results = [];
-    foreach ($passwords as $password) {
-        try {
-            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport('mail.amis.edu.ph', 465, true);
-            $transport->setUsername('noreply@amis.edu.ph');
-            $transport->setPassword($password);
-            
-            $mailer = new \Symfony\Component\Mailer\Mailer($transport);
-            $email = (new \Symfony\Component\Mime\Email())
-                ->from('noreply@amis.edu.ph')
-                ->to('zhairel.lingasa@gmail.com')
-                ->subject('Test Email')
-                ->text('Testing password: ' . $password);
-                
-            $mailer->send($email);
-            $results[$password] = 'Success!';
-        } catch (\Throwable $e) {
-            $results[$password] = 'Failed: ' . $e->getMessage();
+    
+    // 1. Test SMTP with credentials
+    foreach ($hosts as $host) {
+        foreach ($ports as $pInfo) {
+            $port = $pInfo['port'];
+            $tls = $pInfo['tls'];
+            foreach ($passwords as $password) {
+                $key = "SMTP Auth -> {$host}:{$port} (SSL: " . ($tls ? 'Yes' : 'No') . ") with password: {$password}";
+                try {
+                    $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $port, $tls);
+                    $transport->setUsername('noreply@amis.edu.ph');
+                    $transport->setPassword($password);
+                    
+                    $mailer = new \Symfony\Component\Mailer\Mailer($transport);
+                    $email = (new \Symfony\Component\Mime\Email())
+                        ->from('noreply@amis.edu.ph')
+                        ->to($to)
+                        ->subject('SMTP Auth Test Email')
+                        ->text('Testing SMTP Auth config: ' . $key);
+                        
+                    $mailer->send($email);
+                    $results[$key] = 'SUCCESS!';
+                } catch (\Throwable $e) {
+                    $results[$key] = 'Failed: ' . $e->getMessage();
+                }
+            }
         }
+    }
+    
+    // 2. Test SMTP WITHOUT credentials (Anonymous Relay)
+    foreach (['localhost', '127.0.0.1'] as $host) {
+        foreach ([25, 26, 587] as $port) {
+            $key = "SMTP No-Auth -> {$host}:{$port}";
+            try {
+                $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $port, false);
+                $mailer = new \Symfony\Component\Mailer\Mailer($transport);
+                $email = (new \Symfony\Component\Mime\Email())
+                    ->from('noreply@amis.edu.ph')
+                    ->to($to)
+                    ->subject('SMTP No-Auth Test Email')
+                    ->text('Testing SMTP No-Auth config: ' . $key);
+                    
+                $mailer->send($email);
+                $results[$key] = 'SUCCESS!';
+            } catch (\Throwable $e) {
+                $results[$key] = 'Failed: ' . $e->getMessage();
+            }
+        }
+    }
+    
+    // 3. Test Symfony Sendmail Transport directly
+    $key = "Symfony Sendmail Transport";
+    try {
+        $transport = new \Symfony\Component\Mailer\Transport\SendmailTransport();
+        $mailer = new \Symfony\Component\Mailer\Mailer($transport);
+        $email = (new \Symfony\Component\Mime\Email())
+            ->from('noreply@amis.edu.ph')
+            ->to($to)
+            ->subject('Symfony Sendmail Test Email')
+            ->text('Testing Symfony Sendmail config');
+            
+        $mailer->send($email);
+        $results[$key] = 'SUCCESS!';
+    } catch (\Throwable $e) {
+        $results[$key] = 'Failed: ' . $e->getMessage();
+    }
+    
+    // 4. Test Laravel Mail Facade with 'sendmail' driver
+    $key = "Laravel Mail Facade with sendmail driver";
+    try {
+        \Illuminate\Support\Facades\Mail::mailer('sendmail')->raw('Testing Laravel sendmail driver', function ($message) use ($to) {
+            $message->from('noreply@amis.edu.ph', 'AMIS Enrollment')
+                    ->to($to)
+                    ->subject('Laravel Sendmail Driver Test Email');
+        });
+        $results[$key] = 'SUCCESS!';
+    } catch (\Throwable $e) {
+        $results[$key] = 'Failed: ' . $e->getMessage();
     }
     
     return response()->json($results, 200, [], JSON_PRETTY_PRINT);
 });
+
 
 Route::get('/debug-mail', function () {
     try {
