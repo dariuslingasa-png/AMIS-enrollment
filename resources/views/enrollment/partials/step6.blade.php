@@ -83,9 +83,11 @@
                         <a 
                             href="{{ asset('docs/Affidavit_enrollee.pdf') }}" 
                             target="_blank" 
-                            class="!inline-flex !items-center !gap-2 !rounded-xl !bg-emerald-600 !px-4 !py-2.5 !text-xs !font-bold !text-white !shadow-sm hover:!bg-emerald-700 !transition"
+                            style="display: inline-flex; align-items: center; gap: 8px; border-radius: 12px; background-color: #059669; padding: 10px 16px; font-size: 12px; font-weight: 700; color: #ffffff; text-decoration: none; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: background-color 0.2s;"
+                            onmouseover="this.style.backgroundColor='#047857'"
+                            onmouseout="this.style.backgroundColor='#059669'"
                         >
-                            <svg class="!h-4 !w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <svg style="width: 16px; height: 16px; min-width: 16px; min-height: 16px; display: inline-block; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                                 <polyline points="7 10 12 15 17 10"/>
                                 <line x1="12" y1="15" x2="12" y2="3"/>

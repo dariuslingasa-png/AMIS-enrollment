@@ -4,11 +4,34 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class EnrollmentApplicant extends Model
 {
     protected static function booted()
     {
+        static::saving(function ($applicant) {
+            if ($applicant->isDirty('medical_has_concern') && $applicant->medical_has_concern === 'No') {
+                if ($applicant->medical_record_url) {
+                    Storage::disk('public')->delete($applicant->medical_record_url);
+                    if (str_contains($applicant->medical_record_url, '/optimized/')) {
+                        Storage::disk('public')->delete(str_replace('/optimized/', '/original/', $applicant->medical_record_url));
+                        Storage::disk('public')->delete(str_replace('/optimized/', '/thumbnails/small/', $applicant->medical_record_url));
+                        Storage::disk('public')->delete(str_replace('/optimized/', '/thumbnails/medium/', $applicant->medical_record_url));
+                        Storage::disk('public')->delete(str_replace('/optimized/', '/thumbnails/large/', $applicant->medical_record_url));
+                    }
+                    $applicant->medical_record_url = null;
+                }
+                
+                // Clear document_statuses medical_record
+                $docStatuses = $applicant->document_statuses ?? [];
+                if (isset($docStatuses['medical_record'])) {
+                    unset($docStatuses['medical_record']);
+                    $applicant->document_statuses = empty($docStatuses) ? null : $docStatuses;
+                }
+            }
+        });
+
         static::updated(function ($applicant) {
             // 1. Sync grade_level to associated Student
             if ($applicant->wasChanged('grade_level') && $applicant->student) {
