@@ -142,6 +142,16 @@ class EnrollmentUploadService
             $updates['affidavit_data'] = null;
         }
 
+        if ($document === 'report_card') {
+            if ($applicant->affidavit_url) {
+                Storage::disk('public')->delete($applicant->affidavit_url);
+            }
+            $updates['affidavit_url'] = null;
+            $updates['affidavit_data'] = null;
+            unset($documentStatuses['affidavit']);
+            $updates['document_statuses'] = empty($documentStatuses) ? null : $documentStatuses;
+        }
+
         $applicant->update($updates);
     }
 
