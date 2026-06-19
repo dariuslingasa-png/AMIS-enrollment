@@ -56,7 +56,6 @@ class EnrollmentNotificationService
 
             Mail::html($html, function ($message) use ($email, $name) {
                 $message->to($email, $name)
-                    ->replyTo('noreply@amis.edu.ph', 'AMIS Support')
                     ->subject('AMIS Enrollment - Application Submitted Successfully');
             });
         } catch (\Throwable $e) {

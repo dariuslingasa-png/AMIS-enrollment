@@ -61,7 +61,6 @@ class AmisVerifyEmail extends VerifyEmail
 
         return (new MailMessage)
             ->subject('Verify Your AMIS Enrollment Email')
-            ->replyTo('noreply@amis.edu.ph', 'AMIS Support')
             ->view('emails.verify-email', [
                 'user' => $notifiable,
                 'verificationUrl' => $verificationUrl,

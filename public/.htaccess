@@ -1,9 +1,14 @@
+<IfModule mod_security.c>
+    SecRuleEngine Off
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
 
     RewriteEngine On
+
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

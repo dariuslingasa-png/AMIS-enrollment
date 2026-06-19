@@ -33,13 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Illuminate\Routing\Exceptions\InvalidSignatureException $e, \Illuminate\Http\Request $request) {
             if ($request->is('email/verify/*')) {
-                return response()
-                    ->view('auth.verify-result', [
-                        'status' => 'error',
-                        'message' => 'Invalid or Expired Link',
-                    ], 403)
-                    ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-                    ->header('Pragma', 'no-cache');
+                return redirect()->route('login')->withErrors([
+                    'email' => 'This verification link is invalid or expired. Please sign in to request a new 4-digit code.'
+                ]);
             }
 
             return null;
