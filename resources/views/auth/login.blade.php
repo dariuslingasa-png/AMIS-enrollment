@@ -1,4 +1,5 @@
 <x-guest-layout :show-loader="false">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <div id="login-page" class="login-grid login-page visible">
     <section class="login-info auth-hero-panel">
         <div class="login-brand-block auth-hero-brand">
@@ -202,15 +203,24 @@
                 <!-- Step 1: Email View -->
                 <div x-show="step === 'email'">
                     <!-- Google Sign In Button -->
-                    <a href="{{ route('auth.google') }}" class="btn-google-auth-premium" style="margin-bottom: 0.75rem;">
-                        <svg class="auth-google-logo" width="18" height="18" viewBox="0 0 24 24" style="margin-right: 12px; flex-shrink: 0;">
-                            <path fill="#EA4335" d="M12 5.04c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 1.76 14.94 1 12 1 7.35 1 3.39 3.65 1.44 7.5l3.8 2.94c.9-2.7 3.4-4.4 6.76-4.4z"/>
-                            <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.34H12v4.44h6.44c-.28 1.48-1.12 2.73-2.38 3.58l3.69 2.87c2.16-1.99 3.4-4.93 3.4-8.55z"/>
-                            <path fill="#FBBC05" d="M5.24 14.56c-.23-.69-.36-1.43-.36-2.2s.13-1.51.36-2.2L1.44 7.22C.52 9.07 0 11.13 0 13.3c0 2.17.52 4.23 1.44 6.08l3.8-2.82z"/>
-                            <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.92l-3.69-2.87c-1.02.68-2.33 1.09-3.97 1.09-3.36 0-5.86-1.7-6.76-4.4l-3.8 2.94C3.39 20.35 7.35 23 12 23z"/>
-                        </svg>
-                        <span>Sign in with Google</span>
-                    </a>
+                    <div style="margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px;">
+                        <div id="g_id_onload"
+                             data-client_id="{{ config('services.google.client_id') }}"
+                             data-context="signin"
+                             data-ux_mode="redirect"
+                             data-login_uri="{{ route('auth.google.callback') }}"
+                             data-auto_prompt="false">
+                        </div>
+                        <div class="g_id_signin"
+                             data-type="standard"
+                             data-shape="pill"
+                             data-theme="outline"
+                             data-text="signin_with"
+                             data-size="large"
+                             data-logo_alignment="left"
+                             data-width="340">
+                        </div>
+                    </div>
 
                     <!-- Microsoft Sign In Button -->
                     <a href="{{ route('auth.microsoft') }}" class="btn-microsoft-auth-premium" style="margin-bottom: 1.25rem;">
