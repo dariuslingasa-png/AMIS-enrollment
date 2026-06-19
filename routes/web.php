@@ -99,3 +99,43 @@ if (app()->environment('local')) {
     });
 }
 
+Route::get('/debug-env', function () {
+    $info = [
+        'base_path' => base_path(),
+        'public_path' => public_path(),
+        'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? 'unknown',
+        'script_filename' => $_SERVER['SCRIPT_FILENAME'] ?? 'unknown',
+        'public_build_manifest_exists' => file_exists(public_path('build/manifest.json')),
+        'public_build_manifest' => file_exists(public_path('build/manifest.json')) ? json_decode(file_get_contents(public_path('build/manifest.json')), true) : null,
+    ];
+    
+    // Check files in public/build/assets
+    $assetsPath = public_path('build/assets');
+    $info['assets_dir_exists'] = is_dir($assetsPath);
+    if ($info['assets_dir_exists']) {
+        $info['assets_files'] = scandir($assetsPath);
+    }
+    
+    // Check parent directories and siblings
+    $info['parent_dir_contents'] = scandir(dirname(base_path()));
+    $info['base_dir_contents'] = scandir(base_path());
+    if (is_dir(base_path('public'))) {
+        $info['base_public_contents'] = scandir(base_path('public'));
+    }
+    
+    // Check if public_html exists as a sibling of base_path
+    $publicHtmlPath = dirname(base_path()) . '/public_html';
+    $info['public_html_exists'] = is_dir($publicHtmlPath);
+    if ($info['public_html_exists']) {
+        $info['public_html_contents'] = scandir($publicHtmlPath);
+        if (is_dir($publicHtmlPath . '/build')) {
+            $info['public_html_build_contents'] = scandir($publicHtmlPath . '/build');
+        }
+        if (is_dir($publicHtmlPath . '/build/assets')) {
+            $info['public_html_build_assets_contents'] = scandir($publicHtmlPath . '/build/assets');
+        }
+    }
+    
+    return response()->json($info, 200, [], JSON_PRETTY_PRINT);
+});
+
