@@ -24,6 +24,9 @@
     <!-- Scripts & Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
     @stack('styles')
 </head>
 <body class="font-sans antialiased" x-data="{ pageLoaded: false }" x-init="
@@ -91,5 +94,24 @@
     </div>
 
     @stack('scripts')
+    <script>
+        document.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (!(form instanceof HTMLFormElement)) return;
+
+            if (form.action && form.action.indexOf('/logout') !== -1) {
+                if (window.google && window.google.accounts && window.google.accounts.id) {
+                    try {
+                        window.google.accounts.id.initialize({
+                            client_id: '{{ config("services.google.client_id") }}'
+                        });
+                        window.google.accounts.id.disableAutoSelect();
+                    } catch (e) {
+                        console.error('Error disabling Google auto-select:', e);
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

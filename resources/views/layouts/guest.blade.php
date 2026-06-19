@@ -28,6 +28,9 @@
     <!-- Scripts & Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
     @stack('styles')
 </head>
 <body class="font-sans antialiased" x-data="{ pageLoaded: {{ $showLoader ? 'false' : 'true' }} }" x-init="
@@ -150,6 +153,19 @@
                 var form = event.target;
                 if (!(form instanceof HTMLFormElement)) return;
 
+                if (form.action && form.action.indexOf('/logout') !== -1) {
+                    if (window.google && window.google.accounts && window.google.accounts.id) {
+                        try {
+                            window.google.accounts.id.initialize({
+                                client_id: '{{ config("services.google.client_id") }}'
+                            });
+                            window.google.accounts.id.disableAutoSelect();
+                        } catch (e) {
+                            console.error('Error disabling Google auto-select:', e);
+                        }
+                    }
+                }
+
                 if (form.dataset.confirmMessage && !window.confirm(form.dataset.confirmMessage)) {
                     event.preventDefault();
                     return;
@@ -267,6 +283,16 @@
                 clearTimeout(warningTimer);
                 clearInterval(countdownInterval);
                 try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+                if (window.google && window.google.accounts && window.google.accounts.id) {
+                    try {
+                        window.google.accounts.id.initialize({
+                            client_id: '{{ config("services.google.client_id") }}'
+                        });
+                        window.google.accounts.id.disableAutoSelect();
+                    } catch (e) {
+                        console.error('Error disabling Google auto-select:', e);
+                    }
+                }
                 var form = document.getElementById('idle-logout-form');
                 if (form) form.submit();
             }

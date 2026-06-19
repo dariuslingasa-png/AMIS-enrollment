@@ -1,5 +1,4 @@
 <x-guest-layout :show-loader="false">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <div id="login-page" class="login-grid login-page visible">
     <section class="login-info auth-hero-panel">
         <div class="login-brand-block auth-hero-brand">
@@ -209,6 +208,7 @@
                              data-context="signin"
                              data-ux_mode="redirect"
                              data-login_uri="{{ route('auth.google.callback') }}"
+                             data-auto_select="false"
                              data-auto_prompt="false">
                         </div>
                         <div class="g_id_signin"
