@@ -87,19 +87,9 @@
     </div>
 
     <script>
-        document.addEventListener('submit', function (event) {
-            var form = event.target;
-            if (form.closest('.enrollment-page')) return; // Let Alpine handle enrollment form loading
-
-            // Show page load loader overlay instead of button spinner
-            var loader = document.querySelector('.initial-loading-screen');
-            if (loader) {
-                loader.style.setProperty('display', 'flex', 'important');
-                loader.style.opacity = '1';
-            }
-        });
-
         document.addEventListener('click', function (event) {
+            if (event.defaultPrevented) return;
+
             var clickable = event.target.closest('a, button');
             if (!clickable) return;
             if (clickable.closest('.enrollment-page')) return; // Let Alpine handle enrollment form loading
@@ -168,6 +158,15 @@
                 if (form.matches('[data-clear-draft-form]')) {
                     var applicantInput = form.querySelector('input[name="applicant_id"]');
                     window.amisEnrollmentDraftCache.clear(applicantInput ? applicantInput.value : null);
+                }
+
+                // Show page load loader overlay instead of button spinner (unless handled by Alpine inside enrollment-page)
+                if (!form.closest('.enrollment-page')) {
+                    var loader = document.querySelector('.initial-loading-screen');
+                    if (loader) {
+                        loader.style.setProperty('display', 'flex', 'important');
+                        loader.style.opacity = '1';
+                    }
                 }
             });
 
