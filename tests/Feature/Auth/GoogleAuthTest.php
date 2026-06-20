@@ -15,8 +15,9 @@ class GoogleAuthTest extends TestCase
     public function test_google_sign_in_redirects_to_google(): void
     {
         $mockProvider = Mockery::mock(\Laravel\Socialite\Two\GoogleProvider::class);
+        $mockProvider->shouldReceive('scopes')->with(['openid', 'email'])->andReturnSelf();
+        $mockProvider->shouldReceive('with')->with(['response_mode' => 'form_post'])->andReturnSelf();
         
-        // Mock the target URL logic
         $redirectResponse = Mockery::mock(\Illuminate\Http\RedirectResponse::class);
         $redirectResponse->shouldReceive('getTargetUrl')->andReturn('https://accounts.google.com/o/oauth2/auth');
         
@@ -39,6 +40,8 @@ class GoogleAuthTest extends TestCase
         $mockUser->shouldReceive('getName')->andReturn('Test User');
 
         $mockProvider = Mockery::mock(\Laravel\Socialite\Two\GoogleProvider::class);
+        $mockProvider->shouldReceive('scopes')->with(['openid', 'email'])->andReturnSelf();
+        $mockProvider->shouldReceive('stateless')->andReturnSelf();
         $mockProvider->shouldReceive('user')->andReturn($mockUser);
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($mockProvider);
@@ -55,6 +58,26 @@ class GoogleAuthTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('enrollment.dashboard'));
+    }
+
+    public function test_google_sign_in_redirects_to_warning_on_unsupported_browser(): void
+    {
+        $userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/251.0.0.31.111;]";
+
+        $response = $this->withHeaders([
+            'User-Agent' => $userAgent,
+        ])->get(route('auth.google'));
+
+        $response->assertRedirect(route('auth.unsupported-browser'));
+    }
+
+    public function test_unsupported_browser_warning_page_renders(): void
+    {
+        $response = $this->get(route('auth.unsupported-browser'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Google Sign-in Blocked');
+        $response->assertSee('Google Sign-In is not supported inside Messenger or Facebook browser.');
     }
 
     protected function tearDown(): void

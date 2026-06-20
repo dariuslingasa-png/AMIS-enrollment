@@ -16,8 +16,18 @@ use Exception;
 
 class GoogleAuthController extends Controller
 {
-    public function redirect()
+    public function redirect(Request $request)
     {
+        $userAgent = $request->header('User-Agent') ?? '';
+        if ($this->isUnsupportedInAppBrowser($userAgent)) {
+            \Illuminate\Support\Facades\Log::warning('Google Sign-In blocked: Facebook/Messenger in-app browser detected.', [
+                'ip' => $request->ip(),
+                'user_agent' => $userAgent,
+            ]);
+
+            return redirect()->route('auth.unsupported-browser');
+        }
+
         try {
             $redirectResponse = Socialite::driver('google')
                 ->scopes(['openid', 'email'])
@@ -29,6 +39,52 @@ class GoogleAuthController extends Controller
         } catch (Exception $e) {
             return redirect()->route('login')->withErrors(['email' => 'Failed to initialize Google redirect: ' . $e->getMessage()]);
         }
+    }
+
+    public function unsupportedBrowser(Request $request)
+    {
+        $userAgent = $request->header('User-Agent') ?? '';
+        
+        $isIos = str_contains(strtolower($userAgent), 'iphone') 
+            || str_contains(strtolower($userAgent), 'ipad') 
+            || str_contains(strtolower($userAgent), 'ipod');
+            
+        $isAndroid = str_contains(strtolower($userAgent), 'android');
+
+        $host = $request->getHost();
+        $scheme = $request->isSecure() ? 'https' : 'http';
+        
+        // Android Intent URI to trigger launching default browser
+        $intentUrl = "intent://" . $host . "/g-signin#Intent;scheme=" . $scheme . ";action=android.intent.action.VIEW;end";
+
+        return view('auth.unsupported-browser', [
+            'isIos' => $isIos,
+            'isAndroid' => $isAndroid,
+            'intentUrl' => $intentUrl,
+            'portalUrl' => $scheme . '://' . $host . '/login'
+        ]);
+    }
+
+    private function isUnsupportedInAppBrowser(string $userAgent): bool
+    {
+        $userAgentLower = strtolower($userAgent);
+
+        $isMobile = str_contains($userAgentLower, 'mobi') 
+            || str_contains($userAgentLower, 'android') 
+            || str_contains($userAgentLower, 'iphone') 
+            || str_contains($userAgentLower, 'ipad') 
+            || str_contains($userAgentLower, 'ipod');
+
+        if (!$isMobile) {
+            return false;
+        }
+
+        $isFbOrMessenger = str_contains($userAgent, 'FBAN') 
+            || str_contains($userAgent, 'FBAV') 
+            || str_contains($userAgent, 'FB_IAB') 
+            || str_contains($userAgentLower, 'messenger');
+
+        return $isFbOrMessenger;
     }
 
     public function callback(Request $request): RedirectResponse
@@ -97,6 +153,7 @@ class GoogleAuthController extends Controller
                 $user = User::create([
                     'name' => mb_strtoupper($name ?: $fallbackName, 'UTF-8'),
                     'email' => $email,
+                    'username' => User::makeUniqueUsername($email),
                     'password' => bcrypt(Str::random(24)),
                     'role' => 'applicant',
                     'account_status' => 'verified',

@@ -36,6 +36,8 @@ Route::get('/g-signin', [GoogleAuthController::class, 'redirect'])
 Route::match(['get', 'post'], '/g-callback', [GoogleAuthController::class, 'callback'])
     ->middleware('throttle:10,1')
     ->name('auth.google.callback');
+Route::get('/auth/unsupported-browser', [GoogleAuthController::class, 'unsupportedBrowser'])
+    ->name('auth.unsupported-browser');
 
 // Microsoft OAuth
 Route::get('/m-signin', [\App\Http\Controllers\MicrosoftAuthController::class, 'redirect'])
