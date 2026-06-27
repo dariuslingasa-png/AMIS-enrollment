@@ -75,6 +75,11 @@ function enrollmentForm() {
         detectingTimezone: false,
         timezoneMessage: '',
         error: '',
+        searchStudentNumber: '',
+        searchDOB: '',
+        searchingStudent: false,
+        searchError: '',
+        searchSuccess: '',
         rejectionFixSteps: REJECTION_FIX_STEPS,
         rejectionRemarks: REJECTION_REMARKS,
         countriesLoading: true,
@@ -1059,6 +1064,58 @@ function enrollmentForm() {
                     this.gradeShifts = await response.json();
                 }
             } catch (_) {}
+        },
+
+        async searchAndAutofillStudent() {
+            if (!this.searchStudentNumber || !this.searchDOB) return;
+            this.searchingStudent = true;
+            this.searchError = '';
+            this.searchSuccess = '';
+            
+            try {
+                const response = await fetch('{{ route("enrollment.search-old-student") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        student_number: this.searchStudentNumber,
+                        date_of_birth: this.searchDOB
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to search student record.');
+                }
+
+                // Auto-fill form fields
+                Object.keys(data.student).forEach(key => {
+                    if (key in this.form) {
+                        this.form[key] = data.student[key];
+                    }
+                });
+
+                // Sync UI elements that rely on form properties
+                if (this.form.country) {
+                    this.syncCountryChoice();
+                }
+                if (this.form.grade_level) {
+                    this.loadShiftsForGrade();
+                }
+
+                this.searchSuccess = 'Student profile auto-filled successfully! Please review the fields in the next steps.';
+                this.hasUserEdited = true;
+                
+                // Trigger auto-save draft
+                this.saveDraft();
+            } catch (error) {
+                this.searchError = error.message;
+            } finally {
+                this.searchingStudent = false;
+            }
         },
 
         applySiblingParent(checked) {

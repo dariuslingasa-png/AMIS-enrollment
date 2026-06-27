@@ -23,10 +23,39 @@
 
     <section class="setup-section" x-show="form.student_type === 'Old'" x-cloak>
         <div class="form-divider">OLD Student Record</div>
-        <div class="returning-coming-soon">
-            <span>Coming Soon</span>
-            <strong>OLD student auto-fill is not available yet.</strong>
-            <p>Please manually fill up the enrollment form again. This is the new AMIS enrollment portal and the old student database is not connected yet.</p>
+        <div class="search-student-card p-6 bg-slate-50 border border-slate-200/80 rounded-3xl space-y-4">
+            <h4 class="text-sm font-bold text-slate-800">Search and Auto-fill Student Profile</h4>
+            <p class="text-xs text-slate-500">Provide your child's Student ID (e.g. 260001) or LRN and Date of Birth to search and auto-populate all form fields.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Student ID or LRN</label>
+                    <input type="text" x-model="searchStudentNumber" placeholder="e.g. 260001 or LRN" 
+                           class="w-full px-4 py-2.5 text-sm uppercase bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition"
+                           :disabled="searchingStudent">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Date of Birth</label>
+                    <input type="date" x-model="searchDOB" 
+                           class="w-full px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition"
+                           :disabled="searchingStudent">
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between pt-2">
+                <div class="text-xs font-semibold">
+                    <span x-show="searchError" x-text="searchError" class="text-rose-600" x-cloak></span>
+                    <span x-show="searchSuccess" x-text="searchSuccess" class="text-emerald-700" x-cloak></span>
+                </div>
+                <button type="button" @click="searchAndAutofillStudent()" :disabled="searchingStudent || !searchStudentNumber || !searchDOB"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-xs transition">
+                    <svg x-show="searchingStudent" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" x-cloak>
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span x-text="searchingStudent ? 'Searching...' : 'Search & Auto-fill'"></span>
+                </button>
+            </div>
         </div>
     </section>
 

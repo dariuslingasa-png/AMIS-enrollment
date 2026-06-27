@@ -692,4 +692,106 @@ class EnrollmentController extends Controller
         ]);
     }
 
+    /**
+     * Search for an old student record by Student ID / LRN and Date of Birth.
+     */
+    public function searchOldStudent(Request $request)
+    {
+        $validated = $request->validate([
+            'student_number' => 'required|string',
+            'date_of_birth' => 'required|date',
+        ]);
+
+        $studentNumber = trim($validated['student_number']);
+        $dob = $validated['date_of_birth'];
+
+        // Search by student number or LRN
+        $student = \App\Models\Student::where('student_number', $studentNumber)
+            ->orWhere('student_number', str_replace('-', '', $studentNumber))
+            ->orWhereHas('applicant', function ($q) use ($studentNumber) {
+                $q->where('lrn', $studentNumber);
+            })
+            ->with('applicant')
+            ->first();
+
+        if (!$student) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No student record found with the given Student ID or LRN.',
+            ], 404);
+        }
+
+        $applicant = $student->applicant;
+        if (!$applicant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No application details found for this student.',
+            ], 404);
+        }
+
+        // Verify Date of Birth
+        $formattedDob = $applicant->date_of_birth ? $applicant->date_of_birth->format('Y-m-d') : null;
+        if ($formattedDob !== $dob) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The provided date of birth does not match our records.',
+            ], 422);
+        }
+
+        // Return applicant data for auto-filling
+        return response()->json([
+            'success' => true,
+            'message' => 'Student record found!',
+            'student' => [
+                'amis_student_id' => $student->student_number,
+                'lrn' => $applicant->lrn === 'NA' ? '' : $applicant->lrn,
+                'first_name' => $applicant->first_name,
+                'last_name' => $applicant->last_name,
+                'middle_name' => $applicant->middle_name,
+                'suffix' => $applicant->suffix,
+                'gender' => $applicant->gender,
+                'date_of_birth' => $formattedDob,
+                'place_of_birth' => $applicant->place_of_birth,
+                'religion' => $applicant->religion,
+                'ethnicity' => $applicant->ethnicity,
+                'country' => $applicant->country,
+                'state_province' => $applicant->state_province,
+                'city' => $applicant->city,
+                'street_address' => $applicant->street_address,
+                'postal_code' => $applicant->postal_code,
+                'address' => $applicant->address,
+                'email' => $applicant->email,
+                'mobile_country_code' => $applicant->mobile_country_code,
+                'mobile_number' => $applicant->mobile_number,
+                'father_last_name' => $applicant->father_last_name,
+                'father_first_name' => $applicant->father_first_name,
+                'father_middle_name' => $applicant->father_middle_name,
+                'father_occupation' => $applicant->father_occupation,
+                'mother_last_name' => $applicant->mother_last_name,
+                'mother_first_name' => $applicant->mother_first_name,
+                'mother_middle_name' => $applicant->mother_middle_name,
+                'mother_occupation' => $applicant->mother_occupation,
+                'home_address' => $applicant->home_address,
+                'home_state_province' => $applicant->home_state_province,
+                'home_city' => $applicant->home_city,
+                'home_street_address' => $applicant->home_street_address,
+                'home_postal_code' => $applicant->home_postal_code,
+                'parent_country_code' => $applicant->parent_country_code,
+                'parent_mobile' => $applicant->parent_mobile,
+                'parent_email' => $applicant->parent_email,
+                'emergency_name' => $applicant->emergency_name,
+                'emergency_relationship' => $applicant->emergency_relationship,
+                'emergency_phone' => $applicant->emergency_phone,
+                'emergency_instructions' => $applicant->emergency_instructions,
+                'medical_has_concern' => $applicant->medical_has_concern,
+                'allergies' => $applicant->allergies,
+                'current_medications' => $applicant->current_medications,
+                'health_conditions' => $applicant->health_conditions,
+                'medical_history' => $applicant->medical_history,
+                'med_explanation' => $applicant->med_explanation,
+                'family_physician' => $applicant->family_physician,
+                'physician_phone' => $applicant->physician_phone,
+            ]
+        ]);
+    }
 }
