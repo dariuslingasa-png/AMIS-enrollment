@@ -19,7 +19,7 @@ class SubmitEnrollmentRequest extends FormRequest
         $applicant = $this->editableApplicant();
 
         return [
-            'student_type'            => 'required|in:New,Old',
+            'student_type'            => 'required|in:New,Old,Transferee',
             'amis_student_id'         => 'nullable|string|max:20',
             'learning_mode'           => 'required|string',
             'timezone'                => 'nullable|string|max:64',

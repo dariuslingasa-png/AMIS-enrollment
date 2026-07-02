@@ -742,7 +742,7 @@ function enrollmentForm() {
         validateStep() {
             this.error = '';
             if (this.step === 1) {
-                if (!this.form.student_type) return 'Please answer if the student is OLD or NEW to AMIS.';
+                if (!this.form.student_type) return 'Please answer if the student is OLD, NEW, or a TRANSFER student.';
                 if (!this.form.grade_level) return 'Grade level is required.';
                 if (!this.form.learning_mode_main) return 'Please select a learning modality.';
                 if (this.form.learning_mode_main === 'Flexible Online Learning' && !this.form.timezone) {

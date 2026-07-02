@@ -447,154 +447,15 @@ class AuthController extends Controller
 
     public function showVerifyConfirm(Request $request, int $id, string $hash)
     {
-        $token = $request->query('token');
-        $ip = $request->ip();
-        $userAgent = Str::limit((string) $request->userAgent(), 1000, '');
-        $timestamp = now();
-
-        // 1. Check if token exists in request
-        if (!$token) {
-            $this->logVerificationAttempt(null, 'invalid_link', 'No token provided in verification GET request', $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Invalid Link',
-            ]);
-        }
-
-        $tokenHash = hash('sha256', $token);
-        $magicLink = MagicLink::where('token_hash', $tokenHash)->first();
-
-        // 2. Check if token exists in DB
-        if (!$magicLink) {
-            $this->logVerificationAttempt(null, 'invalid_link', 'Magic link token not found on GET', $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Invalid Link',
-            ]);
-        }
-
-        // 3. Check if token is expired
-        if ($magicLink->expires_at->isPast()) {
-            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_expired', "Token expired at {$magicLink->expires_at} on GET", $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Link Expired',
-            ]);
-        }
-
-        // 4. Check if token is already used
-        if ($magicLink->used_at !== null) {
-            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_reused_attempt', 'Attempted reuse of already used magic link on GET', $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Link Already Used',
-            ]);
-        }
-
-        // 5. Check if user matches token
-        $user = User::find($id);
-        if (!$user || $magicLink->user_id !== $user->id || !hash_equals(sha1($user->getEmailForVerification()), $hash)) {
-            $this->logVerificationAttempt($magicLink->user_id, 'invalid_link', 'User mismatch or invalid email hash on GET', $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Invalid Link',
-            ]);
-        }
-
-        // Token is valid! Render the landing page with confirmation form
-        return view('auth.verify-confirm', [
-            'id' => $id,
-            'hash' => $hash,
-            'token' => $token,
-            'email' => $user->email,
+        return redirect()->route('login')->withErrors([
+            'email' => 'This verification link is invalid or has expired. Please sign in to request a new code.',
         ]);
     }
 
     public function verifyEmail(Request $request, int $id, string $hash)
     {
-        $token = $request->query('token') ?? $request->input('token');
-        $ip = $request->ip();
-        $userAgent = Str::limit((string) $request->userAgent(), 1000, '');
-        $timestamp = now();
-
-        // 1. Check if token exists
-        if (!$token) {
-            $this->logVerificationAttempt(null, 'invalid_link', 'No token provided in verification POST request', $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Invalid Link',
-            ]);
-        }
-
-        $tokenHash = hash('sha256', $token);
-        $magicLink = MagicLink::where('token_hash', $tokenHash)->first();
-
-        // 2. Check if token exists in DB
-        if (!$magicLink) {
-            $this->logVerificationAttempt(null, 'invalid_link', 'Magic link token not found on POST', $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Invalid Link',
-            ]);
-        }
-
-        // 3. Check if token is expired
-        if ($magicLink->expires_at->isPast()) {
-            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_expired', "Token expired at {$magicLink->expires_at} on POST", $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Link Expired',
-            ]);
-        }
-
-        // 4. Check if token is already used
-        if ($magicLink->used_at !== null) {
-            $this->logVerificationAttempt($magicLink->user_id, 'magic_link_reused_attempt', 'Attempted reuse of magic link on POST', $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Link Already Used',
-            ]);
-        }
-
-        // 5. Check if user matches token
-        $user = User::find($id);
-        if (!$user || $magicLink->user_id !== $user->id || !hash_equals(sha1($user->getEmailForVerification()), $hash)) {
-            $this->logVerificationAttempt($magicLink->user_id, 'invalid_link', 'User mismatch or invalid hash on POST', $ip, $userAgent, $timestamp);
-            return view('auth.verify-result', [
-                'status' => 'error',
-                'message' => 'Invalid Link',
-            ]);
-        }
-
-        // Verification successful! Mark as used and update user status
-        $magicLink->update(['used_at' => $timestamp]);
-
-        if (!$user->hasVerifiedEmail()) {
-            $user->forceFill([
-                'email_verified_at' => $timestamp,
-                'account_status' => 'verified',
-            ])->save();
-
-            event(new Verified($user));
-        } elseif ($user->account_status !== 'verified') {
-            $user->update(['account_status' => 'verified']);
-        }
-
-        // Log Magic Link Verified event
-        $this->logVerificationAttempt($user->id, 'magic_link_verified', 'Verification Successful', $ip, $userAgent, $timestamp);
-
-        $user->forceFill(['last_active_at' => now()])->save();
-
-        // Authenticate the user
-        Auth::login($user);
-        $request->session()->regenerate();
-        $request->session()->forget('verify_email');
-        $request->session()->forget('verify_timer_start');
-
-        return view('auth.verify-result', [
-            'status' => 'success',
-            'message' => 'Verification Successful',
-            'redirectUrl' => route('enrollment.dashboard'),
+        return redirect()->route('login')->withErrors([
+            'email' => 'This verification link is invalid or has expired. Please sign in to request a new code.',
         ]);
     }
 

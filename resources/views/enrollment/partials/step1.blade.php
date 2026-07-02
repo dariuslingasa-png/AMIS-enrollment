@@ -2,7 +2,7 @@
     <!-- Student Type -->
     <section class="setup-section">
         <x-form-field-label required>Are you an OLD or NEW AMIS student?</x-form-field-label>
-        <div class="choice-card-grid">
+        <div class="choice-card-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
             <x-enrollment.choice-card
                 label="OLD AMIS Student"
                 description="Previously enrolled at AMIS"
@@ -16,6 +16,13 @@
                 icon="spark"
                 click="toggleStudentType('New')"
                 selected="form.student_type === 'New'"
+            />
+            <x-enrollment.choice-card
+                label="TRANSFER Student"
+                description="Transferring from another school"
+                icon="transfer"
+                click="toggleStudentType('Transferee')"
+                selected="form.student_type === 'Transferee'"
             />
         </div>
         <input type="hidden" name="student_type" :value="form.student_type">
