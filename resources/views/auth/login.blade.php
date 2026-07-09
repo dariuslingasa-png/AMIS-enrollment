@@ -17,14 +17,14 @@
                 </svg>
                 Now Enrolling SY 2026-2027
             </span>
-            <h1>Start with your email.</h1>
-            <p>Enter any parent or student email. We send a 4-digit verification code every time before opening the dashboard.</p>
+            <h1>Select login method.</h1>
+            <p>Log in or sign up using your Google or Microsoft account to open your pre-enrollment dashboard.</p>
         </div>
 
         <div class="auth-hero-flow">
             @php
                 $steps = [
-                    ['Email verification', 'Enter your email and verify using the 4-digit code we send.'],
+                    ['Student authentication', 'Sign in using Google or Microsoft.'],
                     ['Enrollment form', 'Complete student, parent, medical, and document details.'],
                     ['Payment proof', 'Upload GCash, Maya, or BDO receipt to secure the slot.'],
                     ['School review', 'Track status and payment updates from your dashboard.'],
@@ -41,7 +41,7 @@
             @endforeach
         </div>
     </section>
-
+ 
     <section class="login-form">
         <div class="login-form-panel">
             <div class="auth-entry-card" x-data="{ 
@@ -176,7 +176,7 @@
                     <span class="auth-entry-kicker">AMIS Enrollment V2</span>
                     <h2 x-show="step === 'email'">Log in or sign up</h2>
                     <h2 x-show="step === 'otp'">Verify email</h2>
-                    <p x-show="step === 'email'">Enter your email to verify and open your pre-enrollment dashboard.</p>
+                    <p x-show="step === 'email'">Choose Google or Microsoft to open your pre-enrollment dashboard.</p>
                     <p x-show="step === 'otp'">We sent a 4-digit verification code to <strong x-text="email" style="color:#0f172a; word-break:break-all;"></strong>. Enter the code to continue.</p>
                 </div>
 
@@ -198,7 +198,7 @@
                     </a>
 
                     <!-- Microsoft Sign In Button -->
-                    <a href="{{ route('auth.microsoft') }}" class="btn-microsoft-auth-premium" style="margin-bottom: 1.25rem;">
+                    <a href="{{ route('auth.microsoft') }}" class="btn-microsoft-auth-premium" style="margin-bottom: 0.75rem;">
                         <svg class="auth-microsoft-logo" width="18" height="18" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 12px; flex-shrink: 0;">
                             <rect width="10.5" height="10.5" fill="#F25022"/>
                             <rect x="12.5" width="10.5" height="10.5" fill="#7FBA00"/>
@@ -208,9 +208,9 @@
                         <span>Sign in with Microsoft</span>
                     </a>
 
-                    <div class="auth-option-divider"><span>or</span></div>
+                    <div class="auth-option-divider" style="display: none;"><span>or</span></div>
 
-                    <div class="form-group">
+                    <div class="form-group" style="display: none;">
                         <label for="email" class="premium-input-label">Email address</label>
                         <div class="premium-input-wrapper">
                             <svg class="premium-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -221,7 +221,7 @@
                         </div>
                     </div>
 
-                    <button type="button" class="auth-button premium-continue-button" @click="submitEmail()" :disabled="loading">
+                    <button type="button" class="auth-button premium-continue-button" @click="submitEmail()" :disabled="loading" style="display: none;">
                         <span x-show="!loading">Continue</span>
                         <span x-show="loading" class="premium-spinner"></span>
                     </button>
