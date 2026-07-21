@@ -559,7 +559,7 @@ function buildConfigForm(node) {
             <div class="form-group">
                 <label class="form-label">Subject</label>
                 <input class="form-input" id="cfg_subject" value="${c.subject || ''}">
-                <div class="hint">Use {{student_name}}, {{grade_level}}, {{status}}, {{school_year}}</div>
+                <div class="hint">Use @{{student_name}}, @{{grade_level}}, @{{status}}, @{{school_year}}</div>
             </div>
             <div class="form-group">
                 <label class="form-label">Body</label>
