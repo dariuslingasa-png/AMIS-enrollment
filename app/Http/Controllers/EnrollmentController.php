@@ -8,6 +8,7 @@ use App\Http\Requests\Enrollment\SubmitEnrollmentRequest;
 use App\Services\Enrollment\AffidavitPdfService;
 use App\Services\Enrollment\EnrollmentApplicationService;
 use App\Services\Enrollment\EnrollmentNotificationService;
+use App\Services\Workflow\WorkflowEngineService;
 use Illuminate\Http\Request;
 use App\Services\Enrollment\GradeShiftService;
 use Illuminate\Support\Facades\Auth;
@@ -434,6 +435,13 @@ class EnrollmentController extends Controller
             if (!empty($submittedApplication->parent_email) && $submittedApplication->parent_email !== $user->email) {
                 $notifications->sendSubmissionConfirmation($submittedApplication->parent_email, $submittedApplication);
             }
+
+            // 🔥 Fire workflow: enrollment.submitted
+            try {
+                app(WorkflowEngineService::class)->fire('enrollment.submitted', $submittedApplication);
+            } catch (\Throwable $e) {
+                Log::error('Workflow fire error [enrollment.submitted]: ' . $e->getMessage());
+            }
         }
 
         return redirect()->route('enrollment.dashboard')
@@ -666,6 +674,13 @@ class EnrollmentController extends Controller
             } catch (\Throwable $e) {
                 Log::error('Failed to send finalization emails from payment submit: ' . $e->getMessage());
             }
+        }
+
+        // 🔥 Fire workflow: enrollment.payment_submitted
+        try {
+            app(WorkflowEngineService::class)->fire('enrollment.payment_submitted', $applicant->fresh());
+        } catch (\Throwable $e) {
+            Log::error('Workflow fire error [enrollment.payment_submitted]: ' . $e->getMessage());
         }
 
         return redirect()->route('enrollment.dashboard')
