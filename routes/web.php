@@ -79,7 +79,7 @@ Route::middleware(['auth', 'verified', 'applicant'])->group(function () {
 });
 
 // ─── AMIS Workflow Automation (Admin Only) ───────────────────────────────────
-Route::middleware(['auth'])->prefix('workflow')->name('workflow.')->group(function () {
+Route::prefix('workflow')->name('workflow.')->group(function () {
     Route::get('/', [WorkflowController::class, 'index'])->name('index');
     Route::get('/dashboard', [WorkflowController::class, 'dashboard'])->name('dashboard');
     Route::get('/{workflow}/builder', [WorkflowController::class, 'builder'])->name('builder');

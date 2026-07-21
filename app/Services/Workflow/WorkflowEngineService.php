@@ -123,19 +123,25 @@ class WorkflowEngineService
 
     protected function actionSendEmail(array $config, EnrollmentApplicant $applicant): array
     {
-        $to      = $applicant->email ?? ($applicant->user->email ?? null);
-        $subject = $this->interpolate($config['subject'] ?? 'AMIS Enrollment Update', $applicant);
-        $body    = $this->interpolate($config['body'] ?? '', $applicant);
+        // TEST MODE: If WORKFLOW_TEST_EMAIL is set, ALL emails go to that address only
+        $testEmail  = env('WORKFLOW_TEST_EMAIL');
+        $realTo     = $applicant->email ?? ($applicant->user->email ?? null);
+        $to         = $testEmail ?: $realTo;
+        $subject    = $this->interpolate($config['subject'] ?? 'AMIS Enrollment Update', $applicant);
+        $body       = $this->interpolate($config['body'] ?? '', $applicant);
 
         if (!$to) {
             return ['status' => 'failed', 'message' => 'No email address for applicant'];
         }
 
-        Mail::raw($body, function ($msg) use ($to, $subject) {
-            $msg->to($to)->subject($subject);
+        $testNote = $testEmail ? "[TEST MODE — originally for: {$realTo}]\n\n" : '';
+
+        Mail::raw($testNote . $body, function ($msg) use ($to, $subject, $testEmail) {
+            $msg->to($to)->subject(($testEmail ? '[TEST] ' : '') . $subject);
         });
 
-        return ['status' => 'success', 'message' => "Email sent to {$to}", 'output' => ['to' => $to, 'subject' => $subject]];
+        $sentTo = $testEmail ? "{$testEmail} (TEST MODE)" : $to;
+        return ['status' => 'success', 'message' => "Email sent to {$sentTo}", 'output' => ['to' => $sentTo, 'subject' => $subject]];
     }
 
     protected function actionChangeStatus(array $config, EnrollmentApplicant $applicant): array
@@ -176,15 +182,18 @@ class WorkflowEngineService
 
     protected function actionNotifyAdmin(array $config, EnrollmentApplicant $applicant): array
     {
-        $adminEmail = $config['admin_email'] ?? config('mail.from.address');
+        // TEST MODE: override admin email too
+        $testEmail  = env('WORKFLOW_TEST_EMAIL');
+        $adminEmail = $testEmail ?: ($config['admin_email'] ?? config('mail.from.address'));
         $subject    = $this->interpolate($config['subject'] ?? 'AMIS Admin Notification', $applicant);
         $body       = $this->interpolate($config['body'] ?? 'A workflow action was triggered for applicant {{student_name}}.', $applicant);
 
-        Mail::raw($body, function ($msg) use ($adminEmail, $subject) {
-            $msg->to($adminEmail)->subject($subject);
+        Mail::raw($body, function ($msg) use ($adminEmail, $subject, $testEmail) {
+            $msg->to($adminEmail)->subject(($testEmail ? '[TEST] ' : '') . $subject);
         });
 
-        return ['status' => 'success', 'message' => "Admin notified at {$adminEmail}", 'output' => ['to' => $adminEmail]];
+        $sentTo = $testEmail ? "{$testEmail} (TEST MODE)" : $adminEmail;
+        return ['status' => 'success', 'message' => "Admin notified at {$sentTo}", 'output' => ['to' => $sentTo]];
     }
 
     // ─── Helpers ──────────────────────────────────────────
