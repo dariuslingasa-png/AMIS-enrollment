@@ -4,9 +4,10 @@
     'icon' => 'check',
     'click',
     'selected',
+    'invalid' => 'false',
 ])
 
-<button type="button" @click="{{ $click }}" class="choice-card" :class="{ 'is-selected': {{ $selected }} }">
+<button type="button" @click="{{ $click }}" class="choice-card" :class="{ 'is-selected': {{ $selected }}, 'is-invalid-field': {{ $invalid }} }">
     <span class="choice-card-icon">
         @if ($icon === 'school')
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/><path d="M22 10v6"/></svg>

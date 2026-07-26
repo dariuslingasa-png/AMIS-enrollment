@@ -87,18 +87,57 @@ function enrollmentForm() {
         countryApiUrl: '/countries.json',
         countries: [],
         toasts: [],
+        hasAttemptedNext: false,
+        _toastTimeout: null,
 
         showToast(message, type = 'error') {
             if (!message) return;
-            const id = Date.now() + Math.random();
-            this.toasts.push({ id, message, type });
-            setTimeout(() => {
-                this.removeToast(id);
+            this.toasts = [{ id: Date.now(), message, type }];
+            clearTimeout(this._toastTimeout);
+            this._toastTimeout = setTimeout(() => {
+                this.toasts = [];
             }, 6000);
         },
 
         removeToast(id) {
-            this.toasts = this.toasts.filter(t => t.id !== id);
+            this.toasts = [];
+        },
+
+        isFieldInvalid(field) {
+            if (!this.hasAttemptedNext) return false;
+            if (this.step === 1) {
+                if (field === 'student_type') return !this.form.student_type;
+                if (field === 'grade_level') return !this.form.grade_level;
+                if (field === 'learning_mode_main') return !this.form.learning_mode_main;
+                if (field === 'timezone') return this.form.learning_mode_main === 'Flexible Online Learning' && !this.form.timezone;
+                if (field === 'learning_mode_shift') return this.form.learning_mode_main === 'Flexible Online Learning' && !this.form.learning_mode_shift;
+            }
+            if (this.step === 2) {
+                if (field === 'last_name') return !this.form.last_name || !this.form.last_name.trim();
+                if (field === 'first_name') return !this.form.first_name || !this.form.first_name.trim();
+                if (field === 'gender') return !this.form.gender;
+                if (field === 'date_of_birth') return !this.form.date_of_birth;
+                if (field === 'place_of_birth') return !this.form.place_of_birth || !this.form.place_of_birth.trim();
+                if (field === 'religion') return !this.form.religion || !this.form.religion.trim();
+                if (field === 'lrn') return this.form.lrn && this.form.lrn.length !== 12;
+            }
+            if (this.step === 3) {
+                if (field === 'country') return !this.form.country;
+                if (field === 'street_address') return !this.form.street_address || !this.form.street_address.trim();
+                if (field === 'mobile_country_code') return !this.form.mobile_country_code;
+                if (field === 'mobile_number') return !this.form.mobile_number || !this.form.mobile_number.trim() || this.form.mobile_number.replace(/\D/g, '').length < 7;
+            }
+            if (this.step === 4) {
+                if (field === 'parent_country_code') return !this.form.parent_country_code;
+                if (field === 'parent_mobile') return !this.form.parent_mobile || !this.form.parent_mobile.trim() || this.form.parent_mobile.replace(/\D/g, '').length < 7;
+            }
+            if (this.step === 5) {
+                if (field === 'medical_has_concern') return !this.form.medical_has_concern;
+                if (field === 'emergency_name') return !this.form.emergency_name || !this.form.emergency_name.trim();
+                if (field === 'emergency_relationship') return !this.form.emergency_relationship || !this.form.emergency_relationship.trim();
+                if (field === 'emergency_phone') return !this.form.emergency_phone || !this.form.emergency_phone.trim();
+            }
+            return false;
         },
 
         init() {
@@ -926,6 +965,7 @@ function enrollmentForm() {
 
         async nextStep() {
             if (this.stepSaving) return;
+            this.hasAttemptedNext = true;
             const err = this.validateStep();
             if (!this.visitedSteps.includes(this.step)) this.visitedSteps.push(this.step);
             if (err) {
@@ -936,6 +976,7 @@ function enrollmentForm() {
             }
             if (this.isStepComplete(this.step) && !this.completedSteps.includes(this.step)) this.completedSteps.push(this.step);
             this.error = '';
+            this.hasAttemptedNext = false;
             this.pageLoading = true;
             this.stepSaving = true;
             this.draftSaving = false;
@@ -957,6 +998,7 @@ function enrollmentForm() {
 
         prevStep() {
             this.error = '';
+            this.hasAttemptedNext = false;
             if (!this.visitedSteps.includes(this.step)) this.visitedSteps.push(this.step);
             this.pageLoading = true;
             setTimeout(() => {
@@ -969,6 +1011,7 @@ function enrollmentForm() {
 
         goToStep(num) {
             if (num === this.step) return;
+            this.hasAttemptedNext = true;
             if (!this.visitedSteps.includes(this.step)) this.visitedSteps.push(this.step);
 
             if (!this.canGoToStep(num)) {
@@ -980,6 +1023,7 @@ function enrollmentForm() {
             }
 
             this.error = '';
+            this.hasAttemptedNext = false;
             this.pageLoading = true;
             setTimeout(() => {
                 this.step = num;
@@ -990,6 +1034,7 @@ function enrollmentForm() {
         },
 
         handleSubmit(e) {
+            this.hasAttemptedNext = true;
             if (this.loading || this.hasFilePreparationPending() || this.draftSaving) {
                 e.preventDefault();
                 const err = this.hasFilePreparationPending()

@@ -16,6 +16,7 @@
         id="{{ $name }}"
         name="{{ $name }}"
         class="plain-input"
+        :class="{ 'is-invalid-field': isFieldInvalid('{{ $name }}') }"
         placeholder="{{ $placeholder ?: $label }}"
         value="{{ old($name, $value) }}"
         autocomplete="off"

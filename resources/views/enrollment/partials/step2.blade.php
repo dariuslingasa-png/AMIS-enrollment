@@ -21,7 +21,7 @@
         <div class="student-identity-grid">
             <div class="form-group">
                 <x-form-field-label required>Gender</x-form-field-label>
-                <select name="gender" class="select-input" x-model="form.gender">
+                <select name="gender" class="select-input" :class="{ 'is-invalid-field': isFieldInvalid('gender') }" x-model="form.gender">
                     <option value="">Select</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -38,12 +38,12 @@
         <div class="student-origin-grid">
             <div class="form-group">
                 <x-form-field-label required>Place of Birth</x-form-field-label>
-                <input type="text" name="place_of_birth" class="plain-input" placeholder="Place of birth" x-model="form.place_of_birth">
+                <input type="text" name="place_of_birth" class="plain-input" :class="{ 'is-invalid-field': isFieldInvalid('place_of_birth') }" placeholder="Place of birth" x-model="form.place_of_birth">
             </div>
 
             <div class="form-group">
                 <x-form-field-label required>Religion</x-form-field-label>
-                <input type="text" name="religion" class="plain-input" placeholder="Religion" x-model="form.religion">
+                <input type="text" name="religion" class="plain-input" :class="{ 'is-invalid-field': isFieldInvalid('religion') }" placeholder="Religion" x-model="form.religion">
             </div>
 
             <div class="form-group">

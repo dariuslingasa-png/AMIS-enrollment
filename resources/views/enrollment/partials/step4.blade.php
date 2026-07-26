@@ -77,7 +77,7 @@
                 <x-form-field-label required>Parent Mobile</x-form-field-label>
                 <div class="contact-number-grid">
                     <div class="country-combobox phone-code-combobox" x-data="{ open: false, search: '' }" @click.outside="open = false">
-                        <button type="button" class="country-combobox-trigger phone-code-trigger" @click="open = !open">
+                        <button type="button" class="country-combobox-trigger phone-code-trigger" :class="{ 'is-invalid-field': isFieldInvalid('parent_country_code') }" @click="open = !open">
                             <template x-if="selectedParentCodeCountry?.flagPng">
                                 <img :src="selectedParentCodeCountry.flagPng" alt="" class="country-flag-img-static">
                             </template>
@@ -98,7 +98,7 @@
                         </div>
                     </div>
                     <input type="hidden" name="parent_country_code" :value="form.parent_country_code">
-                    <input type="tel" name="parent_mobile" class="plain-input phone-number-input" :placeholder="getPhonePlaceholder(form.parent_country_code)" x-model="form.parent_mobile"
+                    <input type="tel" name="parent_mobile" class="plain-input phone-number-input" :class="{ 'is-invalid-field': isFieldInvalid('parent_mobile') }" :placeholder="getPhonePlaceholder(form.parent_country_code)" x-model="form.parent_mobile"
                         @input="form.parent_mobile = formatPhoneNumber($event.target.value, form.parent_country_code)">
                 </div>
             </div>

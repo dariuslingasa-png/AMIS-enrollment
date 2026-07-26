@@ -5,7 +5,7 @@
     <div class="form-group address-country-field">
         <x-form-field-label required>Country</x-form-field-label>
         <div class="country-combobox" x-data="{ open: false, search: '' }" @click.outside="open = false">
-            <button type="button" class="country-combobox-trigger" @click="open = !open">
+            <button type="button" class="country-combobox-trigger" :class="{ 'is-invalid-field': isFieldInvalid('country') }" @click="open = !open">
                 <template x-if="selectedCountry?.flagPng">
                     <img :src="selectedCountry.flagPng" alt="" class="country-flag-img-static">
                 </template>
@@ -32,7 +32,7 @@
     </div>
     <div class="form-group address-full-field">
         <x-form-field-label required>Complete Address</x-form-field-label>
-        <input type="text" name="street_address" class="plain-input" placeholder="House no., street, building, unit, city/province" x-model="form.street_address">
+        <input type="text" name="street_address" class="plain-input" :class="{ 'is-invalid-field': isFieldInvalid('street_address') }" placeholder="House no., street, building, unit, city/province" x-model="form.street_address">
     </div>
 
     <div class="form-divider address-full-field">Contact Information</div>
@@ -41,7 +41,7 @@
         <x-form-field-label required>Mobile Number</x-form-field-label>
         <div class="contact-number-grid">
             <div class="country-combobox phone-code-combobox" x-data="{ open: false, search: '' }" @click.outside="open = false">
-                <button type="button" class="country-combobox-trigger phone-code-trigger" @click="open = !open">
+                <button type="button" class="country-combobox-trigger phone-code-trigger" :class="{ 'is-invalid-field': isFieldInvalid('mobile_country_code') }" @click="open = !open">
                     <template x-if="selectedMobileCodeCountry?.flagPng">
                         <img :src="selectedMobileCodeCountry.flagPng" alt="" class="country-flag-img-static">
                     </template>
@@ -62,7 +62,7 @@
                 </div>
             </div>
             <input type="hidden" name="mobile_country_code" :value="form.mobile_country_code">
-            <input type="tel" name="mobile_number" class="plain-input phone-number-input" :placeholder="getPhonePlaceholder(form.mobile_country_code)" x-model="form.mobile_number"
+            <input type="tel" name="mobile_number" class="plain-input phone-number-input" :class="{ 'is-invalid-field': isFieldInvalid('mobile_number') }" :placeholder="getPhonePlaceholder(form.mobile_country_code)" x-model="form.mobile_number"
                 @input="form.mobile_number = formatPhoneNumber($event.target.value, form.mobile_country_code)">
         </div>
         <span class="field-hint">Country code is based on country of residence, but you can change it.</span>

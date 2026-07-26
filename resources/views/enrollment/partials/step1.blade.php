@@ -9,6 +9,7 @@
                 icon="school"
                 click="toggleStudentType('Old')"
                 selected="form.student_type === 'Old'"
+                invalid="isFieldInvalid('student_type')"
             />
             <x-enrollment.choice-card
                 label="NEW AMIS Student"
@@ -16,6 +17,7 @@
                 icon="spark"
                 click="toggleStudentType('New')"
                 selected="form.student_type === 'New'"
+                invalid="isFieldInvalid('student_type')"
             />
             <x-enrollment.choice-card
                 label="TRANSFER Student"
@@ -23,6 +25,7 @@
                 icon="transfer"
                 click="toggleStudentType('Transferee')"
                 selected="form.student_type === 'Transferee'"
+                invalid="isFieldInvalid('student_type')"
             />
         </div>
         <input type="hidden" name="student_type" :value="form.student_type">
@@ -68,7 +71,7 @@
 
     <section class="setup-section">
         <x-form-field-label required>Grade Level</x-form-field-label>
-        <select name="grade_level" class="select-input" x-model="form.grade_level" @change="loadShiftsForGrade()">
+        <select name="grade_level" class="select-input" :class="{ 'is-invalid-field': isFieldInvalid('grade_level') }" x-model="form.grade_level" @change="loadShiftsForGrade()">
             <option value="">Select</option>
             @foreach($gradeLevels as $grade)
                 <option value="{{ $grade->name }}">{{ $grade->name }}</option>
@@ -87,6 +90,7 @@
                 icon="building"
                 click="toggleLearningMode('Face-to-Face')"
                 selected="form.learning_mode_main === 'Face-to-Face'"
+                invalid="isFieldInvalid('learning_mode_main')"
             />
             <x-enrollment.choice-card
                 label="Flexible Online Learning"
@@ -94,6 +98,7 @@
                 icon="monitor"
                 click="toggleLearningMode('Flexible Online Learning')"
                 selected="form.learning_mode_main === 'Flexible Online Learning'"
+                invalid="isFieldInvalid('learning_mode_main')"
             />
         </div>
 
@@ -101,7 +106,7 @@
             <div class="setup-section setup-section-nested timezone-picker">
                 <x-form-field-label required>Your timezone</x-form-field-label>
                 <div class="timezone-control">
-                    <select class="select-input" x-model="form.timezone">
+                    <select class="select-input" :class="{ 'is-invalid-field': isFieldInvalid('timezone') }" x-model="form.timezone">
                         <option value="">Select timezone</option>
                         <option value="Asia/Manila">Philippines (PHT / UTC+8)</option>
                         <option value="Asia/Dubai">UAE / Dubai (UTC+4)</option>
