@@ -86,6 +86,28 @@ function enrollmentForm() {
         countriesSource: 'api',
         countryApiUrl: '/countries.json',
         countries: [],
+        toasts: [],
+
+        showToast(message, type = 'error') {
+            if (!message) return;
+            const id = Date.now() + Math.random();
+            this.toasts.push({ id, message, type });
+            setTimeout(() => {
+                this.removeToast(id);
+            }, 6000);
+        },
+
+        removeToast(id) {
+            this.toasts = this.toasts.filter(t => t.id !== id);
+        },
+
+        init() {
+            this.$watch('error', (val) => {
+                if (val) {
+                    this.showToast(val, 'error');
+                }
+            });
+        },
         _debounceTimer: null,
         _submitted: false,
         _savingInflight: false,

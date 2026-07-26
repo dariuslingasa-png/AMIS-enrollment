@@ -1,5 +1,44 @@
 <x-guest-layout>
 <div x-data="enrollmentForm()" @open-affidavit-builder.window="openAffidavitBuilder()" class="enrollment-page">
+    <!-- Dynamic Floating Toast Notifications Stack -->
+    <div class="toast-stack" style="position: fixed; top: 1.25rem; right: 1.25rem; z-index: 100000; display: flex; flex-direction: column; gap: 0.75rem; width: min(380px, calc(100vw - 2rem)); pointer-events: none;">
+        <template x-for="t in toasts" :key="t.id">
+            <div
+                class="toast"
+                :class="'toast-' + (t.type || 'error')"
+                x-transition:enter="toast-enter"
+                x-transition:leave="toast-leave"
+                style="pointer-events: auto; background: white; border-radius: 12px; padding: 0.85rem 1rem; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18); border-left: 4px solid #ef4444; display: flex; align-items: flex-start; gap: 0.75rem;"
+                :style="t.type === 'success' ? 'border-left-color: #10b981;' : (t.type === 'warning' ? 'border-left-color: #f59e0b;' : 'border-left-color: #ef4444;')"
+                role="status"
+            >
+                <span class="toast-icon" style="display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;"
+                      :style="t.type === 'success' ? 'background: #dcfce7; color: #059669;' : (t.type === 'warning' ? 'background: #fef3c7; color: #d97706;' : 'background: #fee2e2; color: #dc2626;')"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <template x-if="t.type === 'success'">
+                            <path d="M20 6 9 17l-5-5"/>
+                        </template>
+                        <template x-if="t.type === 'warning'">
+                            <path d="M12 9v4m0 4h.01"/>
+                        </template>
+                        <template x-if="!t.type || t.type === 'error'">
+                            <path d="M18 6 6 18M6 6l12 12"/>
+                        </template>
+                    </svg>
+                </span>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; margin-bottom: 0.15rem;" x-text="t.type === 'success' ? 'Success' : (t.type === 'warning' ? 'Notice' : 'Required Field Missing')"></div>
+                    <span class="toast-message" style="font-size: 0.82rem; color: #334155; line-height: 1.4; display: block;" x-text="t.message"></span>
+                </div>
+                <button type="button" class="toast-close" @click="removeToast(t.id)" aria-label="Dismiss notification" style="background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 2px; border-radius: 4px; line-height: 1;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M18 6 6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </template>
+    </div>
     <style>
         /* Visually uppercase all text input fields and textareas on the enrollment form */
         .enrollment-page input[type="text"],
