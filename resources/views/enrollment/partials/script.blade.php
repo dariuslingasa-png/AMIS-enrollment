@@ -928,7 +928,11 @@ function enrollmentForm() {
             if (this.stepSaving) return;
             const err = this.validateStep();
             if (!this.visitedSteps.includes(this.step)) this.visitedSteps.push(this.step);
-            if (err) { this.error = err; return; }
+            if (err) {
+                this.error = err;
+                this.showToast(err, 'error');
+                return;
+            }
             if (this.isStepComplete(this.step) && !this.completedSteps.includes(this.step)) this.completedSteps.push(this.step);
             this.error = '';
             this.pageLoading = true;
@@ -967,7 +971,9 @@ function enrollmentForm() {
             if (!this.visitedSteps.includes(this.step)) this.visitedSteps.push(this.step);
 
             if (!this.canGoToStep(num)) {
-                this.error = this.validateStep() || 'Please complete the previous steps before going there.';
+                const err = this.validateStep() || 'Please complete the previous steps before going there.';
+                this.error = err;
+                this.showToast(err, 'error');
                 return;
             }
 
@@ -984,14 +990,23 @@ function enrollmentForm() {
         handleSubmit(e) {
             if (this.loading || this.hasFilePreparationPending() || this.draftSaving) {
                 e.preventDefault();
-                this.error = this.hasFilePreparationPending()
+                const err = this.hasFilePreparationPending()
                     ? 'Please wait until the selected file finishes preparing.'
                     : (this.draftSaving ? 'Please wait until the selected file finishes saving.' : '');
+                if (err) {
+                    this.error = err;
+                    this.showToast(err, 'error');
+                }
                 return;
             }
 
             const err = this.validateStep();
-            if (err) { e.preventDefault(); this.error = err; return; }
+            if (err) {
+                e.preventDefault();
+                this.error = err;
+                this.showToast(err, 'error');
+                return;
+            }
             this._submitted = true;
             this.clearLocalDraft();
             this.loading = true;
