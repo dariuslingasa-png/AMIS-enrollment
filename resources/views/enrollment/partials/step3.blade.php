@@ -45,7 +45,7 @@
                     <template x-if="selectedMobileCodeCountry?.flagPng">
                         <img :src="selectedMobileCodeCountry.flagPng" alt="" class="country-flag-img-static">
                     </template>
-                    <span class="country-combobox-value" x-text="form.mobile_country_code || 'Code'"></span>
+                    <span class="country-combobox-value" x-text="form.mobile_country_code || '+63'"></span>
                     <svg class="country-combobox-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
                 <div x-show="open" x-transition class="country-combobox-menu phone-code-menu">
