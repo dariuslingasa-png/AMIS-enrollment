@@ -128,6 +128,11 @@ function enrollmentForm() {
                 if (field === 'mobile_number') return !this.form.mobile_number || !this.form.mobile_number.trim() || this.form.mobile_number.replace(/\D/g, '').length < 7;
             }
             if (this.step === 4) {
+                const hasFather = !!(this.form.father_first_name || '').trim() && !!(this.form.father_last_name || '').trim();
+                const hasMother = !!(this.form.mother_first_name || '').trim() && !!(this.form.mother_last_name || '').trim();
+                if (['father_last_name', 'father_first_name', 'mother_last_name', 'mother_first_name'].includes(field)) {
+                    return !hasFather && !hasMother;
+                }
                 if (field === 'parent_country_code') return !this.form.parent_country_code;
                 if (field === 'parent_mobile') return !this.form.parent_mobile || !this.form.parent_mobile.trim() || this.form.parent_mobile.replace(/\D/g, '').length < 7;
             }
@@ -830,6 +835,11 @@ function enrollmentForm() {
                 if (this.form.mobile_number.replace(/\D/g, '').length < 7) return 'Mobile number must be at least 7 digits.';
             }
             if (this.step === 4) {
+                const hasFather = !!(this.form.father_first_name || '').trim() && !!(this.form.father_last_name || '').trim();
+                const hasMother = !!(this.form.mother_first_name || '').trim() && !!(this.form.mother_last_name || '').trim();
+                if (!hasFather && !hasMother) {
+                    return "Please provide either Father's Name (First & Last Name) or Mother's Name (First & Last Name).";
+                }
                 if (!this.form.parent_country_code) return 'Parent mobile country code is required.';
                 if (!this.form.parent_mobile.trim()) return 'Parent mobile number is required.';
                 if (this.form.parent_mobile.replace(/\D/g, '').length < 7) return 'Parent mobile number must be at least 7 digits.';
@@ -902,7 +912,10 @@ function enrollmentForm() {
                     && this.form.mobile_number.replace(/\D/g, '').length >= 7;
             }
             if (num === 4) {
-                return !!this.form.parent_country_code
+                const hasFather = !!(this.form.father_first_name || '').trim() && !!(this.form.father_last_name || '').trim();
+                const hasMother = !!(this.form.mother_first_name || '').trim() && !!(this.form.mother_last_name || '').trim();
+                return (hasFather || hasMother)
+                    && !!this.form.parent_country_code
                     && this.form.parent_mobile.replace(/\D/g, '').length >= 7;
             }
             if (num === 5) {
@@ -1105,6 +1118,14 @@ function enrollmentForm() {
                 if (!this.form.mobile_country_code) invalidElements.push(container.querySelector('.phone-code-trigger'));
                 if (!this.form.mobile_number.trim() || this.form.mobile_number.replace(/\D/g, '').length < 7) invalidElements.push(container.querySelector('input[name="mobile_number"]'));
             } else if (this.step === 4) {
+                const hasFather = !!(this.form.father_first_name || '').trim() && !!(this.form.father_last_name || '').trim();
+                const hasMother = !!(this.form.mother_first_name || '').trim() && !!(this.form.mother_last_name || '').trim();
+                if (!hasFather && !hasMother) {
+                    invalidElements.push(container.querySelector('input[name="father_last_name"]'));
+                    invalidElements.push(container.querySelector('input[name="father_first_name"]'));
+                    invalidElements.push(container.querySelector('input[name="mother_last_name"]'));
+                    invalidElements.push(container.querySelector('input[name="mother_first_name"]'));
+                }
                 if (!this.form.parent_country_code) invalidElements.push(container.querySelector('.parent-mobile-field .phone-code-trigger'));
                 if (!this.form.parent_mobile.trim() || this.form.parent_mobile.replace(/\D/g, '').length < 7) invalidElements.push(container.querySelector('input[name="parent_mobile"]'));
             } else if (this.step === 5) {
