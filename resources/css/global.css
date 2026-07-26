@@ -2521,3 +2521,23 @@ body {
     box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
     overflow: hidden;
 }
+
+/* ── Invalid Field Shake & Red Highlight ───────────────────────────── */
+@keyframes shakeInvalidField {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+.is-invalid-shake {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3.5px rgba(239, 68, 68, 0.22) !important;
+    animation: shakeInvalidField 0.4s ease-in-out !important;
+    border-radius: 8px;
+}
+
+.choice-card-grid.is-invalid-shake .choice-card,
+.choice-row.is-invalid-shake .choice-button,
+.shift-card-grid.is-invalid-shake .shift-card {
+    border-color: #f87171 !important;
+}

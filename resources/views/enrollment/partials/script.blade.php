@@ -931,6 +931,7 @@ function enrollmentForm() {
             if (err) {
                 this.error = err;
                 this.showToast(err, 'error');
+                this.highlightInvalidFields();
                 return;
             }
             if (this.isStepComplete(this.step) && !this.completedSteps.includes(this.step)) this.completedSteps.push(this.step);
@@ -974,6 +975,7 @@ function enrollmentForm() {
                 const err = this.validateStep() || 'Please complete the previous steps before going there.';
                 this.error = err;
                 this.showToast(err, 'error');
+                this.highlightInvalidFields();
                 return;
             }
 
@@ -996,6 +998,7 @@ function enrollmentForm() {
                 if (err) {
                     this.error = err;
                     this.showToast(err, 'error');
+                    this.highlightInvalidFields();
                 }
                 return;
             }
@@ -1005,12 +1008,88 @@ function enrollmentForm() {
                 e.preventDefault();
                 this.error = err;
                 this.showToast(err, 'error');
+                this.highlightInvalidFields();
                 return;
             }
             this._submitted = true;
             this.clearLocalDraft();
             this.loading = true;
             this.pageLoading = true; // Show skeleton loading immediately on submission!
+        },
+
+        highlightInvalidFields() {
+            const container = document.querySelector('.enrollment-main');
+            if (!container) return;
+
+            let invalidElements = [];
+
+            if (this.step === 1) {
+                if (!this.form.student_type) {
+                    const grid = container.querySelector('.setup-section:first-child .choice-card-grid');
+                    if (grid) invalidElements.push(grid);
+                }
+                if (!this.form.grade_level) {
+                    const select = container.querySelector('select[name="grade_level"]');
+                    if (select) invalidElements.push(select);
+                }
+                if (!this.form.learning_mode_main) {
+                    const grids = container.querySelectorAll('.choice-card-grid');
+                    if (grids[1]) invalidElements.push(grids[1]);
+                }
+                if (this.form.learning_mode_main === 'Flexible Online Learning') {
+                    if (!this.form.timezone) {
+                        const tzSelect = container.querySelector('.timezone-control select');
+                        if (tzSelect) invalidElements.push(tzSelect);
+                    }
+                    if (!this.form.learning_mode_shift) {
+                        const shiftGrid = container.querySelector('.shift-card-grid');
+                        if (shiftGrid) invalidElements.push(shiftGrid);
+                    }
+                }
+            } else if (this.step === 2) {
+                if (!this.form.last_name.trim()) invalidElements.push(container.querySelector('input[name="last_name"]'));
+                if (!this.form.first_name.trim()) invalidElements.push(container.querySelector('input[name="first_name"]'));
+                if (!this.form.gender) invalidElements.push(container.querySelector('.student-identity-grid .choice-row'));
+                if (!this.form.date_of_birth) invalidElements.push(container.querySelector('input[name="date_of_birth"]'));
+                if (!this.form.place_of_birth.trim()) invalidElements.push(container.querySelector('input[name="place_of_birth"]'));
+                if (!this.form.religion.trim()) invalidElements.push(container.querySelector('input[name="religion"]'));
+                if (this.form.lrn && this.form.lrn.length !== 12) invalidElements.push(container.querySelector('input[name="lrn"]'));
+            } else if (this.step === 3) {
+                if (!this.form.country) invalidElements.push(container.querySelector('.address-country-field .country-combobox-trigger'));
+                if (!this.form.street_address.trim()) invalidElements.push(container.querySelector('input[name="street_address"]'));
+                if (!this.form.mobile_country_code) invalidElements.push(container.querySelector('.phone-code-trigger'));
+                if (!this.form.mobile_number.trim() || this.form.mobile_number.replace(/\D/g, '').length < 7) invalidElements.push(container.querySelector('input[name="mobile_number"]'));
+            } else if (this.step === 4) {
+                if (!this.form.parent_country_code) invalidElements.push(container.querySelector('.parent-mobile-field .phone-code-trigger'));
+                if (!this.form.parent_mobile.trim() || this.form.parent_mobile.replace(/\D/g, '').length < 7) invalidElements.push(container.querySelector('input[name="parent_mobile"]'));
+            } else if (this.step === 5) {
+                if (!this.form.medical_has_concern) invalidElements.push(container.querySelector('.medical-choice-row'));
+                if (!this.form.emergency_name.trim()) invalidElements.push(container.querySelector('input[name="emergency_name"]'));
+                if (!this.form.emergency_relationship.trim()) invalidElements.push(container.querySelector('input[name="emergency_relationship"]'));
+                if (!this.form.emergency_phone.trim()) invalidElements.push(container.querySelector('input[name="emergency_phone"]'));
+            }
+
+            invalidElements = invalidElements.filter(Boolean);
+
+            invalidElements.forEach(el => {
+                el.classList.remove('is-invalid-shake');
+                void el.offsetWidth;
+                el.classList.add('is-invalid-shake');
+
+                const clearHandler = () => {
+                    el.classList.remove('is-invalid-shake');
+                    el.removeEventListener('input', clearHandler);
+                    el.removeEventListener('change', clearHandler);
+                    el.removeEventListener('click', clearHandler);
+                };
+                el.addEventListener('input', clearHandler);
+                el.addEventListener('change', clearHandler);
+                el.addEventListener('click', clearHandler);
+            });
+
+            if (invalidElements.length > 0) {
+                invalidElements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         },
 
         clearLocalDraft() {
