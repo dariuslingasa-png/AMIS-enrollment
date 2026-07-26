@@ -15,17 +15,9 @@
                 <span class="toast-icon" style="display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;"
                       :style="t.type === 'success' ? 'background: #dcfce7; color: #059669;' : (t.type === 'warning' ? 'background: #fef3c7; color: #d97706;' : 'background: #fee2e2; color: #dc2626;')"
                 >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <template x-if="t.type === 'success'">
-                            <path d="M20 6 9 17l-5-5"/>
-                        </template>
-                        <template x-if="t.type === 'warning'">
-                            <path d="M12 9v4m0 4h.01"/>
-                        </template>
-                        <template x-if="!t.type || t.type === 'error'">
-                            <path d="M18 6 6 18M6 6l12 12"/>
-                        </template>
-                    </svg>
+                    <svg x-show="t.type === 'success'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    <svg x-show="t.type === 'warning'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4m0 4h.01"/></svg>
+                    <svg x-show="!t.type || t.type === 'error'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6m0-6 6 6"/></svg>
                 </span>
                 <div style="flex: 1; min-width: 0;">
                     <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; margin-bottom: 0.15rem;" x-text="t.type === 'success' ? 'Success' : (t.type === 'warning' ? 'Notice' : 'Required Field Missing')"></div>
