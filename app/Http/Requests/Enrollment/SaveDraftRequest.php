@@ -34,7 +34,7 @@ class SaveDraftRequest extends FormRequest
             'father_last_name', 'father_first_name', 'father_middle_name', 'father_occupation',
             'mother_last_name', 'mother_first_name', 'mother_middle_name', 'mother_occupation',
             'home_address', 'home_state_province', 'home_city', 'home_street_address', 'home_postal_code',
-            'parent_country_code', 'parent_mobile', 'parent_email', 'referral_source',
+            'parent_country_code', 'parent_mobile', 'parent_email', 'facebook', 'whatsapp', 'referral_source',
             'psych_testing', 'prescription_med', 'medical_has_concern', 'allergies', 'current_medications',
             'health_conditions', 'emergency_instructions', 'medical_history', 'med_explanation',
             'family_physician', 'physician_phone',
