@@ -54,10 +54,12 @@ document.addEventListener('input', function (e) {
 function enrollmentForm() {
     return {
         step: {{ $initialStep }},
-        totalSteps: 7,
+        totalSteps: 8,
         loading: false,
         stepSaving: false,
         leavingWithoutSaving: false,
+        showSubmitConfirmModal: false,
+        paymentReceiptPreview: null,
         useSiblingSchedule: false,
         useSiblingParent: false,
         useSiblingAddress: false,
@@ -89,6 +91,24 @@ function enrollmentForm() {
         toasts: [],
         hasAttemptedNext: false,
         _toastTimeout: null,
+
+        openSubmitConfirmModal() {
+            this.error = '';
+            const err = this.validateStep();
+            if (err) {
+                this.error = err;
+                this.showToast(err, 'error');
+                return;
+            }
+            this.showSubmitConfirmModal = true;
+        },
+
+        confirmAndSubmitForm(event) {
+            this.showSubmitConfirmModal = false;
+            this.loading = true;
+            const formEl = event.target.closest('form');
+            if (formEl) formEl.submit();
+        },
 
         showToast(message, type = 'error') {
             if (!message) return;
@@ -180,9 +200,10 @@ function enrollmentForm() {
             { num: 4, label: 'Parents' },
             { num: 5, label: 'Medical' },
             { num: 6, label: 'Documents' },
-            { num: 7, label: 'Preview' },
+            { num: 7, label: 'Payment' },
+            { num: 8, label: 'Preview' },
         ],
-        stepTitles: ['Enrollment Setup', 'Student Information', 'Address & Contact', 'Parent / Guardian Information', 'Medical & Emergency', 'Documents', 'Preview & Final Submit'],
+        stepTitles: ['Enrollment Setup', 'Student Information', 'Address & Contact', 'Parent / Guardian Information', 'Medical & Emergency', 'Documents', 'Mode of Payment & Receipt', 'Final Review & Submit'],
         form: {
             payment_method: 'gcash_maya',
             student_type: '{{ old("student_type", $applicant?->student_type ?? "") }}',
@@ -888,8 +909,10 @@ function enrollmentForm() {
                 const receiptInput = document.querySelector('input[name="payment_receipt"]');
                 const hasReceipt = receiptInput && receiptInput.files && receiptInput.files.length > 0;
                 if (!hasReceipt) {
-                    return 'Please upload your proof of payment / receipt image before final submission.';
+                    return 'Please upload your proof of payment / receipt image on Step 7.';
                 }
+            }
+            if (this.step === 8) {
                 const checkbox = document.querySelector('input[name="agreed_final_confirmation"]');
                 if (checkbox && !checkbox.checked) {
                     return 'Please check the final confirmation box certifying that all details and payment receipt are authentic.';
@@ -962,6 +985,10 @@ function enrollmentForm() {
             if (num === 7) {
                 const receiptInput = document.querySelector('input[name="payment_receipt"]');
                 return !!(receiptInput && receiptInput.files && receiptInput.files.length > 0);
+            }
+            if (num === 8) {
+                const checkbox = document.querySelector('input[name="agreed_final_confirmation"]');
+                return !!(checkbox && checkbox.checked);
             }
             return false;
         },

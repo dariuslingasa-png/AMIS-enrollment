@@ -181,9 +181,14 @@
                         @include('enrollment.partials.step6')
                     </div>
 
-                    <!-- STEP 7: Preview Documents & Payment -->
+                    <!-- STEP 7: Payment & Proof of Payment Upload -->
                     <div x-show="step === 7" x-cloak class="space-y-5">
                         @include('enrollment.partials.step7')
+                    </div>
+
+                    <!-- STEP 8: Final Review & Confirmation -->
+                    <div x-show="step === 8" x-cloak class="space-y-5">
+                        @include('enrollment.partials.step8')
                     </div>
 
                     <!-- Hidden fields — always in DOM for final form submission -->
@@ -210,12 +215,42 @@
                                 <polyline points="9 18 15 12 9 6"/>
                             </svg>
                         </button>
-                        <button type="submit" x-show="step === totalSteps" class="btn-primary"
+                        <button type="button" x-show="step === totalSteps" @click="openSubmitConfirmModal()" class="btn-primary"
                             style="background-color: #059669 !important; border-color: #047857 !important;"
                             :disabled="loading || hasFilePreparationPending() || draftSaving"
                             :class="{ 'is-disabled': loading || hasFilePreparationPending() || draftSaving }">
-                            <span x-text="hasFilePreparationPending() ? 'Preparing files...' : (draftSaving ? 'Saving files...' : '🚀 CONFIRM & FINAL SUBMIT ENROLLMENT')"></span>
+                            <span x-text="hasFilePreparationPending() ? 'Preparing files...' : (draftSaving ? 'Saving files...' : 'CONFIRM & FINAL SUBMIT ENROLLMENT')"></span>
                         </button>
+                    </div>
+                </div>
+
+                {{-- Confirm Final Submission Pop-up Modal --}}
+                <div x-show="showSubmitConfirmModal" x-cloak class="confirm-overlay" @keydown.escape.window="showSubmitConfirmModal = false">
+                    <div class="confirm-dialog" @click.outside="showSubmitConfirmModal = false" style="max-width: 480px;">
+                        <button type="button" class="confirm-close-button" @click="showSubmitConfirmModal = false" aria-label="Close dialog">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                        <div class="confirm-dialog-copy">
+                            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;">
+                                <div style="width:38px;height:38px;border-radius:10px;background:#dcfce7;color:#15803d;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
+                                <h3 style="margin:0;font-size:1.25rem;color:#0f172a;font-weight:900;">Confirm Final Submission?</h3>
+                            </div>
+                            <p style="font-size:0.88rem;line-height:1.5;color:#475569;margin-top:0.5rem;">
+                                Are you sure all student information, uploaded documents, and payment receipt details are complete and authentic?
+                            </p>
+                            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:0.85rem;margin-top:0.85rem;font-size:0.82rem;line-height:1.4;color:#334155;">
+                                <strong>Note:</strong> Once submitted, your application will be locked for review by the Admissions & Finance office and recorded automatically in the AMIS Admin Portal.
+                            </div>
+                        </div>
+                        <div class="confirm-dialog-actions" style="margin-top:1.25rem;display:flex;gap:0.75rem;justify-content:flex-end;">
+                            <button type="button" class="btn-secondary" @click="showSubmitConfirmModal = false">Edit Application</button>
+                            <button type="button" class="btn-primary" style="background-color:#059669 !important;" @click="confirmAndSubmitForm($event)">Yes, Submit Enrollment Now</button>
+                        </div>
                     </div>
                 </div>
             </form>
