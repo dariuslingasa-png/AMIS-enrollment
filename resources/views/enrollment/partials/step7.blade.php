@@ -57,28 +57,24 @@
 
         {{-- Payment Input Fields --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-            <div>
-                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Payment Method <span class="text-rose-500">*</span></label>
-                <select name="method" x-model="form.payment_method" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+            <div class="form-group">
+                <x-form-field-label required>Payment Method</x-form-field-label>
+                <select name="method" x-model="form.payment_method" class="select-input" :class="{ 'is-invalid-field': isFieldInvalid('payment_method') }">
                     <option value="gcash_maya">GCash / Maya</option>
                     <option value="bdo">BDO Bank Transfer</option>
                 </select>
             </div>
-            <div>
-                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Amount Paid (PHP) <span class="text-rose-500">*</span></label>
-                <input type="number" name="amount" value="4000.00" min="1" step="0.01" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
-            </div>
-            <div>
-                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Reference No. / Ref ID</label>
-                <input type="text" name="reference_no" placeholder="e.g. 100234589" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 uppercase">
-            </div>
+            
+            <x-form-input label="Amount Paid (PHP)" name="amount" type="number" required x-model="form.amount" min="1" step="0.01" placeholder="4000.00" />
+            
+            <x-form-input label="Reference No. / Ref ID" name="reference_no" placeholder="e.g. 100234589" x-model="form.reference_no" class="uppercase" />
         </div>
 
         {{-- Proof of Payment Upload Dropzone --}}
-        <div class="space-y-2 pt-2">
-            <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Upload Proof of Payment / Receipt Photo <span class="text-rose-500">*</span></label>
+        <div class="form-group pt-2">
+            <x-form-field-label required>Upload Proof of Payment / Receipt Photo</x-form-field-label>
             
-            <div class="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-5 text-center hover:border-indigo-400 transition">
+            <div class="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-5 text-center hover:border-indigo-400 transition" :class="{ 'is-invalid-field': isFieldInvalid('payment_receipt') }">
                 <input type="file" name="payment_receipt" id="payment_receipt_input" accept="image/jpeg,image/jpg,image/png,application/pdf"
                     @change="
                         const file = $event.target.files[0];

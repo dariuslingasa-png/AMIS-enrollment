@@ -59,7 +59,7 @@ function enrollmentForm() {
         stepSaving: false,
         leavingWithoutSaving: false,
         showSubmitConfirmModal: false,
-        paymentReceiptPreview: null,
+        paymentReceiptPreview: @js($applicant?->payment?->receipt_url ? (str_ends_with(strtolower($applicant->payment->receipt_url), '.pdf') ? 'pdf' : asset('storage/' . $applicant->payment->receipt_url)) : null),
         useSiblingSchedule: false,
         useSiblingParent: false,
         useSiblingAddress: false,
@@ -162,6 +162,15 @@ function enrollmentForm() {
                 if (field === 'emergency_relationship') return !this.form.emergency_relationship || !this.form.emergency_relationship.trim();
                 if (field === 'emergency_phone') return !this.form.emergency_phone || !this.form.emergency_phone.trim();
             }
+            if (this.step === 7) {
+                if (field === 'payment_method') return !this.form.payment_method;
+                if (field === 'amount') return !this.form.amount || parseFloat(this.form.amount) <= 0;
+                if (field === 'payment_receipt') {
+                    const receiptInput = document.querySelector('input[name="payment_receipt"]');
+                    const hasReceipt = this.paymentReceiptPreview || (receiptInput && receiptInput.files && receiptInput.files.length > 0);
+                    return !hasReceipt;
+                }
+            }
             return false;
         },
 
@@ -205,7 +214,9 @@ function enrollmentForm() {
         ],
         stepTitles: ['Enrollment Setup', 'Student Information', 'Address & Contact', 'Parent / Guardian Information', 'Medical & Emergency', 'Documents', 'Mode of Payment & Receipt', 'Final Review & Submit'],
         form: {
-            payment_method: 'gcash_maya',
+            payment_method: '{{ old("method", ($applicant?->payment?->method === "bdo" ? "bdo" : "gcash_maya")) }}',
+            amount: '{{ old("amount", ($applicant?->payment?->amount ?? "4000.00")) }}',
+            reference_no: '{{ old("reference_no", ($applicant?->payment?->reference_no ?? "")) }}',
             student_type: '{{ old("student_type", $applicant?->student_type ?? "") }}',
             amis_student_id: '{{ old("amis_student_id", $applicant?->amis_student_id ?? "") }}',
             learning_mode: '{{ old("learning_mode", $applicant?->learning_mode ?? "") }}',
@@ -906,8 +917,14 @@ function enrollmentForm() {
                 }
             }
             if (this.step === 7) {
+                if (!this.form.payment_method) {
+                    return 'Please select a payment method.';
+                }
+                if (!this.form.amount || parseFloat(this.form.amount) <= 0) {
+                    return 'Please enter a valid amount paid.';
+                }
                 const receiptInput = document.querySelector('input[name="payment_receipt"]');
-                const hasReceipt = receiptInput && receiptInput.files && receiptInput.files.length > 0;
+                const hasReceipt = this.paymentReceiptPreview || (receiptInput && receiptInput.files && receiptInput.files.length > 0);
                 if (!hasReceipt) {
                     return 'Please upload your proof of payment / receipt image on Step 7.';
                 }

@@ -126,7 +126,7 @@
                     </div>
                     <div class="bg-white p-3 rounded-xl border border-indigo-150 space-y-1">
                         <span class="text-[10px] font-black uppercase text-slate-400 block">Amount Paid</span>
-                        <strong class="text-emerald-700 text-sm block font-black">PHP 4,000.00</strong>
+                        <strong class="text-emerald-700 text-sm block font-black" x-text="'PHP ' + (parseFloat(form.amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></strong>
                     </div>
                 </div>
 
