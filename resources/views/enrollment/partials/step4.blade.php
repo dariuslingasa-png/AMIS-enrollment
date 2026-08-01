@@ -114,13 +114,25 @@
 
         <div class="parent-contact-grid mt-4">
             <div class="form-group">
-                <x-form-field-label optional>Facebook Account Link / Name</x-form-field-label>
-                <input type="text" name="facebook" class="plain-input normal-case" placeholder="e.g. facebook.com/username or Account Name" x-model="form.facebook">
+                <x-form-field-label required>Facebook Account Link / Name</x-form-field-label>
+                <input type="text" name="facebook" class="plain-input normal-case" :class="{ 'is-invalid-field': isFieldInvalid('facebook') }" placeholder="e.g. facebook.com/username or Account Name" x-model="form.facebook">
             </div>
             <div class="form-group">
                 <x-form-field-label optional>WhatsApp Number</x-form-field-label>
                 <input type="text" name="whatsapp" class="plain-input" placeholder="e.g. 0912345678" x-model="form.whatsapp">
             </div>
+        </div>
+
+        <div class="mt-5" :class="{ 'is-invalid-shake': isFieldInvalid('facebook_screenshot') }">
+            <x-upload-requirement-card
+                title="Facebook Profile Screenshot"
+                description="Please upload a screenshot of your Facebook Profile / Account to verify identity."
+                name="facebook_screenshot"
+                :required="true"
+                :uploaded="$applicant?->facebook_screenshot_url"
+                accept="image/jpeg,image/jpg,image/png"
+                :maxSizeMB="5"
+            />
         </div>
     </section>
 </div>

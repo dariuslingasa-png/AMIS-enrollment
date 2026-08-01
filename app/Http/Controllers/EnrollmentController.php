@@ -386,7 +386,7 @@ class EnrollmentController extends Controller
                 $request->files->set('receipts', [$request->file('receipt')]);
             }
 
-            $method = $request->input('method', 'gcash_maya');
+            $method = $request->input('method', 'gcash');
             $amount = (float) $request->input('amount', 4000.00);
             $referenceNo = $request->input('reference_no');
 
@@ -415,7 +415,7 @@ class EnrollmentController extends Controller
 
             $paymentData = [
                 'user_id' => $user->id,
-                'method' => $method === 'bdo' ? 'bdo' : 'gcash',
+                'method' => in_array($method, ['bdo', 'gcash', 'maya', 'remittance', 'other']) ? $method : 'gcash',
                 'amount' => $amount,
                 'receipt_url' => $receiptPath,
                 'status' => 'pending',
@@ -668,7 +668,7 @@ class EnrollmentController extends Controller
 
         $receiptRule = ($existingPayment?->receipt_url || $request->filled('remarks')) ? 'nullable' : 'required';
         $validated = $request->validate([
-            'method' => 'required|in:gcash_maya,gcash,maya,bdo',
+            'method' => 'required|in:gcash,maya,remittance,bdo,other',
             'reference_no' => 'nullable|string|max:100',
             'amount' => 'required|numeric|min:1|max:999999',
             'remarks' => 'nullable|string|max:1000',
@@ -708,7 +708,7 @@ class EnrollmentController extends Controller
 
         $paymentData = [
             'user_id' => $user->id,
-            'method' => $validated['method'] === 'bdo' ? 'bdo' : 'gcash',
+            'method' => in_array($validated['method'], ['bdo', 'gcash', 'maya', 'remittance', 'other']) ? $validated['method'] : 'gcash',
             'amount' => $validated['amount'],
             'receipt_url' => $receiptPath,
             'status' => 'pending',

@@ -60,6 +60,7 @@ class SubmitEnrollmentRequest extends FormRequest
             'parent_email'            => 'nullable|email|max:255',
             'facebook'                => 'nullable|string|max:255',
             'whatsapp'                => 'nullable|string|max:255',
+            'facebook_screenshot'     => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'referral_source'         => 'nullable|string|max:255',
             'psych_testing'           => 'nullable|string|max:255',
             'prescription_med'        => 'nullable|string|max:255',

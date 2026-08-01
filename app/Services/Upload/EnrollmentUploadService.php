@@ -15,6 +15,7 @@ class EnrollmentUploadService
         'marriage_contract',
         'medical_record',
         'affidavit',
+        'facebook_screenshot',
     ];
 
     public function storeEnrollmentDocuments(EnrollmentApplicant $applicant, Request $request): void
@@ -57,6 +58,7 @@ class EnrollmentUploadService
                 'marriage_contract' => 'marriage_contract',
                 'medical_record' => 'medical_record',
                 'affidavit' => 'affidavit',
+                'facebook_screenshot' => 'facebook_screenshot',
                 default => $key,
             };
 

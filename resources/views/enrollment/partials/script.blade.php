@@ -21,7 +21,7 @@ document.addEventListener('alpine:init', () => {
 document.addEventListener('input', function (e) {
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
         const type = e.target.type ? e.target.type.toLowerCase() : 'text';
-        if (type === 'text' || type === 'email' || type === 'search' || type === 'url' || e.target.tagName === 'TEXTAREA') {
+        if ((type === 'text' || type === 'search' || type === 'url' || e.target.tagName === 'TEXTAREA') && type !== 'email') {
             const originalVal = e.target.value;
             const upperVal = originalVal.toUpperCase();
             if (originalVal !== upperVal) {
@@ -155,6 +155,12 @@ function enrollmentForm() {
                 }
                 if (field === 'parent_country_code') return !this.form.parent_country_code;
                 if (field === 'parent_mobile') return !this.form.parent_mobile || !this.form.parent_mobile.trim() || this.form.parent_mobile.replace(/\D/g, '').length < 7;
+                if (field === 'facebook') return !this.form.facebook || !this.form.facebook.trim();
+                if (field === 'facebook_screenshot') {
+                    const fbInput = document.querySelector('input[name="facebook_screenshot"]');
+                    const hasFbScreenshot = this.uploadedFiles.facebook_screenshot || (fbInput && fbInput.files && fbInput.files.length > 0);
+                    return !hasFbScreenshot;
+                }
             }
             if (this.step === 5) {
                 if (field === 'medical_has_concern') return !this.form.medical_has_concern;
@@ -192,6 +198,7 @@ function enrollmentForm() {
             marriage_contract: {{ $applicant?->marriage_contract_url ? 'true' : 'false' }},
             medical_record: {{ $applicant?->medical_record_url ? 'true' : 'false' }},
             affidavit: {{ $applicant?->affidavit_url ? 'true' : 'false' }},
+            facebook_screenshot: {{ $applicant?->facebook_screenshot_url ? 'true' : 'false' }},
         },
         filePreparation: {
             photo_2x2: false,
@@ -200,6 +207,7 @@ function enrollmentForm() {
             marriage_contract: false,
             medical_record: false,
             affidavit: false,
+            facebook_screenshot: false,
         },
         completedSteps: @json($completedSteps),
         visitedSteps: @json($completedSteps ? array_values(array_unique(array_merge([1], $completedSteps))) : [1]),
@@ -215,7 +223,7 @@ function enrollmentForm() {
         ],
         stepTitles: ['Enrollment Setup', 'Student Information', 'Address & Contact', 'Parent / Guardian Information', 'Medical & Emergency', 'Documents', 'Mode of Payment & Receipt', 'Final Review & Submit'],
         form: {
-            payment_method: '{{ old("method", ($applicant?->payment?->method === "bdo" ? "bdo" : "gcash_maya")) }}',
+            payment_method: '{{ old("method", $applicant?->payment?->method ?? "gcash") }}',
             amount: '{{ old("amount", ($applicant?->payment?->amount ?? "4000.00")) }}',
             reference_no: '{{ old("reference_no", ($applicant?->payment?->reference_no ?? "")) }}',
             remarks: '{{ old("remarks", ($applicant?->payment?->remarks ?? "")) }}',
@@ -753,7 +761,7 @@ function enrollmentForm() {
                 fd.append('school_year', '2026-2027');
                 if (this.savedApplicantId) fd.append('applicant_id', this.savedApplicantId);
                 const uploadedNames = [];
-                ['photo_2x2','birth_cert','report_card','marriage_contract','medical_record','affidavit'].forEach(name => {
+                ['photo_2x2','birth_cert','report_card','marriage_contract','medical_record','affidavit','facebook_screenshot'].forEach(name => {
                     const input = document.querySelector('input[name="' + name + '"]');
                     if (input && input.files.length) {
                         fd.append(name, input.files[0]);
@@ -881,6 +889,12 @@ function enrollmentForm() {
                 if (!this.form.parent_country_code) return 'Parent mobile country code is required.';
                 if (!this.form.parent_mobile.trim()) return 'Parent mobile number is required.';
                 if (this.form.parent_mobile.replace(/\D/g, '').length < 7) return 'Parent mobile number must be at least 7 digits.';
+                if (!this.form.facebook || !this.form.facebook.trim()) return 'Facebook Account Link / Name is required.';
+                const fbInput = document.querySelector('input[name="facebook_screenshot"]');
+                const hasFbScreenshot = this.uploadedFiles.facebook_screenshot || (fbInput && fbInput.files && fbInput.files.length > 0);
+                if (!hasFbScreenshot) {
+                    return 'Please upload a screenshot of your Facebook Profile.';
+                }
             }
             if (this.step === 5) {
                 if (!this.form.medical_has_concern) return 'Please answer if the student has any medical concern.';

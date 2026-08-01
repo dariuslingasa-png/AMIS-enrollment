@@ -198,10 +198,15 @@
 
                 <!-- Form Actions -->
                 <div class="form-actions form-actions-row" x-show="!pageLoading">
-                    {{-- Left: Cancel --}}
-                    <button type="button" @click="openCancelPrompt()" class="btn-secondary">
-                        Cancel
-                    </button>
+                    {{-- Left: Cancel & Save Draft --}}
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button type="button" @click="openCancelPrompt()" class="btn-secondary">
+                            Cancel
+                        </button>
+                        <button type="button" @click="saveDraft({ force: true, showStatus: true })" class="btn-secondary" :disabled="stepSaving" :class="{ 'is-disabled': stepSaving }">
+                            Save Draft
+                        </button>
+                    </div>
                     {{-- Right: Back + Next/Submit --}}
                     <div class="form-actions-group">
                         <button type="button" x-show="step > 1" @click="prevStep()" class="btn-secondary">

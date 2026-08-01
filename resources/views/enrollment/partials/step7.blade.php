@@ -38,24 +38,24 @@
                 <div class="space-y-2.5 pl-1">
                     <div class="space-y-2.5">
                         <div class="border-b border-slate-200 pb-2">
-                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">AL MUNAWWARA ISLAMIC SCHOOL Inc.</span>
-                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Savings: 010478011996</span>
+                            <span class="text-xs font-bold text-slate-700 uppercase block tracking-wider">AL MUNAWWARA ISLAMIC SCHOOL Inc.</span>
+                            <span class="text-base font-black text-slate-950 block mt-0.5">BDO Savings: 010478011996</span>
                         </div>
                         <div class="border-b border-slate-200 pb-2">
-                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">CABEL B. NURHASAN</span>
-                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Current: 010478008782</span>
+                            <span class="text-xs font-bold text-slate-700 uppercase block tracking-wider">CABEL B. NURHASAN</span>
+                            <span class="text-base font-black text-slate-950 block mt-0.5">BDO Current: 010478008782</span>
                         </div>
                         <div class="border-b border-slate-200 pb-2">
-                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">CABEL NURHASAN</span>
-                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Savings: 010470022817</span>
+                            <span class="text-xs font-bold text-slate-700 uppercase block tracking-wider">CABEL NURHASAN</span>
+                            <span class="text-base font-black text-slate-950 block mt-0.5">BDO Savings: 010470022817</span>
                         </div>
                         <div class="border-b border-slate-200 pb-2">
-                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">WARDAH D. PINDATON / JAMELLA P. MOHAMAD</span>
-                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Savings: 010470099925</span>
+                            <span class="text-xs font-bold text-slate-700 uppercase block tracking-wider">WARDAH D. PINDATON / JAMELLA P. MOHAMAD</span>
+                            <span class="text-base font-black text-slate-950 block mt-0.5">BDO Savings: 010470099925</span>
                         </div>
                         <div class="pb-1">
-                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">JAMELLA P. MOHAMAD / WARDAH D. PINDATON</span>
-                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Savings: 010470105712</span>
+                            <span class="text-xs font-bold text-slate-700 uppercase block tracking-wider">JAMELLA P. MOHAMAD / WARDAH D. PINDATON</span>
+                            <span class="text-base font-black text-slate-950 block mt-0.5">BDO Savings: 010470105712</span>
                         </div>
                     </div>
                     <div class="pt-2.5 border-t border-slate-200 text-xs text-slate-500 space-y-1">
@@ -91,8 +91,11 @@
             <div class="form-group">
                 <x-form-field-label required>Payment Method</x-form-field-label>
                 <select name="method" x-model="form.payment_method" class="select-input" :class="{ 'is-invalid-field': isFieldInvalid('payment_method') }">
-                    <option value="gcash_maya">GCash / Maya</option>
+                    <option value="gcash">GCash</option>
+                    <option value="maya">Maya</option>
+                    <option value="remittance">Remittance</option>
                     <option value="bdo">BDO Bank Transfer</option>
+                    <option value="other">Other Payments</option>
                 </select>
             </div>
             
