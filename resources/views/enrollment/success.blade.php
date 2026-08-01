@@ -17,22 +17,7 @@
                     </svg>
                     <span>Your application is now <span class="badge-pending">Pending Review</span></span>
                 </div>
-                @if ($applicant)
-                    <div class="success-info-row">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary); flex-shrink: 0;">
-                            <path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-                        </svg>
-                        @if ((float) $applicant->discount_percentage > 0)
-                            <span>
-                                Sibling Discount Eligible:
-                                <strong>{{ $applicant->sibling_order }}{{ $applicant->sibling_order == 2 ? 'nd' : ($applicant->sibling_order == 3 ? 'rd' : 'th') }} Child</strong>,
-                                <strong>{{ rtrim(rtrim(number_format((float) $applicant->discount_percentage, 2), '0'), '.') }}% Discount Applied</strong>
-                            </span>
-                        @else
-                            <span>Sibling discount eligibility will be reviewed and finalized by the registrar.</span>
-                        @endif
-                    </div>
-                @endif
+
             </div>
 
             <!-- Processing Time Notice -->
