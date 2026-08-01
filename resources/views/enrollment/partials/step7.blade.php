@@ -30,27 +30,56 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {{-- BDO Card --}}
-            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2">
+            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
                 <div class="flex items-center gap-2">
                     <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-900 text-white font-bold text-xs">BDO</span>
-                    <strong class="text-xs font-black text-slate-900">BDO Bank Deposit / Online Transfer</strong>
+                    <strong class="text-xs font-black text-slate-900">BDO Savings / Current Accounts</strong>
                 </div>
-                <div class="text-xs space-y-1 pl-1">
-                    <p class="text-slate-600">Account Name: <strong class="text-slate-900">AL MUNAWWARA ISLAMIC SCHOOL Inc.</strong></p>
-                    <p class="text-slate-600">Account No.: <strong class="text-slate-900 text-sm">010478011996</strong></p>
-                    <p class="text-[11px] text-slate-500 font-medium">Branch: Woodlane Diversion Road - Davao City</p>
+                <div class="text-xs space-y-2 pl-1">
+                    <div class="space-y-1.5">
+                        <div class="border-b border-slate-200 pb-1.5">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase block">AL MUNAWWARA ISLAMIC SCHOOL Inc.</span>
+                            <span class="text-slate-950 font-black">Savings: 010478011996</span>
+                        </div>
+                        <div class="border-b border-slate-200 pb-1.5">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase block">CABEL B. NURHASAN</span>
+                            <span class="text-slate-950 font-black">Current: 010478008782</span>
+                        </div>
+                        <div class="border-b border-slate-200 pb-1.5">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase block">CABEL NURHASAN</span>
+                            <span class="text-slate-950 font-black">Savings: 010470022817</span>
+                        </div>
+                        <div class="border-b border-slate-200 pb-1.5">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase block">WARDAH D. PINDATON / JAMELLA P. MOHAMAD</span>
+                            <span class="text-slate-950 font-black">Savings: 010470099925</span>
+                        </div>
+                        <div class="pb-0.5">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase block">JAMELLA P. MOHAMAD / WARDAH D. PINDATON</span>
+                            <span class="text-slate-950 font-black">Savings: 010470105712</span>
+                        </div>
+                    </div>
+                    <div class="pt-1.5 border-t border-slate-200 text-[10px] text-slate-500 space-y-0.5">
+                        <p>Swift Code: <strong class="text-slate-700 font-bold uppercase">BNORPHMM</strong></p>
+                        <p>Branch: <strong class="text-slate-700 font-bold uppercase">WOODLANE DIVERSION ROAD - DAVAO CITY</strong></p>
+                    </div>
                 </div>
             </div>
 
             {{-- GCash / Maya Card --}}
-            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2">
+            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
                 <div class="flex items-center gap-2">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">G/M</span>
-                    <strong class="text-xs font-black text-slate-900">GCash / Maya Payment Center</strong>
+                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">G</span>
+                    <strong class="text-xs font-black text-slate-900">GCash Authorized Payment Center</strong>
                 </div>
-                <div class="text-xs space-y-1 pl-1">
-                    <p class="text-slate-600">Account Name: <strong class="text-slate-900">CABEL B. NURHASAN</strong></p>
-                    <p class="text-slate-600">Mobile No.: <strong class="text-slate-900 text-sm">(+63) 927 299 1833</strong> / <strong class="text-slate-900 text-sm">(+63) 995 233 9423</strong></p>
+                <div class="text-xs space-y-2 pl-1">
+                    <div class="pb-1.5">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase block">Account Name</span>
+                        <strong class="text-slate-950 font-black text-sm block">CABEL B. NURHASAN</strong>
+                    </div>
+                    <div class="pt-1.5 border-t border-slate-200">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase block">GCash Number</span>
+                        <strong class="text-indigo-950 font-black text-sm block">(+63) 927 299 1833</strong>
+                    </div>
                 </div>
             </div>
         </div>
