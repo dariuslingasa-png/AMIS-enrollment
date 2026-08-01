@@ -31,8 +31,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {{-- BDO Card --}}
             <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
-                <div class="flex items-center gap-2">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-900 text-white font-bold text-xs">BDO</span>
+                <div class="flex items-center gap-2.5">
+                    <img src="{{ asset('images/mode_of_payments/BDO.png') }}" alt="BDO Logo" class="h-6 w-auto object-contain rounded-md shadow-3xs">
                     <strong class="text-xs font-black text-slate-900">BDO Savings / Current Accounts</strong>
                 </div>
                 <div class="text-xs space-y-2 pl-1">
@@ -67,8 +67,8 @@
 
             {{-- GCash / Maya Card --}}
             <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
-                <div class="flex items-center gap-2">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">G</span>
+                <div class="flex items-center gap-2.5">
+                    <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash Logo" class="h-6 w-auto object-contain rounded-md shadow-3xs">
                     <strong class="text-xs font-black text-slate-900">GCash Authorized Payment Center</strong>
                 </div>
                 <div class="text-xs space-y-2 pl-1">
