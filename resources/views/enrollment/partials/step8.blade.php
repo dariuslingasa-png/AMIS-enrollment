@@ -128,6 +128,10 @@
                         <span class="text-[10px] font-black uppercase text-slate-400 block">Amount Paid</span>
                         <strong class="text-emerald-700 text-sm block font-black" x-text="'PHP ' + (parseFloat(form.amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></strong>
                     </div>
+                    <div class="bg-white p-3 rounded-xl border border-indigo-150 space-y-1" x-show="form.remarks">
+                        <span class="text-[10px] font-black uppercase text-slate-400 block">Remarks / Notes</span>
+                        <strong class="text-slate-700 text-xs block font-bold normal-case" x-text="form.remarks"></strong>
+                    </div>
                 </div>
 
                 {{-- Uploaded Receipt Thumbnail Image Preview --}}
@@ -143,8 +147,8 @@
                     </template>
 
                     <div>
-                        <strong class="text-xs font-black text-slate-900 block">Payment Receipt Attached</strong>
-                        <span class="text-[11px] text-emerald-700 font-bold block mt-0.5">Verified & ready for submission</span>
+                        <strong class="text-xs font-black text-slate-900 block" x-text="paymentReceiptPreview ? 'Payment Receipt Attached' : 'Remarks / Explanation Added'"></strong>
+                        <span class="text-[11px] font-bold block mt-0.5" :class="paymentReceiptPreview ? 'text-emerald-700' : 'text-indigo-600'" x-text="paymentReceiptPreview ? 'Verified & ready for submission' : 'No receipt file; remarks explanation provided'"></span>
                     </div>
                 </div>
             </div>

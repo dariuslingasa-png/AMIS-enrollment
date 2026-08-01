@@ -165,10 +165,11 @@ function enrollmentForm() {
             if (this.step === 7) {
                 if (field === 'payment_method') return !this.form.payment_method;
                 if (field === 'amount') return !this.form.amount || parseFloat(this.form.amount) <= 0;
-                if (field === 'payment_receipt') {
+                if (field === 'payment_receipt' || field === 'remarks') {
                     const receiptInput = document.querySelector('input[name="payment_receipt"]');
                     const hasReceipt = this.paymentReceiptPreview || (receiptInput && receiptInput.files && receiptInput.files.length > 0);
-                    return !hasReceipt;
+                    const hasRemarks = this.form.remarks && this.form.remarks.trim().length > 0;
+                    return !hasReceipt && !hasRemarks;
                 }
             }
             return false;
@@ -217,6 +218,7 @@ function enrollmentForm() {
             payment_method: '{{ old("method", ($applicant?->payment?->method === "bdo" ? "bdo" : "gcash_maya")) }}',
             amount: '{{ old("amount", ($applicant?->payment?->amount ?? "4000.00")) }}',
             reference_no: '{{ old("reference_no", ($applicant?->payment?->reference_no ?? "")) }}',
+            remarks: '{{ old("remarks", ($applicant?->payment?->remarks ?? "")) }}',
             student_type: '{{ old("student_type", $applicant?->student_type ?? "") }}',
             amis_student_id: '{{ old("amis_student_id", $applicant?->amis_student_id ?? "") }}',
             learning_mode: '{{ old("learning_mode", $applicant?->learning_mode ?? "") }}',
@@ -925,8 +927,9 @@ function enrollmentForm() {
                 }
                 const receiptInput = document.querySelector('input[name="payment_receipt"]');
                 const hasReceipt = this.paymentReceiptPreview || (receiptInput && receiptInput.files && receiptInput.files.length > 0);
-                if (!hasReceipt) {
-                    return 'Please upload your proof of payment / receipt image on Step 7.';
+                const hasRemarks = this.form.remarks && this.form.remarks.trim().length > 0;
+                if (!hasReceipt && !hasRemarks) {
+                    return 'Please upload your proof of payment / receipt image, or write an explanation in the remarks field if you don\'t have a receipt.';
                 }
             }
             if (this.step === 8) {

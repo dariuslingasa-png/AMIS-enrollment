@@ -419,7 +419,7 @@ class EnrollmentController extends Controller
                 'amount' => $amount,
                 'receipt_url' => $receiptPath,
                 'status' => 'pending',
-                'remarks' => null,
+                'remarks' => $request->input('remarks'),
                 'paid_at' => now(),
                 'verified_at' => null,
             ];
@@ -666,11 +666,12 @@ class EnrollmentController extends Controller
             $request->files->set('receipts', [$request->file('receipt')]);
         }
 
-        $receiptRule = ($existingPayment?->receipt_url) ? 'nullable' : 'required';
+        $receiptRule = ($existingPayment?->receipt_url || $request->filled('remarks')) ? 'nullable' : 'required';
         $validated = $request->validate([
             'method' => 'required|in:gcash_maya,gcash,maya,bdo',
             'reference_no' => 'nullable|string|max:100',
             'amount' => 'required|numeric|min:1|max:999999',
+            'remarks' => 'nullable|string|max:1000',
             'receipts' => $receiptRule . '|array',
             'receipts.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
@@ -711,7 +712,7 @@ class EnrollmentController extends Controller
             'amount' => $validated['amount'],
             'receipt_url' => $receiptPath,
             'status' => 'pending',
-            'remarks' => null,
+            'remarks' => $validated['remarks'] ?? null,
             'paid_at' => now(),
             'verified_at' => null,
         ];

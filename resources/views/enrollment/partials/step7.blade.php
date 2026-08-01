@@ -30,55 +30,57 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {{-- BDO Card --}}
-            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3.5">
                 <div class="flex items-center gap-2.5">
-                    <img src="{{ asset('images/mode_of_payments/BDO.png') }}" alt="BDO Logo" class="h-6 w-auto object-contain rounded-md shadow-3xs">
-                    <strong class="text-xs font-black text-slate-900">BDO Savings / Current Accounts</strong>
+                    <img src="{{ asset('images/mode_of_payments/BDO.png') }}" alt="BDO Logo" class="h-9 w-auto object-contain rounded-md shadow-3xs">
+                    <strong class="text-sm font-black text-slate-900">BDO Savings / Current Accounts</strong>
                 </div>
-                <div class="text-xs space-y-2 pl-1">
-                    <div class="space-y-1.5">
-                        <div class="border-b border-slate-200 pb-1.5">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase block">AL MUNAWWARA ISLAMIC SCHOOL Inc.</span>
-                            <span class="text-slate-950 font-black">Savings: 010478011996</span>
+                <div class="space-y-2.5 pl-1">
+                    <div class="space-y-2.5">
+                        <div class="border-b border-slate-200 pb-2">
+                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">AL MUNAWWARA ISLAMIC SCHOOL Inc.</span>
+                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Savings: 010478011996</span>
                         </div>
-                        <div class="border-b border-slate-200 pb-1.5">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase block">CABEL B. NURHASAN</span>
-                            <span class="text-slate-950 font-black">Current: 010478008782</span>
+                        <div class="border-b border-slate-200 pb-2">
+                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">CABEL B. NURHASAN</span>
+                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Current: 010478008782</span>
                         </div>
-                        <div class="border-b border-slate-200 pb-1.5">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase block">CABEL NURHASAN</span>
-                            <span class="text-slate-950 font-black">Savings: 010470022817</span>
+                        <div class="border-b border-slate-200 pb-2">
+                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">CABEL NURHASAN</span>
+                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Savings: 010470022817</span>
                         </div>
-                        <div class="border-b border-slate-200 pb-1.5">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase block">WARDAH D. PINDATON / JAMELLA P. MOHAMAD</span>
-                            <span class="text-slate-950 font-black">Savings: 010470099925</span>
+                        <div class="border-b border-slate-200 pb-2">
+                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">WARDAH D. PINDATON / JAMELLA P. MOHAMAD</span>
+                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Savings: 010470099925</span>
                         </div>
-                        <div class="pb-0.5">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase block">JAMELLA P. MOHAMAD / WARDAH D. PINDATON</span>
-                            <span class="text-slate-950 font-black">Savings: 010470105712</span>
+                        <div class="pb-1">
+                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">JAMELLA P. MOHAMAD / WARDAH D. PINDATON</span>
+                            <span class="text-sm font-black text-slate-900 block mt-0.5">BDO Savings: 010470105712</span>
                         </div>
                     </div>
-                    <div class="pt-1.5 border-t border-slate-200 text-[10px] text-slate-500 space-y-0.5">
-                        <p>Swift Code: <strong class="text-slate-700 font-bold uppercase">BNORPHMM</strong></p>
-                        <p>Branch: <strong class="text-slate-700 font-bold uppercase">WOODLANE DIVERSION ROAD - DAVAO CITY</strong></p>
+                    <div class="pt-2.5 border-t border-slate-200 text-xs text-slate-500 space-y-1">
+                        <p>Swift Code: <strong class="text-slate-800 font-extrabold uppercase">BNORPHMM</strong></p>
+                        <p>Branch: <strong class="text-slate-800 font-extrabold uppercase text-xs">WOODLANE DIVERSION ROAD - DAVAO CITY</strong></p>
                     </div>
                 </div>
             </div>
 
             {{-- GCash / Maya Card --}}
-            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
-                <div class="flex items-center gap-2.5">
-                    <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash Logo" class="h-6 w-auto object-contain rounded-md shadow-3xs">
-                    <strong class="text-xs font-black text-slate-900">GCash Authorized Payment Center</strong>
-                </div>
-                <div class="text-xs space-y-2 pl-1">
-                    <div class="pb-1.5">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase block">Account Name</span>
-                        <strong class="text-slate-950 font-black text-sm block">CABEL B. NURHASAN</strong>
+            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3.5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <img src="{{ asset('images/mode_of_payments/GCASH.png') }}" alt="GCash Logo" class="h-9 w-auto object-contain rounded-md shadow-3xs">
+                        <strong class="text-sm font-black text-slate-900">GCash Authorized Payment Center</strong>
                     </div>
-                    <div class="pt-1.5 border-t border-slate-200">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase block">GCash Number</span>
-                        <strong class="text-indigo-950 font-black text-sm block">(+63) 927 299 1833</strong>
+                    <div class="space-y-3 pl-1 mt-4">
+                        <div class="pb-2">
+                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">Account Name</span>
+                            <strong class="text-slate-900 font-black text-base block mt-0.5">CABEL B. NURHASAN</strong>
+                        </div>
+                        <div class="pt-3 border-t border-slate-200">
+                            <span class="text-[11px] font-black text-slate-500 uppercase block tracking-wider">GCash Number</span>
+                            <strong class="text-indigo-900 font-black text-lg block mt-0.5">(+63) 927 299 1833</strong>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -152,6 +154,12 @@
                     </div>
                 </template>
             </div>
+        </div>
+
+        {{-- Remarks / Payment Notes --}}
+        <div class="form-group pt-2">
+            <x-form-field-label optional>Remarks / Payment Notes (If no receipt, write explanation here)</x-form-field-label>
+            <textarea name="remarks" x-model="form.remarks" placeholder="If you do not have a receipt/screenshot yet, please write an explanation here (e.g. over-the-counter deposit date, pending bank reference, etc.) to proceed." class="plain-input min-h-[80px] py-2.5 px-3.5 text-xs text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl border border-slate-200 normal-case" :class="{ 'is-invalid-field': isFieldInvalid('remarks') }"></textarea>
         </div>
     </div>
 </section>

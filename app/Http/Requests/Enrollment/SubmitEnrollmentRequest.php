@@ -86,6 +86,7 @@ class SubmitEnrollmentRequest extends FormRequest
             'method'                  => 'nullable|string|max:50',
             'amount'                  => 'nullable|numeric',
             'reference_no'            => 'nullable|string|max:100',
+            'remarks'                 => 'nullable|string|max:1000',
             'payment_receipt'         => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'agreed_final_confirmation' => 'nullable',
         ];
