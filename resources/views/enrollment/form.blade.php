@@ -181,6 +181,11 @@
                         @include('enrollment.partials.step6')
                     </div>
 
+                    <!-- STEP 7: Preview Documents & Payment -->
+                    <div x-show="step === 7" x-cloak class="space-y-5">
+                        @include('enrollment.partials.step7')
+                    </div>
+
                     <!-- Hidden fields — always in DOM for final form submission -->
                     @include('enrollment.partials.hidden_fields')
 
@@ -206,9 +211,10 @@
                             </svg>
                         </button>
                         <button type="submit" x-show="step === totalSteps" class="btn-primary"
+                            style="background-color: #059669 !important; border-color: #047857 !important;"
                             :disabled="loading || hasFilePreparationPending() || draftSaving"
                             :class="{ 'is-disabled': loading || hasFilePreparationPending() || draftSaving }">
-                            <span x-text="hasFilePreparationPending() ? 'Preparing files...' : (draftSaving ? 'Saving files...' : 'Submit Application')"></span>
+                            <span x-text="hasFilePreparationPending() ? 'Preparing files...' : (draftSaving ? 'Saving files...' : '🚀 CONFIRM & FINAL SUBMIT ENROLLMENT')"></span>
                         </button>
                     </div>
                 </div>

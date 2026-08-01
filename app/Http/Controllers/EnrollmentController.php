@@ -377,12 +377,90 @@ class EnrollmentController extends Controller
     ) {
         $user = $request->user();
         $applicant = $this->applications->submit($user, $request, $request->enrollmentData());
-        $message = $applicant->status === EnrollmentApplicationService::STATUS_SUBMITTED
-            ? 'Corrected application resubmitted successfully. The admin office will review the updated details.'
-            : 'Child application is ready for submission. You may add another child or finalize enrollment.';
 
-        return redirect()->route('enrollment.dashboard', ['applicant' => $applicant->id])
-            ->with('success', $message);
+        // Process payment proof if uploaded during Step 7 Preview
+        if ($request->hasFile('payment_receipt') || $request->hasFile('receipt') || $request->filled('amount')) {
+            if ($request->hasFile('payment_receipt')) {
+                $request->files->set('receipts', [$request->file('payment_receipt')]);
+            } elseif ($request->hasFile('receipt')) {
+                $request->files->set('receipts', [$request->file('receipt')]);
+            }
+
+            $method = $request->input('method', 'gcash_maya');
+            $amount = (float) $request->input('amount', 4000.00);
+            $referenceNo = $request->input('reference_no');
+
+            $receiptPath = null;
+            if ($request->hasFile('receipts')) {
+                $familyFolder = 'family_' . strtolower(trim($applicant->last_name)) . '_' . str_replace(' ', '_', strtolower(trim($applicant->school_year ?? '2026-2027')));
+                $familyFolder = preg_replace('/[^a-z0-9_\-]+/', '', $familyFolder);
+                $lastnameSlug = preg_replace('/[^a-z0-9]+/', '_', strtolower(trim($applicant->last_name)));
+                
+                $newPaths = [];
+                foreach ($request->file('receipts') as $index => $file) {
+                    $timestamp = time();
+                    $ext = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'bin';
+                    $filename = 'payment_receipt_' . $lastnameSlug . '_' . $timestamp . '_' . $index . '.' . $ext;
+                    
+                    $path = $file->storeAs('documents/' . $familyFolder, $filename, 'public');
+                    if ($path) {
+                        $newPaths[] = $path;
+                    }
+                }
+
+                if (!empty($newPaths)) {
+                    $receiptPath = count($newPaths) === 1 ? $newPaths[0] : json_encode($newPaths);
+                }
+            }
+
+            $paymentData = [
+                'user_id' => $user->id,
+                'method' => $method === 'bdo' ? 'bdo' : 'gcash',
+                'amount' => $amount,
+                'receipt_url' => $receiptPath,
+                'status' => 'pending',
+                'remarks' => null,
+                'paid_at' => now(),
+                'verified_at' => null,
+            ];
+
+            if (Schema::hasColumn('payments', 'reference_no')) {
+                $paymentData['reference_no'] = $referenceNo;
+            }
+
+            $existingPayment = $applicant->payment;
+            if ($existingPayment) {
+                $existingPayment->update($paymentData);
+            } else {
+                $applicant->payment()->create($paymentData);
+            }
+
+            $documentStatuses = $applicant->document_statuses ?? [];
+            $documentStatuses['payment_proof'] = 'pending';
+            $applicant->forceFill(['document_statuses' => $documentStatuses])->save();
+        }
+
+        // Set application status directly to 'submitted' so it immediately appears in the Admin Portal!
+        $applicant->update([
+            'status' => EnrollmentApplicationService::STATUS_SUBMITTED,
+            'review_remarks' => null,
+        ]);
+
+        try {
+            $notifications = app(EnrollmentNotificationService::class);
+            $notifications->sendSubmissionConfirmation($user->email, $applicant);
+            if (!empty($applicant->parent_email) && $applicant->parent_email !== $user->email) {
+                $notifications->sendSubmissionConfirmation($applicant->parent_email, $applicant);
+            }
+            try {
+                app(WorkflowEngineService::class)->fire('enrollment.submitted', $applicant);
+            } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+            Log::error('Failed to send submission confirmation: ' . $e->getMessage());
+        }
+
+        return redirect()->route('enrollment.success', ['applicant' => $applicant->id])
+            ->with('success', 'Your enrollment application and proof of payment have been submitted successfully!');
     }
 
     public function showFinalizePreview(Request $request)

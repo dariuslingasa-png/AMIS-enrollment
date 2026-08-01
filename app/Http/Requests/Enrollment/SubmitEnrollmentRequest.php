@@ -83,6 +83,11 @@ class SubmitEnrollmentRequest extends FormRequest
             'marriage_contract'       => 'nullable|mimes:jpg,jpeg,png|max:5120',
             'medical_record'          => 'nullable|mimes:jpg,jpeg,png|max:5120',
             'affidavit'               => 'nullable|mimes:jpg,jpeg,png|max:5120',
+            'method'                  => 'nullable|string|max:50',
+            'amount'                  => 'nullable|numeric',
+            'reference_no'            => 'nullable|string|max:100',
+            'payment_receipt'         => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'agreed_final_confirmation' => 'nullable',
         ];
     }
 

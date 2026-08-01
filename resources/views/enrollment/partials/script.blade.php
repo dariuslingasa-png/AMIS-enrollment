@@ -54,7 +54,7 @@ document.addEventListener('input', function (e) {
 function enrollmentForm() {
     return {
         step: {{ $initialStep }},
-        totalSteps: 6,
+        totalSteps: 7,
         loading: false,
         stepSaving: false,
         leavingWithoutSaving: false,
@@ -180,9 +180,11 @@ function enrollmentForm() {
             { num: 4, label: 'Parents' },
             { num: 5, label: 'Medical' },
             { num: 6, label: 'Documents' },
+            { num: 7, label: 'Preview' },
         ],
-        stepTitles: ['Enrollment Setup', 'Student Information', 'Address & Contact', 'Parent / Guardian Information', 'Medical & Emergency', 'Documents'],
+        stepTitles: ['Enrollment Setup', 'Student Information', 'Address & Contact', 'Parent / Guardian Information', 'Medical & Emergency', 'Documents', 'Preview & Final Submit'],
         form: {
+            payment_method: 'gcash_maya',
             student_type: '{{ old("student_type", $applicant?->student_type ?? "") }}',
             amis_student_id: '{{ old("amis_student_id", $applicant?->amis_student_id ?? "") }}',
             learning_mode: '{{ old("learning_mode", $applicant?->learning_mode ?? "") }}',
@@ -882,6 +884,17 @@ function enrollmentForm() {
                     return 'Upload the Report Card, or use the signed Affidavit / Temporary Proof option if it is not yet available.';
                 }
             }
+            if (this.step === 7) {
+                const receiptInput = document.querySelector('input[name="payment_receipt"]');
+                const hasReceipt = receiptInput && receiptInput.files && receiptInput.files.length > 0;
+                if (!hasReceipt) {
+                    return 'Please upload your proof of payment / receipt image before final submission.';
+                }
+                const checkbox = document.querySelector('input[name="agreed_final_confirmation"]');
+                if (checkbox && !checkbox.checked) {
+                    return 'Please check the final confirmation box certifying that all details and payment receipt are authentic.';
+                }
+            }
             return null;
         },
 
@@ -945,6 +958,10 @@ function enrollmentForm() {
 
                 return hasDocument('photo_2x2')
                     && (this.isKinderOrNursery() || this.form.student_type === 'Old' || hasDocument('report_card') || hasDocument('affidavit'));
+            }
+            if (num === 7) {
+                const receiptInput = document.querySelector('input[name="payment_receipt"]');
+                return !!(receiptInput && receiptInput.files && receiptInput.files.length > 0);
             }
             return false;
         },
