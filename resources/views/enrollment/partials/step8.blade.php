@@ -70,6 +70,18 @@
                     <span class="text-[10px] font-black uppercase text-slate-400 block">Parent Contact Mobile</span>
                     <strong class="text-slate-900 block" x-text="`${form.parent_country_code || '+63'} ${form.parent_mobile || ''}`"></strong>
                 </div>
+                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-150" x-show="form.parent_email">
+                    <span class="text-[10px] font-black uppercase text-slate-400 block">Parent Email</span>
+                    <strong class="text-slate-900 block normal-case" x-text="form.parent_email"></strong>
+                </div>
+                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-150" x-show="form.facebook">
+                    <span class="text-[10px] font-black uppercase text-slate-400 block">Facebook</span>
+                    <strong class="text-slate-900 block normal-case" x-text="form.facebook"></strong>
+                </div>
+                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-150" x-show="form.whatsapp">
+                    <span class="text-[10px] font-black uppercase text-slate-400 block">WhatsApp</span>
+                    <strong class="text-slate-900 block" x-text="form.whatsapp"></strong>
+                </div>
             </div>
         </div>
 

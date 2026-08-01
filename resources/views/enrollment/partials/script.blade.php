@@ -219,6 +219,8 @@ function enrollmentForm() {
             amount: '{{ old("amount", ($applicant?->payment?->amount ?? "4000.00")) }}',
             reference_no: '{{ old("reference_no", ($applicant?->payment?->reference_no ?? "")) }}',
             remarks: '{{ old("remarks", ($applicant?->payment?->remarks ?? "")) }}',
+            facebook: '{{ old("facebook", $applicant?->facebook ?? "") }}',
+            whatsapp: '{{ old("whatsapp", $applicant?->whatsapp ?? "") }}',
             student_type: '{{ old("student_type", $applicant?->student_type ?? "") }}',
             amis_student_id: '{{ old("amis_student_id", $applicant?->amis_student_id ?? "") }}',
             learning_mode: '{{ old("learning_mode", $applicant?->learning_mode ?? "") }}',

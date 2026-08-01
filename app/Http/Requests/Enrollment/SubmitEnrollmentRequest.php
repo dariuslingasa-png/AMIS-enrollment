@@ -58,6 +58,8 @@ class SubmitEnrollmentRequest extends FormRequest
             'parent_country_code'     => 'required|string|max:8',
             'parent_mobile'           => 'required|string|min:7|max:20',
             'parent_email'            => 'nullable|email|max:255',
+            'facebook'                => 'nullable|string|max:255',
+            'whatsapp'                => 'nullable|string|max:255',
             'referral_source'         => 'nullable|string|max:255',
             'psych_testing'           => 'nullable|string|max:255',
             'prescription_med'        => 'nullable|string|max:255',

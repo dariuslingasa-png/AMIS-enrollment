@@ -111,5 +111,16 @@
                 <input type="email" name="parent_email" class="plain-input" placeholder="parent@email.com" x-model="form.parent_email">
             </div>
         </div>
+
+        <div class="parent-contact-grid mt-4">
+            <div class="form-group">
+                <x-form-field-label optional>Facebook Account Link / Name</x-form-field-label>
+                <input type="text" name="facebook" class="plain-input normal-case" placeholder="e.g. facebook.com/username or Account Name" x-model="form.facebook">
+            </div>
+            <div class="form-group">
+                <x-form-field-label optional>WhatsApp Number</x-form-field-label>
+                <input type="text" name="whatsapp" class="plain-input" placeholder="e.g. 0912345678" x-model="form.whatsapp">
+            </div>
+        </div>
     </section>
 </div>
