@@ -36,17 +36,13 @@
 @endphp
 
 <article class="family-child-card">
-    <div class="family-child-photo" x-data="{ imgLoaded: false, imgError: false }" style="position: relative; overflow: hidden;">
+    <div class="family-child-photo" x-data="{ imgError: false }" style="position: relative; overflow: hidden;">
         @if ($child->photo_2x2_url)
-            <div x-show="!imgLoaded && !imgError" class="family-photo-placeholder animate-pulse" style="position: absolute; inset: 0; background: #e2e8f0;"></div>
             <img x-show="!imgError"
                  src="{{ asset('storage/' . \App\Support\ImageHelper::thumb($child->photo_2x2_url, 'medium')) }}" 
                  alt="{{ $childName }}"
-                 style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s;"
-                 :style="imgLoaded ? 'opacity: 1;' : 'opacity: 0;'"
-                 @load="imgLoaded = true"
-                 x-on:error="imgError = true"
-                 loading="lazy">
+                 style="width: 100%; height: 100%; object-fit: cover;"
+                 x-on:error="imgError = true">
             <span x-show="imgError" class="family-photo-placeholder" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; color: #94a3b8; font-size: 10px; font-weight: 700; gap: 2px;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 <span>No Photo</span>
