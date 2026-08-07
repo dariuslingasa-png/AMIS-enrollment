@@ -47,9 +47,15 @@
                  @load="imgLoaded = true"
                  x-on:error="imgError = true"
                  loading="lazy">
-            <span x-show="imgError" class="family-photo-placeholder" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc; color: #64748b; font-size: 11px; font-weight: bold;">No Photo</span>
+            <span x-show="imgError" class="family-photo-placeholder" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; color: #94a3b8; font-size: 10px; font-weight: 700; gap: 2px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>No Photo</span>
+            </span>
         @else
-            <span class="family-photo-placeholder">No Photo</span>
+            <span class="family-photo-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #94a3b8;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>No Photo</span>
+            </span>
         @endif
     </div>
 
