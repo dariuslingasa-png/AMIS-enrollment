@@ -68,9 +68,9 @@
 .auth-hero-panel {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 1.15rem;
-    padding: clamp(2rem, 3.5vw, 3.5rem);
+    padding: clamp(2.5rem, 4vw, 4rem);
     overflow: visible;
     background: linear-gradient(160deg, #059669 0%, #065f46 68%);
     color: #ffffff;

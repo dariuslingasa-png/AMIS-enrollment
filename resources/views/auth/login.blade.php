@@ -1,7 +1,7 @@
 <x-guest-layout :show-loader="false">
 <div id="login-page" class="login-grid login-page visible">
     {{-- Left Hero Panel --}}
-    <section class="login-info auth-hero-panel" style="justify-content: flex-start; padding: clamp(2rem, 3.5vw, 3.5rem); gap: 1rem;">
+    <section class="login-info auth-hero-panel" style="justify-content: center; padding: clamp(2.5rem, 4vw, 4rem); gap: 1rem;">
         {{-- Branding Block --}}
         <div class="login-brand-block auth-hero-brand">
             <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS Logo">
