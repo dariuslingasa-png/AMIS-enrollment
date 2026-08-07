@@ -1,59 +1,48 @@
 <x-guest-layout :show-loader="false">
 <div id="login-page" class="login-grid login-page visible">
     {{-- Left Hero Panel --}}
-    <section class="login-info auth-hero-panel" style="justify-content: flex-start; padding: clamp(2.5rem, 5vw, 4rem);">
+    <section class="login-info auth-hero-panel" style="justify-content: flex-start; padding: clamp(2rem, 3.5vw, 3.5rem); gap: 1rem;">
         {{-- Branding Block --}}
         <div class="login-brand-block auth-hero-brand">
             <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS Logo">
             <div style="min-width: 0;">
                 <div class="auth-hero-arabic" lang="ar" dir="rtl">المدرسة المنورة الإسلامية</div>
                 <div class="auth-hero-school">AL MUNAWWARA ISLAMIC SCHOOL</div>
-                <div class="auth-hero-subtitle" style="color: #a7f3d0; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.05em; margin-top: 2px;">AMIS ENROLLMENT SYSTEM</div>
             </div>
         </div>
 
-        {{-- Eyebrow Badge --}}
-        <div style="margin-top: 1.25rem;">
-            <span class="auth-hero-eyebrow">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                </svg>
-                AMIS Enrollment System - SY 2026 - 2027
-            </span>
-        </div>
-
         {{-- Main Left Headline & Subtitle --}}
-        <div class="auth-hero-copy" style="max-width: 580px; margin-top: 1rem;">
-            <h1 style="font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 900; line-height: 1.2; color: #ffffff; margin: 0 0 0.65rem 0;">
-                How to Enroll in the<br>AMIS Enrollment System
+        <div class="auth-hero-copy" style="max-width: 580px; margin-top: 0.25rem;">
+            <h1 style="font-size: clamp(1.5rem, 2.2vw, 2.1rem); font-weight: 900; line-height: 1.25; color: #ffffff; margin: 0 0 0.4rem 0;">
+                AMIS Enrollment System
             </h1>
-            <p style="font-size: 0.95rem; line-height: 1.55; color: rgba(255, 255, 255, 0.88); font-weight: 500; margin: 0;">
+            <p style="font-size: 0.9rem; line-height: 1.5; color: rgba(255, 255, 255, 0.88); font-weight: 500; margin: 0;">
                 Watch our enrollment guide and review the frequently asked questions before starting your application.
             </p>
         </div>
 
         {{-- Video Guide Preview Card (Disabled non-interactive state) --}}
-        <div class="video-guide-preview-card" style="margin-top: 1.5rem; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; padding: 1.75rem 1.5rem; text-align: center; backdrop-filter: blur(12px); position: relative; overflow: hidden; max-width: 580px; box-shadow: 0 12px 32px rgba(0,0,0,0.18);">
+        <div class="video-guide-preview-card" style="margin-top: 0.85rem; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 18px; padding: 1.35rem 1.25rem; text-align: center; backdrop-filter: blur(12px); position: relative; overflow: hidden; max-width: 580px; box-shadow: 0 12px 32px rgba(0,0,0,0.18);">
             <div style="position: absolute; top: 12px; right: 12px; background: rgba(245, 158, 11, 0.25); border: 1px solid rgba(245, 158, 11, 0.5); color: #fef08a; font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.06em;">
                 COMING SOON
             </div>
             
-            <div style="width: 52px; height: 52px; margin: 0 auto 0.85rem; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.3); color: rgba(255, 255, 255, 0.6); display: flex; align-items: center; justify-content: center; pointer-events: none;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="margin-left: 3px;">
+            <div style="width: 46px; height: 46px; margin: 0 auto 0.75rem; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.3); color: rgba(255, 255, 255, 0.6); display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-left: 3px;">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
             </div>
 
-            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #ffffff; letter-spacing: 0.03em;">
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 800; color: #ffffff; letter-spacing: 0.03em;">
                 ENROLLMENT VIDEO GUIDE
             </h3>
-            <p style="margin: 0.3rem 0 0 0; font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); font-weight: 500;">
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.78rem; color: rgba(255, 255, 255, 0.7); font-weight: 500;">
                 Video walkthrough is currently being prepared for SY 2026–2027.
             </p>
         </div>
 
         {{-- Enrollment FAQs Component --}}
-        <div style="max-width: 580px; width: 100%; margin-top: 1.5rem;">
+        <div style="max-width: 580px; width: 100%; margin-top: 0.85rem;">
             <x-enrollment-faq-modal />
         </div>
 
