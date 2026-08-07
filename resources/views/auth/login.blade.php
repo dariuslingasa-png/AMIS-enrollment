@@ -18,7 +18,7 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                     <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
                 </svg>
-                Now Enrolling SY 2026–2027
+                AMIS Enrollment System - SY 2026 - 2027
             </span>
         </div>
 

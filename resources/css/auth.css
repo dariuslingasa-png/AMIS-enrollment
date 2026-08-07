@@ -62,17 +62,19 @@
     min-height: 100vh;
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
+    align-items: stretch;
 }
 
 .auth-hero-panel {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 2rem;
-    padding: clamp(3rem, 6vw, 5rem);
-    overflow: hidden;
+    justify-content: flex-start;
+    gap: 1.15rem;
+    padding: clamp(2rem, 3.5vw, 3.5rem);
+    overflow: visible;
     background: linear-gradient(160deg, #059669 0%, #065f46 68%);
     color: #ffffff;
+    min-height: 100%;
 }
 
 .auth-hero-brand {
