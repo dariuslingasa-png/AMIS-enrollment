@@ -8,7 +8,7 @@
                         <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="h-9 w-9 object-contain">
                         <div>
                             <span class="text-sm font-bold text-gray-900">AMIS</span>
-                            <span class="text-xs text-gray-500 block leading-none">Enrollment Portal</span>
+                            <span class="text-xs text-gray-500 block leading-none">Enrollment System</span>
                         </div>
                     </a>
                 </div>

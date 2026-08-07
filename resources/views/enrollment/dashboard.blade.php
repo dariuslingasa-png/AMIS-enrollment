@@ -19,7 +19,7 @@
                 <div class="dashboard-logo">
                     <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS Logo">
                     <div>
-                        <h1>AMIS Enrollment Portal</h1>
+                        <h1>AMIS Enrollment System</h1>
                         <p style="margin-bottom: 4px;">Welcome, {{ $user->name }}</p>
                         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; align-items: center;">
                             <!-- Activity Status Badge -->
