@@ -6,7 +6,7 @@
             <div>
                 <div class="auth-hero-arabic" lang="ar" dir="rtl">المدرسة المنورة الإسلامية</div>
                 <div class="auth-hero-school">AL MUNAWWARA ISLAMIC SCHOOL</div>
-                <div class="auth-hero-subtitle">AMIS Online Enrollment V2</div>
+                <div class="auth-hero-subtitle">AMIS ENROLLMENT SYSTEM</div>
             </div>
         </div>
 
@@ -173,7 +173,7 @@
                 }
             }">
                 <div class="auth-entry-heading">
-                    <span class="auth-entry-kicker">AMIS Enrollment V2</span>
+                    <span class="auth-entry-kicker">AMIS ENROLLMENT SYSTEM</span>
                     <h2 x-show="step === 'email'">Log in or sign up</h2>
                     <h2 x-show="step === 'otp'">Verify email</h2>
                     <p x-show="step === 'email'">Choose Google or Microsoft to open your pre-enrollment dashboard.</p>
