@@ -225,4 +225,86 @@ class UploadValidationRulesTest extends TestCase
             'status' => 'draft',
         ]);
     }
+
+    public function test_successful_ajax_submit_returns_json_with_redirect_url(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+        $draft = EnrollmentApplicant::create([
+            'user_id' => $user->id,
+            'status' => 'draft',
+            'first_name' => 'Ana',
+            'last_name' => 'Reyes',
+            'grade_level' => 'Grade 1',
+            'school_year' => '2026-2027',
+        ]);
+
+        $payload = [
+            'applicant_id' => $draft->id,
+            'student_type' => 'New',
+            'learning_mode' => 'Face-to-Face',
+            'grade_level' => 'Grade 1',
+            'last_name' => 'Reyes',
+            'first_name' => 'Ana',
+            'gender' => 'Female',
+            'date_of_birth' => '2019-05-15',
+            'place_of_birth' => 'Davao City',
+            'religion' => 'Islam',
+            'ethnicity' => 'Filipino',
+            'country' => 'Philippines',
+            'street_address' => 'Sample Street',
+            'mobile_country_code' => '+63',
+            'mobile_number' => '9123456789',
+            'parent_country_code' => '+63',
+            'parent_mobile' => '9123456789',
+            'medical_has_concern' => 'No',
+            'emergency_name' => 'Parent Reyes',
+            'emergency_relationship' => 'Parent',
+            'emergency_phone' => '9123456789',
+            'agreed_to_terms' => '1',
+            'agreed_to_fee_policy' => '1',
+            'agreed_to_data_privacy' => '1',
+            'school_year' => '2026-2027',
+            'photo_2x2' => UploadedFile::fake()->create('photo.jpg', 50, 'image/jpeg'),
+            'report_card' => UploadedFile::fake()->create('report.pdf', 50, 'application/pdf'),
+            'payment_receipt' => UploadedFile::fake()->create('receipt.jpg', 50, 'image/jpeg'),
+        ];
+
+        $response = $this->actingAs($user)->postJson('/enroll', $payload);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+        $this->assertNotEmpty($response->json('redirect'));
+    }
+
+    public function test_late_autosave_cannot_revert_submitted_application_back_to_draft(): void
+    {
+        $user = User::factory()->create();
+        $applicant = EnrollmentApplicant::create([
+            'user_id' => $user->id,
+            'status' => 'submitted',
+            'first_name' => 'Lito',
+            'last_name' => 'Cruz',
+            'grade_level' => 'Grade 10',
+            'school_year' => '2026-2027',
+        ]);
+
+        // Attempt late autosave after application has already been submitted
+        $response = $this->actingAs($user)->postJson('/enroll/draft', [
+            'applicant_id' => $applicant->id,
+            'first_name' => 'Lito Modified',
+            'last_name' => 'Cruz',
+        ]);
+
+        $response->assertStatus(200);
+
+        // Status MUST remain 'submitted' and NOT revert to 'draft'
+        $this->assertDatabaseHas('enrollment_applicants', [
+            'id' => $applicant->id,
+            'status' => 'submitted',
+        ]);
+    }
 }

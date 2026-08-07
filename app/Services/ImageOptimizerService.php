@@ -137,6 +137,22 @@ class ImageOptimizerService
         }
 
         try {
+            // Support both ImageMagick 7 ('magick') and ImageMagick 6 ('convert')
+            if ($args[0] === 'magick') {
+                static $binary = null;
+                if ($binary === null) {
+                    $binary = 'magick';
+                    @exec('which magick 2>&1', $testOut, $testCode);
+                    if ($testCode !== 0) {
+                        @exec('which convert 2>&1', $testOut2, $testCode2);
+                        if ($testCode2 === 0) {
+                            $binary = 'convert';
+                        }
+                    }
+                }
+                $args[0] = $binary;
+            }
+
             $escapedArgs = array_map('escapeshellarg', $args);
             $command = implode(' ', $escapedArgs);
             

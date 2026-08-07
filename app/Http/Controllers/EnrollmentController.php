@@ -497,6 +497,14 @@ class EnrollmentController extends Controller
             Log::error('Failed to send submission confirmation: ' . $e->getMessage());
         }
 
+        if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Your enrollment application and proof of payment have been submitted successfully!',
+                'redirect' => route('enrollment.success', ['applicant' => $applicant->id]),
+            ]);
+        }
+
         return redirect()->route('enrollment.success', ['applicant' => $applicant->id])
             ->with('success', 'Your enrollment application and proof of payment have been submitted successfully!');
     }

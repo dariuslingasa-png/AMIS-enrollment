@@ -91,9 +91,20 @@ class EnrollmentUploadService
                 $resultCode = -1;
                 if (function_exists('exec')) {
                     try {
-                        @exec('magick ' . escapeshellarg($absoluteOriginal) . ' -quality 85 ' . escapeshellarg($absoluteOptimized) . ' 2>&1', $output, $resultCode);
+                        static $imBinary = null;
+                        if ($imBinary === null) {
+                            $imBinary = 'magick';
+                            @exec('which magick 2>&1', $test1, $code1);
+                            if ($code1 !== 0) {
+                                @exec('which convert 2>&1', $test2, $code2);
+                                if ($code2 === 0) {
+                                    $imBinary = 'convert';
+                                }
+                            }
+                        }
+                        @exec($imBinary . ' ' . escapeshellarg($absoluteOriginal) . ' -quality 85 ' . escapeshellarg($absoluteOptimized) . ' 2>&1', $output, $resultCode);
                     } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::error("Failed to run magick command in EnrollmentUploadService: " . $e->getMessage());
+                        \Illuminate\Support\Facades\Log::error("Failed to run ImageMagick command in EnrollmentUploadService: " . $e->getMessage());
                     }
                 }
 
