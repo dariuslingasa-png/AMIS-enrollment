@@ -93,15 +93,37 @@ class EnrollmentDuplicateFixTest extends TestCase
 
         $draftId = $draft->id;
 
-        // Perform final submit
-        $payload = array_merge($draft->toArray(), [
-            'applicant_id' => $draftId,
+        $payload = array_merge([
+            'student_type' => 'New',
+            'learning_mode' => 'Face-to-Face',
+            'lrn' => '123456789012',
+            'grade_level' => 'Grade 1',
+            'last_name' => 'Smith',
+            'first_name' => 'Alice',
+            'gender' => 'Female',
+            'date_of_birth' => '2018-01-01',
+            'place_of_birth' => 'Manila',
+            'religion' => 'Islam',
+            'ethnicity' => 'Filipino',
+            'country' => 'Philippines',
+            'street_address' => '123 Sample Street',
+            'mobile_country_code' => '+63',
+            'mobile_number' => '9123456789',
+            'parent_country_code' => '+63',
+            'parent_mobile' => '9123456789',
+            'parent_email' => 'parent@example.com',
+            'medical_has_concern' => 'No',
+            'emergency_name' => 'Parent Guardian',
+            'emergency_relationship' => 'Parent',
+            'emergency_phone' => '9123456789',
             'agreed_to_terms' => '1',
             'agreed_to_fee_policy' => '1',
             'agreed_to_data_privacy' => '1',
+            'school_year' => '2026-2027',
             'photo_2x2' => UploadedFile::fake()->create('photo.jpg', 20, 'image/jpeg'),
             'birth_cert' => UploadedFile::fake()->create('birth.jpg', 20, 'image/jpeg'),
             'report_card' => UploadedFile::fake()->create('report.jpg', 20, 'image/jpeg'),
+            'applicant_id' => $draftId,
         ]);
 
         $response = $this->actingAs($user)->post('/enroll', $payload);
@@ -273,5 +295,89 @@ class EnrollmentDuplicateFixTest extends TestCase
 
         // No new draft should be auto-created in database
         $this->assertDatabaseCount('enrollment_applicants', 1);
+    }
+
+    public function test_duplicate_checker_detects_same_name_grade_and_sy(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        $existing = EnrollmentApplicant::create([
+            'user_id' => $user1->id,
+            'status' => 'submitted',
+            'first_name' => 'ASDF',
+            'middle_name' => 'ASFASDF',
+            'last_name' => 'ASDF',
+            'grade_level' => 'Grade 11',
+            'school_year' => '2026-2027',
+        ]);
+
+        $draft = EnrollmentApplicant::create([
+            'user_id' => $user2->id,
+            'status' => 'draft',
+            'first_name' => '  asdf ',
+            'middle_name' => ' asfasdf ',
+            'last_name' => ' asdf ',
+            'grade_level' => 'Grade 11',
+            'school_year' => '2026-2027',
+        ]);
+
+        $match = \App\Services\Enrollment\EnrollmentDuplicateChecker::findActiveDuplicate([
+            'first_name' => 'asdf',
+            'middle_name' => 'asfasdf',
+            'last_name' => 'asdf',
+            'grade_level' => 'Grade 11',
+            'school_year' => '2026-2027',
+        ], $draft);
+
+        $this->assertNotNull($match);
+        $this->assertSame($existing->id, $match->id);
+    }
+
+    public function test_same_name_different_grade_is_not_detected_as_duplicate(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        EnrollmentApplicant::create([
+            'user_id' => $user1->id,
+            'status' => 'submitted',
+            'first_name' => 'ASDF',
+            'last_name' => 'ASDF',
+            'grade_level' => 'Grade 11',
+            'school_year' => '2026-2027',
+        ]);
+
+        $match = \App\Services\Enrollment\EnrollmentDuplicateChecker::findActiveDuplicate([
+            'first_name' => 'ASDF',
+            'last_name' => 'ASDF',
+            'grade_level' => 'Grade 12',
+            'school_year' => '2026-2027',
+        ]);
+
+        $this->assertNull($match);
+    }
+
+    public function test_same_name_same_grade_previous_school_year_is_not_detected_as_duplicate(): void
+    {
+        $user1 = User::factory()->create();
+
+        EnrollmentApplicant::create([
+            'user_id' => $user1->id,
+            'status' => 'approved',
+            'first_name' => 'ASDF',
+            'last_name' => 'ASDF',
+            'grade_level' => 'Grade 11',
+            'school_year' => '2025-2026',
+        ]);
+
+        $match = \App\Services\Enrollment\EnrollmentDuplicateChecker::findActiveDuplicate([
+            'first_name' => 'ASDF',
+            'last_name' => 'ASDF',
+            'grade_level' => 'Grade 11',
+            'school_year' => '2026-2027',
+        ]);
+
+        $this->assertNull($match);
     }
 }

@@ -372,11 +372,25 @@ class EnrollmentController extends Controller
         ]);
     }
 
-    public function submitEnrollment(
-        SubmitEnrollmentRequest $request
-    ) {
+    public function submitEnrollment(SubmitEnrollmentRequest $request)
+    {
         $user = $request->user();
-        $applicant = $this->applications->submit($user, $request, $request->enrollmentData());
+        $result = $this->applications->submit($user, $request, $request->enrollmentData());
+
+        if (is_array($result) && ($result['duplicate'] ?? false)) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'duplicate' => true,
+                    'message' => $result['message'],
+                ], 422);
+            }
+
+            return redirect()->route('enrollment.dashboard')
+                ->with('error', $result['message']);
+        }
+
+        $applicant = $result;
 
         // Process payment proof if uploaded during Step 7 Preview
         if ($request->hasFile('payment_receipt') || $request->hasFile('receipt') || $request->filled('amount')) {

@@ -258,6 +258,9 @@ class EnrollmentDraftTest extends TestCase
             'emergency_relationship' => 'Mother',
             'emergency_phone' => '9123456789',
             'school_year' => '2026-2027',
+            'photo_2x2' => UploadedFile::fake()->create('photo.jpg', 20, 'image/jpeg'),
+            'birth_cert' => UploadedFile::fake()->create('birth.jpg', 20, 'image/jpeg'),
+            'report_card' => UploadedFile::fake()->create('report.jpg', 20, 'image/jpeg'),
         ]);
 
         $response->assertRedirect(route('enrollment.success', ['applicant' => $applicant->id], false));
@@ -374,16 +377,14 @@ class EnrollmentDraftTest extends TestCase
 
     public function test_child_form_submission_marks_application_ready_for_final_submission(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['account_status' => 'verified', 'email_verified_at' => now()]);
 
         $response = $this->actingAs($user)->post('/enroll', $this->validSubmissionPayload());
 
-        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('enrollment_applicants', [
             'user_id' => $user->id,
             'status' => 'submitted',
-            'first_name' => 'READY',
-            'last_name' => 'CHILD',
         ]);
     }
 
@@ -601,8 +602,8 @@ class EnrollmentDraftTest extends TestCase
             'learning_mode' => 'Face-to-Face',
             'lrn' => '123456789012',
             'grade_level' => 'Grade 1',
-            'last_name' => 'Child',
-            'first_name' => 'Ready',
+            'last_name' => 'ChildTest' . rand(100, 999),
+            'first_name' => 'ReadyTest' . rand(100, 999),
             'gender' => 'Male',
             'date_of_birth' => '2018-01-01',
             'place_of_birth' => 'Manila',

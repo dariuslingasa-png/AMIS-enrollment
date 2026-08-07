@@ -202,6 +202,36 @@ class EnrollmentApplicationService
                 return $applicant;
             }
 
+            // Check if an active application already exists for the same Full Name + Grade Level + School Year
+            $duplicateData = array_merge([
+                'first_name' => $applicant?->first_name,
+                'last_name' => $applicant?->last_name,
+                'middle_name' => $applicant?->middle_name,
+                'suffix' => $applicant?->suffix,
+                'grade_level' => $applicant?->grade_level,
+                'school_year' => $applicant?->school_year ?? '2026-2027',
+            ], array_filter($data));
+
+            $activeDuplicate = EnrollmentDuplicateChecker::findActiveDuplicate($duplicateData, $applicant);
+
+            if ($activeDuplicate) {
+                Log::warning('Active duplicate enrollment blocked during final submit', [
+                    'user_id' => $user->id,
+                    'attempted_applicant_id' => $applicant?->id,
+                    'existing_duplicate_id' => $activeDuplicate->id,
+                    'student_name' => ($duplicateData['first_name'] ?? '') . ' ' . ($duplicateData['last_name'] ?? ''),
+                    'grade_level' => $duplicateData['grade_level'] ?? '',
+                    'school_year' => $duplicateData['school_year'] ?? '',
+                ]);
+
+                return [
+                    'duplicate' => true,
+                    'message' => "Duplicate enrollment detected. A student with the same full name (" . trim(($activeDuplicate->first_name ?? '') . ' ' . ($activeDuplicate->last_name ?? '')) . ") and grade level ({$activeDuplicate->grade_level}) already has an active application for SY {$activeDuplicate->school_year} (Applicant #{$activeDuplicate->id}). No additional application was created.",
+                    'existing' => $activeDuplicate,
+                    'draft' => $applicant,
+                ];
+            }
+
             $submitData = array_merge($data, [
                 'user_id' => $user->id,
                 'status' => $this->submitStatusFor($applicant),
