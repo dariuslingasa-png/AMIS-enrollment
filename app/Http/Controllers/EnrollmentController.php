@@ -440,11 +440,15 @@ class EnrollmentController extends Controller
             $applicant->forceFill(['document_statuses' => $documentStatuses])->save();
         }
 
-        // Set application status directly to 'submitted' so it immediately appears in the Admin Portal!
         $applicant->update([
             'status' => EnrollmentApplicationService::STATUS_SUBMITTED,
+            'submitted_at' => $applicant->submitted_at ?? now(),
             'review_remarks' => null,
         ]);
+
+        if ((int) session('current_enrollment_applicant_id') === (int) $applicant->id) {
+            session()->forget('current_enrollment_applicant_id');
+        }
 
         try {
             $notifications = app(EnrollmentNotificationService::class);

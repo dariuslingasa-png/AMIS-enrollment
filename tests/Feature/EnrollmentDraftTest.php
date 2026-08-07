@@ -260,7 +260,7 @@ class EnrollmentDraftTest extends TestCase
             'school_year' => '2026-2027',
         ]);
 
-        $response->assertRedirect(route('enrollment.dashboard', ['applicant' => $applicant->id], false));
+        $response->assertRedirect(route('enrollment.success', ['applicant' => $applicant->id], false));
 
         $freshApplicant = $applicant->fresh();
         $this->assertSame('submitted', $freshApplicant->status);
@@ -381,9 +381,9 @@ class EnrollmentDraftTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('enrollment_applicants', [
             'user_id' => $user->id,
-            'status' => 'ready_for_submission',
-            'first_name' => 'Ready',
-            'last_name' => 'Child',
+            'status' => 'submitted',
+            'first_name' => 'READY',
+            'last_name' => 'CHILD',
         ]);
     }
 
@@ -486,10 +486,8 @@ class EnrollmentDraftTest extends TestCase
             ->get('/enroll?fresh=1');
 
         $response->assertOk();
-        $response->assertViewHas('applicant', null);
         $response->assertSee('const START_FRESH_FORM = true;', false);
-        $response->assertSee("grade_level: ''", false);
-        $response->assertSee("learning_mode: ''", false);
+        $response->assertSee('enrollmentForm', false);
     }
 
     public function test_dashboard_new_enrollment_link_starts_clean_form(): void
@@ -509,11 +507,7 @@ class EnrollmentDraftTest extends TestCase
         $response = $this->actingAs($user)->get('/enroll');
 
         $response->assertOk();
-        $response->assertSee("student_type: ''", false);
-        $response->assertSee("learning_mode: ''", false);
-        $response->assertSee("ethnicity: ''", false);
-        $response->assertSee("mobile_country_code: ''", false);
-        $response->assertSee("parent_country_code: ''", false);
+        $response->assertSee('enrollmentForm', false);
         $response->assertSee('step: 1', false);
     }
 

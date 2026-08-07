@@ -105,6 +105,27 @@ class EnrollmentApplicationService
 
     public function saveDraft(User $user, Request $request, array $data): EnrollmentApplicant|array
     {
+        $explicitId = $request->input('applicant_id')
+            ?? $request->query('applicant')
+            ?? session('current_enrollment_applicant_id');
+
+        if ($explicitId) {
+            $existing = EnrollmentApplicant::query()
+                ->where('user_id', $user->id)
+                ->whereKey($explicitId)
+                ->first();
+
+            if ($existing && in_array($existing->status, self::FINAL_STATUSES, true)) {
+                return $existing;
+            }
+        }
+
+        $applicant = $this->resolveEditableApplication($user, $request);
+
+        if ($applicant && in_array($applicant->status, self::FINAL_STATUSES, true)) {
+            return $applicant;
+        }
+
         $data['user_id'] = $user->id;
         $familyId = $this->familyApplicationIdFor($user);
         if ($familyId) {
@@ -115,8 +136,7 @@ class EnrollmentApplicationService
             && (int) $request->input('from_step', $data['last_step'] ?? 0) === 2;
 
         if ($shouldCheckDuplicate) {
-            $existingApplicant = $this->resolveEditableApplication($user, $request);
-            $duplicate = $this->findDuplicate($data, $existingApplicant);
+            $duplicate = $this->findDuplicate($data, $applicant);
             if ($duplicate) {
                 return [
                     'duplicate' => true,
@@ -126,20 +146,13 @@ class EnrollmentApplicationService
             }
         }
 
-        $applicant = $this->resolveEditableApplication($user, $request);
         $data['status'] = $applicant?->status === 'rejected' ? 'rejected' : self::STATUS_DRAFT;
 
         if ($applicant) {
             $applicant->update($data);
         } else {
-            // Deduplication: if no applicant_id was provided, check if a draft was
-            // just created in the last 30 seconds with the same student name to
-            // prevent race-condition duplicates (autosave + cancelAndSave firing together).
             $recent = $user->enrollmentApplicants()
-                ->where('status', self::STATUS_DRAFT)
-                ->where('updated_at', '>=', now()->subSeconds(30))
-                ->when(!empty($data['first_name']), fn ($q) => $q->where('first_name', $data['first_name']))
-                ->when(!empty($data['last_name']), fn ($q) => $q->where('last_name', $data['last_name']))
+                ->whereIn('status', self::EDITABLE_STATUSES)
                 ->latest()
                 ->first();
 
@@ -161,32 +174,60 @@ class EnrollmentApplicationService
 
     public function submit(User $user, Request $request, array $data): EnrollmentApplicant
     {
-        $applicant = $this->resolveEditableApplication($user, $request);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($user, $request, $data) {
+            $explicitId = $request->input('applicant_id')
+                ?? $request->query('applicant')
+                ?? session('current_enrollment_applicant_id');
 
-        $submitData = array_merge($data, [
-            'user_id' => $user->id,
-            'status' => $this->submitStatusFor($applicant),
-            'last_step' => 7,
-            'document_statuses' => $this->documentStatusesForResubmission($applicant),
-            'review_remarks' => null,
-        ]);
-        $familyId = $this->familyApplicationIdFor($user);
-        if ($familyId) {
-            $submitData['family_application_id'] = $familyId;
-        }
+            $applicant = null;
 
-        if ($applicant) {
-            $applicant->update($submitData);
-        } else {
-            $applicant = EnrollmentApplicant::create($submitData);
-        }
+            if ($explicitId) {
+                $applicant = EnrollmentApplicant::query()
+                    ->where('user_id', $user->id)
+                    ->whereKey($explicitId)
+                    ->lockForUpdate()
+                    ->first();
+            }
 
-        $this->ensureFamilyApplication($applicant, $user);
-        $this->discounts->apply($user, $applicant);
-        session(['current_enrollment_applicant_id' => $applicant->id]);
-        $this->uploads->storeEnrollmentDocuments($applicant, $request);
+            if (!$applicant) {
+                $applicant = EnrollmentApplicant::query()
+                    ->where('user_id', $user->id)
+                    ->whereIn('status', self::EDITABLE_STATUSES)
+                    ->latest()
+                    ->lockForUpdate()
+                    ->first();
+            }
 
-        return $applicant->refresh();
+            if ($applicant && in_array($applicant->status, self::FINAL_STATUSES, true)) {
+                return $applicant;
+            }
+
+            $submitData = array_merge($data, [
+                'user_id' => $user->id,
+                'status' => $this->submitStatusFor($applicant),
+                'last_step' => 7,
+                'submitted_at' => now(),
+                'document_statuses' => $this->documentStatusesForResubmission($applicant),
+                'review_remarks' => null,
+            ]);
+            $familyId = $this->familyApplicationIdFor($user);
+            if ($familyId) {
+                $submitData['family_application_id'] = $familyId;
+            }
+
+            if ($applicant) {
+                $applicant->update($submitData);
+            } else {
+                $applicant = EnrollmentApplicant::create($submitData);
+            }
+
+            $this->ensureFamilyApplication($applicant, $user);
+            $this->discounts->apply($user, $applicant);
+            session(['current_enrollment_applicant_id' => $applicant->id]);
+            $this->uploads->storeEnrollmentDocuments($applicant, $request);
+
+            return $applicant->refresh();
+        });
     }
 
     public function readyApplications(User $user): Collection

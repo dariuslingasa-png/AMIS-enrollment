@@ -104,9 +104,19 @@ function enrollmentForm() {
         },
 
         confirmAndSubmitForm(event) {
-            this.showSubmitConfirmModal = false;
+            if (this._submitted || this.loading) return;
+            this._submitted = true;
             this.loading = true;
-            const formEl = event.target.closest('form');
+            this.showSubmitConfirmModal = false;
+            clearTimeout(this._debounceTimer);
+
+            const btn = event?.target?.closest('button');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Submitting...';
+            }
+
+            const formEl = event?.target?.closest('form') || document.querySelector('[data-no-browser-autofill]');
             if (formEl) formEl.submit();
         },
 
