@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
 
         if ($isProduction) {
             URL::forceScheme('https');
-            URL::forceRootUrl('https://enrollment.amis.edu.ph');
+            URL::forceRootUrl(config('app.url'));
             
             if (!$this->app->runningInConsole()) {
                 $_SERVER['HTTPS'] = 'on';
