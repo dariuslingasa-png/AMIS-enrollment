@@ -393,7 +393,6 @@
             grid-template-columns: 1fr;
         }
 
-        .family-child-photo,
         .family-group-actions,
         .family-card-actions,
         .family-add-yes,
@@ -402,8 +401,11 @@
         }
 
         .family-child-photo {
-            height: 190px;
-            flex-basis: auto;
+            width: 96px !important;
+            height: 96px !important;
+            flex: 0 0 96px !important;
+            aspect-ratio: 1 / 1 !important;
+            border-radius: 14px !important;
         }
 
         .family-card-actions {

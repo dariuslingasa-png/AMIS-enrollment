@@ -26,6 +26,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/password', [\App\Http\Controllers\Auth\PasswordController::class, 'update'])->name('password.update');
+    Route::get('/enrollment/dashboard', [EnrollmentController::class, 'showDashboard'])->name('enrollment.dashboard');
+    Route::get('/enrollment/status', [EnrollmentController::class, 'checkApplicationStatus'])->name('enrollment.status');
+    Route::post('/activity/offline', [AuthController::class, 'setOffline'])->name('activity.offline');
 });
 
 Route::get('/g-signin', [GoogleAuthController::class, 'redirect'])->middleware('throttle:10,1')->name('auth.google');
@@ -52,19 +55,13 @@ Route::post('/email/verification-notification', [\App\Http\Controllers\Auth\Emai
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'showVerifyConfirm'])->middleware(['throttle:60,1'])->name('verification.verify');
 Route::post('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->middleware(['throttle:60,1'])->name('verification.verify.post');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/enrollment/dashboard', [EnrollmentController::class, 'showDashboard'])->name('enrollment.dashboard');
-    Route::get('/enrollment/status', [EnrollmentController::class, 'checkApplicationStatus'])->name('enrollment.status');
-    Route::post('/activity/offline', [AuthController::class, 'setOffline'])->name('activity.offline');
-});
-
 Route::middleware(['auth', 'verified', 'applicant'])->group(function () {
     Route::get('/enroll/new', [EnrollmentController::class, 'startNewApplication'])->name('enrollment.new');
     Route::get('/enroll/affidavit', [EnrollmentController::class, 'showAffidavit'])->name('enrollment.affidavit');
     Route::post('/enroll/affidavit/draft', [EnrollmentController::class, 'saveAffidavitDraft'])->name('enrollment.affidavit.draft');
     Route::post('/enroll/affidavit', [EnrollmentController::class, 'storeAffidavit'])->name('enrollment.affidavit.store');
-    Route::get('/enroll/{applicant}', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form.child');
     Route::get('/enroll', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form');
+    Route::get('/enroll/{applicant}', [EnrollmentController::class, 'showEnrollmentForm'])->name('enrollment.form.child');
     Route::post('/enroll', [EnrollmentController::class, 'submitEnrollment'])->middleware('throttle:20,1')->name('enrollment.submit');
     Route::post('/enroll/search-old-student', [EnrollmentController::class, 'searchOldStudent'])->name('enrollment.search-old-student');
     Route::post('/enroll/draft', [EnrollmentController::class, 'saveDraft'])->middleware('throttle:30,1')->name('enrollment.draft');
@@ -97,6 +94,16 @@ Route::prefix('workflow')->name('workflow.')->group(function () {
         Route::get('/workflows/{workflow}/runs', [WorkflowController::class, 'apiRuns'])->name('runs');
         Route::get('/dashboard-stats', [WorkflowController::class, 'apiDashboardStats'])->name('dashboard-stats');
     });
+});
+
+// ─── AMIS Document Generation & Export System ──────────────────────────────
+Route::prefix('admin/documents')->name('admin.documents.')->group(function () {
+    Route::get('/preview/{id}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'previewHtml'])->name('preview');
+    Route::get('/pdf/{id}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'exportPdf'])->name('pdf');
+    Route::get('/docx/{id}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'exportDocx'])->name('docx');
+    Route::post('/batch-export', [\App\Http\Controllers\Admin\DocumentExportController::class, 'batchExport'])->name('batch-export');
+    Route::get('/batch-status/{batchId}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'batchStatus'])->name('batch-status');
+    Route::get('/download-zip/{filename}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'downloadZip'])->name('download-zip');
 });
 
 if (app()->environment('local')) {

@@ -57,13 +57,13 @@
                 name="report_card"
                 :required="true"
                 :uploaded="$applicant?->report_card_url ?: $applicant?->affidavit_url"
-                accept="image/jpeg,image/jpg,image/png,application/pdf"
+                accept="image/jpeg,image/jpg,image/png"
                 :maxSizeMB="5"
                 guide-title="Preparation note"
                 :guide="[
                     'Latest report card or transcript copy.',
                     'Make sure grades and school name are visible.',
-                    'Upload a flat, uncropped image or PDF for faster review.',
+                    'Upload a flat, uncropped JPG or PNG image for faster review.',
                 ]"
                 :guide-images="[
                     ['src' => 'images/document-guide/document-blurry.svg', 'label' => 'Blurry', 'tone' => 'danger', 'alt' => 'Blurry report card upload example'],

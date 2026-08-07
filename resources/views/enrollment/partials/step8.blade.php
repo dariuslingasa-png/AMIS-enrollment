@@ -20,8 +20,12 @@
         {{-- Card 1: Student Profile & Modality --}}
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
             <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                <div class="flex items-center gap-2">
-                    <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                <div class="flex items-center gap-3">
+                    @if ($applicant?->photo_2x2_url)
+                        <img src="{{ asset('storage/' . $applicant->photo_2x2_url) }}" alt="2x2 Student Photo" class="h-12 w-12 rounded-xl object-cover border-2 border-emerald-500 shadow-sm flex-shrink-0">
+                    @else
+                        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                    @endif
                     <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-800">1. Student Details & Modality</h4>
                 </div>
                 <button type="button" @click="goToStep(2)" class="text-xs font-extrabold text-emerald-700 hover:underline cursor-pointer">Edit Student Info</button>
@@ -96,11 +100,15 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-2.5">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-3">
+                    @if ($applicant?->photo_2x2_url)
+                        <img src="{{ asset('storage/' . $applicant->photo_2x2_url) }}" alt="2x2 Student Photo" class="h-10 w-10 rounded-lg object-cover border border-emerald-500 flex-shrink-0">
+                    @else
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    @endif
                     <div>
                         <strong class="text-xs font-bold text-slate-900 block">2x2 Student Photo</strong>
-                        <span class="text-[10px] text-emerald-700 font-bold">Attached</span>
+                        <span class="text-[10px] text-emerald-700 font-bold">Attached & Verified</span>
                     </div>
                 </div>
                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-2.5">

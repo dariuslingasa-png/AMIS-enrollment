@@ -113,12 +113,6 @@
                 ])
             @endforeach
         </div>
-
-        @if ($paymentTarget)
-            <div class="family-payment-action-row">
-                <a href="{{ route('enrollment.payment', ['applicant' => $paymentTarget->id]) }}" class="family-action family-action-payment">Upload Payment Proof</a>
-            </div>
-        @endif
     @endif
 
     @if ($draftLikeApplications->isNotEmpty())
