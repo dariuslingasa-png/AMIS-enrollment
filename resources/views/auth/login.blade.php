@@ -1,47 +1,69 @@
 <x-guest-layout :show-loader="false">
 <div id="login-page" class="login-grid login-page visible">
-    <section class="login-info auth-hero-panel">
+    {{-- Left Hero Panel --}}
+    <section class="login-info auth-hero-panel" style="justify-content: flex-start; padding: clamp(2.5rem, 5vw, 4rem);">
+        {{-- Branding Block --}}
         <div class="login-brand-block auth-hero-brand">
-            <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS">
-            <div>
+            <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS Logo">
+            <div style="min-width: 0;">
                 <div class="auth-hero-arabic" lang="ar" dir="rtl">المدرسة المنورة الإسلامية</div>
                 <div class="auth-hero-school">AL MUNAWWARA ISLAMIC SCHOOL</div>
-                <div class="auth-hero-subtitle">AMIS ENROLLMENT SYSTEM</div>
+                <div class="auth-hero-subtitle" style="color: #a7f3d0; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.05em; margin-top: 2px;">AMIS ENROLLMENT SYSTEM</div>
             </div>
         </div>
 
-        <div class="login-headline-block auth-hero-copy">
+        {{-- Eyebrow Badge --}}
+        <div style="margin-top: 1.25rem;">
             <span class="auth-hero-eyebrow">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                     <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
                 </svg>
-                Now Enrolling SY 2026-2027
+                Now Enrolling SY 2026–2027
             </span>
-            <h1>Select login method.</h1>
-            <p>Log in or sign up using your Google or Microsoft account to open your pre-enrollment dashboard.</p>
         </div>
 
-        <div class="auth-hero-flow">
-            @php
-                $steps = [
-                    ['Student authentication', 'Sign in using Google or Microsoft.'],
-                    ['Enrollment form', 'Complete student, parent, medical, and document details.'],
-                    ['Payment proof', 'Upload GCash, Maya, or BDO receipt to secure the slot.'],
-                    ['School review', 'Track status and payment updates from your dashboard.'],
-                ];
-            @endphp
-            @foreach ($steps as $index => [$title, $copy])
-                <div class="auth-hero-flow-item">
-                    <span>{{ $index + 1 }}</span>
-                    <div>
-                        <strong>{{ $title }}</strong>
-                        <p>{{ $copy }}</p>
-                    </div>
-                </div>
-            @endforeach
+        {{-- Main Left Headline & Subtitle --}}
+        <div class="auth-hero-copy" style="max-width: 580px; margin-top: 1rem;">
+            <h1 style="font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 900; line-height: 1.2; color: #ffffff; margin: 0 0 0.65rem 0;">
+                How to Enroll in the<br>AMIS Enrollment System
+            </h1>
+            <p style="font-size: 0.95rem; line-height: 1.55; color: rgba(255, 255, 255, 0.88); font-weight: 500; margin: 0;">
+                Watch our enrollment guide and review the frequently asked questions before starting your application.
+            </p>
+        </div>
+
+        {{-- Video Guide Preview Card (Disabled non-interactive state) --}}
+        <div class="video-guide-preview-card" style="margin-top: 1.5rem; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; padding: 1.75rem 1.5rem; text-align: center; backdrop-filter: blur(12px); position: relative; overflow: hidden; max-width: 580px; box-shadow: 0 12px 32px rgba(0,0,0,0.18);">
+            <div style="position: absolute; top: 12px; right: 12px; background: rgba(245, 158, 11, 0.25); border: 1px solid rgba(245, 158, 11, 0.5); color: #fef08a; font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.06em;">
+                COMING SOON
+            </div>
+            
+            <div style="width: 52px; height: 52px; margin: 0 auto 0.85rem; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.3); color: rgba(255, 255, 255, 0.6); display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="margin-left: 3px;">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+            </div>
+
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #ffffff; letter-spacing: 0.03em;">
+                ENROLLMENT VIDEO GUIDE
+            </h3>
+            <p style="margin: 0.3rem 0 0 0; font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); font-weight: 500;">
+                Video walkthrough is currently being prepared for SY 2026–2027.
+            </p>
+        </div>
+
+        {{-- Enrollment FAQs Component --}}
+        <div style="max-width: 580px; width: 100%; margin-top: 1.5rem;">
+            <x-enrollment-faq-modal />
+        </div>
+
+        {{-- Left Footer Copyright --}}
+        <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid rgba(255, 255, 255, 0.15); color: rgba(255, 255, 255, 0.75); font-size: 0.8rem; font-weight: 500;">
+            © 2026 Al Munawwara Islamic School. All rights reserved. &bull; AMIS Enrollment System
         </div>
     </section>
- 
+
+    {{-- Right Login Panel --}}
     <section class="login-form">
         <div class="login-form-panel">
             <div class="auth-entry-card" x-data="{ 
@@ -172,6 +194,14 @@
                     });
                 }
             }">
+                {{-- Mobile Brand Header --}}
+                <div class="auth-entry-mobile-brand">
+                    <img src="{{ asset('images/AMIS_Logo.png') }}" alt="AMIS" class="auth-entry-mobile-logo">
+                    <div class="auth-entry-mobile-arabic" lang="ar" dir="rtl">المدرسة المنورة الإسلامية</div>
+                    <div class="auth-entry-mobile-school">AL MUNAWWARA ISLAMIC SCHOOL</div>
+                    <div style="color: #059669; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px;">AMIS ENROLLMENT SYSTEM</div>
+                </div>
+
                 <div class="auth-entry-heading">
                     <span class="auth-entry-kicker">AMIS ENROLLMENT SYSTEM</span>
                     <h2 x-show="step === 'email'">Log in or sign up</h2>
@@ -254,6 +284,16 @@
                 <p class="auth-entry-note" style="margin-top: 1.5rem; text-align: center; color: #64748b; font-size: 0.8rem;">
                     Sign in options are protected by AMIS security policies.
                 </p>
+
+                {{-- Mobile FAQ Section --}}
+                <div class="mobile-faq-wrapper" style="display: none; margin-top: 1.5rem;">
+                    <x-enrollment-faq-modal />
+                </div>
+
+                {{-- Mobile Copyright Footer --}}
+                <div style="margin-top: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.78rem; font-weight: 500;">
+                    © 2026 Al Munawwara Islamic School. All rights reserved.
+                </div>
             </div>
         </div>
     </section>
