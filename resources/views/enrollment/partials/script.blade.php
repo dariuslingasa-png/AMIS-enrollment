@@ -94,6 +94,8 @@ function enrollmentForm() {
         submittingEnrollmentOverlay: false,
         submitProgressTitle: 'Submitting Enrollment',
         submitProgressStatus: 'Saving application...',
+        showDuplicateErrorModal: false,
+        duplicateErrorMessage: '',
 
         openSubmitConfirmModal() {
             this.error = '';
@@ -158,9 +160,9 @@ function enrollmentForm() {
 
                     const errMsg = data.message || (data.errors ? Object.values(data.errors).flat()[0] : null) || 'A validation error occurred.';
                     this.error = errMsg;
-                    this.showToast(errMsg, 'error');
+                    this.duplicateErrorMessage = errMsg;
+                    this.showDuplicateErrorModal = true;
                     this.highlightInvalidFields();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             } catch (err) {
                 // Hide loading overlay and re-enable controls on server error
@@ -170,7 +172,8 @@ function enrollmentForm() {
 
                 const networkMsg = 'A network error occurred. Your draft remains safe. Please try again.';
                 this.error = networkMsg;
-                this.showToast(networkMsg, 'error');
+                this.duplicateErrorMessage = networkMsg;
+                this.showDuplicateErrorModal = true;
             }
         },
 
@@ -1587,9 +1590,13 @@ function enrollmentForm() {
                 Alpine.store('enrollmentGuide').gender = value || '';
             });
 
-            // If there are server-side validation errors, scroll to top
-            @if ($errors->any())
-            setTimeout(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 300);
+            // If there are server-side validation errors, pop up the dedicated error modal
+            @if ($errors->has('duplicate'))
+                this.duplicateErrorMessage = @json($errors->first('duplicate'));
+                this.showDuplicateErrorModal = true;
+            @elseif ($errors->any())
+                this.duplicateErrorMessage = @json($errors->first());
+                this.showDuplicateErrorModal = true;
             @endif
 
             // Precise User-Edited Detection: Only input & change events that are user-triggered (trusted)

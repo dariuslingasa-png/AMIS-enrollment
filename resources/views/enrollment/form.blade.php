@@ -269,25 +269,77 @@
                             <button type="button" class="btn-secondary" @click="showSubmitConfirmModal = false">Edit Application</button>
                             <button type="button" class="btn-primary" style="background-color:#059669 !important;" @click="confirmAndSubmitForm($event)">Yes, Submit Enrollment Now</button>
                         </div>
-                {{-- Submitting Enrollment Full-Screen Overlay --}}
-                <div x-show="submittingEnrollmentOverlay" x-cloak class="confirm-overlay" style="z-index: 200000; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);">
-                    <div class="confirm-dialog" style="max-width: 440px; text-align: center; padding: 2.5rem 2rem; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.1);">
-                        <div style="margin-bottom: 1.5rem;">
-                            <div style="width: 56px; height: 56px; margin: 0 auto 1.25rem; border: 4px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                            <h3 style="margin: 0; font-size: 1.35rem; color: #0f172a; font-weight: 900;" x-text="submitProgressTitle || 'Submitting Enrollment'"></h3>
-                            <p style="margin: 0.5rem 0 0; font-size: 0.88rem; color: #475569; font-weight: 600;" x-text="submitProgressStatus || 'Saving application...'"></p>
-                        </div>
-
-                        <div style="width: 100%; height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-bottom: 1.5rem; position: relative;">
-                            <div class="indeterminate-progress-bar" style="height: 100%; background: linear-gradient(90deg, #059669, #10b981); border-radius: 999px;"></div>
-                        </div>
-
-                        <p style="margin: 0; font-size: 0.8rem; color: #94a3b8; font-weight: 600;">
-                            Please do not close or refresh this page.
-                        </p>
                     </div>
                 </div>
             </form>
+
+            {{-- Full-Screen Submitting Enrollment Loading Overlay --}}
+            <div x-show="submittingEnrollmentOverlay" x-cloak class="confirm-overlay" style="z-index: 999999; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;">
+                <div class="confirm-dialog" style="max-width: 460px; width: 90%; text-align: center; padding: 2.5rem 2rem; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.15); background: white;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="width: 60px; height: 60px; margin: 0 auto 1.25rem; border: 4px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                        <h3 style="margin: 0; font-size: 1.35rem; color: #0f172a; font-weight: 900;" x-text="submitProgressTitle || 'Submitting Enrollment'"></h3>
+                        <p style="margin: 0.5rem 0 0; font-size: 0.88rem; color: #475569; font-weight: 600;" x-text="submitProgressStatus || 'Saving application...'"></p>
+                    </div>
+
+                    <div style="width: 100%; height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-bottom: 1.5rem; position: relative;">
+                        <div class="indeterminate-progress-bar" style="height: 100%; background: linear-gradient(90deg, #059669, #10b981); border-radius: 999px;"></div>
+                    </div>
+
+                    <p style="margin: 0; font-size: 0.8rem; color: #94a3b8; font-weight: 600;">
+                        Please do not close or refresh this page.
+                    </p>
+                </div>
+            </div>
+
+            {{-- Dedicated Duplicate Enrollment / Validation Error Modal Pop-up --}}
+            <div x-show="showDuplicateErrorModal" x-cloak class="confirm-overlay" style="z-index: 999998; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;" @keydown.escape.window="showDuplicateErrorModal = false">
+                <div class="confirm-dialog" style="max-width: 520px; width: 92%; padding: 2rem; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); background: white; border: 1px solid #fee2e2;" @click.outside="showDuplicateErrorModal = false">
+                    <button type="button" class="confirm-close-button" @click="showDuplicateErrorModal = false" aria-label="Close dialog">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                    <div class="confirm-dialog-copy">
+                        <div style="display:flex; align-items:center; gap:0.85rem; margin-bottom:1rem;">
+                            <div style="width:44px; height:44px; border-radius:12px; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 style="margin:0; font-size:1.3rem; color:#991b1b; font-weight:900; line-height:1.2;">Duplicate Enrollment Detected</h3>
+                                <span style="font-size:0.75rem; font-weight:700; color:#b91c1c; text-transform:uppercase; tracking-wider:0.05em;">AMIS Business Validation Notice</span>
+                            </div>
+                        </div>
+
+                        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:14px; padding:1rem 1.15rem; margin-top:0.75rem;">
+                            <p style="font-size:0.88rem; line-height:1.55; color:#7f1d1d; font-weight:600; margin:0;" x-text="duplicateErrorMessage"></p>
+                        </div>
+
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.85rem 1rem; margin-top:1rem; font-size:0.82rem; line-height:1.45; color:#475569;">
+                            <strong style="color:#0f172a;">Application Safe:</strong> Your current application remains saved as a <span style="color:#059669; font-weight:700;">Draft</span>. No duplicate pending application was created.
+                        </div>
+                    </div>
+
+                    <div class="confirm-dialog-actions" style="margin-top:1.5rem; display:flex; gap:0.75rem; justify-content:flex-end; align-items:center;">
+                        <button type="button" class="btn-secondary" style="padding: 0.65rem 1.25rem; font-weight: 700;" @click="showDuplicateErrorModal = false">
+                            Review / Edit Draft
+                        </button>
+                        <a href="{{ route('enrollment.dashboard') }}" class="btn-primary" style="background-color:#dc2626 !important; border-color:#b91c1c !important; padding: 0.65rem 1.4rem; font-weight: 800; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            <span>EXIT TO DASHBOARD</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
 
             <div x-show="showDuplicateModal" x-cloak class="confirm-overlay" @keydown.escape.window="closeDuplicateModal()">
                 <div class="confirm-dialog duplicate-dialog" @click.outside="closeDuplicateModal()">
