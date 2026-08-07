@@ -582,8 +582,11 @@
                 </div>
                 @endif
 
+                <!-- Enrollment FAQ Section -->
+                <x-enrollment-faq-modal />
+
                 <!-- Help Section -->
-                <div class="dashboard-info">
+                <div class="dashboard-info" style="margin-top: 1.5rem;">
                     <h3>Need Help?</h3>
                     <p>Choose the office that best matches your question.</p>
                     <div class="support-card-grid">

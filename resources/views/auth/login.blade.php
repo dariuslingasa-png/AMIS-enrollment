@@ -37,8 +37,11 @@
                         <strong>{{ $title }}</strong>
                         <p>{{ $copy }}</p>
                     </div>
-                </div>
             @endforeach
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <x-enrollment-faq-modal />
         </div>
     </section>
  
