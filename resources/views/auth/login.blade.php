@@ -195,7 +195,7 @@
                     <span class="auth-entry-kicker">AMIS ENROLLMENT SYSTEM</span>
                     <h2 x-show="step === 'email'">Log in or sign up</h2>
                     <h2 x-show="step === 'otp'">Verify email</h2>
-                    <p x-show="step === 'email'">Choose Google, Microsoft, or Email to open your pre-enrollment dashboard.</p>
+                    <p x-show="step === 'email'">Choose Google or Microsoft to open your pre-enrollment dashboard.</p>
                     <p x-show="step === 'otp'">We sent a 4-digit verification code to <strong x-text="email" style="color:#0f172a; word-break:break-all;"></strong>. Enter the code to continue.</p>
                 </div>
 
@@ -238,21 +238,33 @@
                         <span style="background: #fef3c7; color: #92400e; font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 999px; text-transform: uppercase;">COMING SOON</span>
                     </div>
 
-                    <div class="auth-option-divider" style="display: flex; margin: 1.15rem 0 1rem; text-transform: lowercase;"><span>or sign in with email</span></div>
+                    <!-- Email Sign In (Coming Soon) -->
+                    <div class="auth-coming-soon-option" style="margin-bottom: 0.75rem; min-height: 50px; border-radius: 9999px; border: 1.5px dashed #cbd5e1; background: #f8fafc; padding: 0.6rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" aria-hidden="true" style="flex-shrink: 0;">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                            <span style="font-size: 0.9rem; font-weight: 600; color: #64748b;">Sign in with Email</span>
+                        </div>
+                        <span style="background: #fef3c7; color: #92400e; font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 999px; text-transform: uppercase;">COMING SOON</span>
+                    </div>
 
-                    <div class="form-group" style="display: block; margin-bottom: 0.85rem;">
+                    <div class="auth-option-divider" style="display: none;"><span>or</span></div>
+
+                    <div class="form-group" style="display: none;">
                         <label for="email" class="premium-input-label">Email address</label>
                         <div class="premium-input-wrapper">
                             <svg class="premium-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                                 <polyline points="22,6 12,13 2,6"/>
                             </svg>
-                            <input type="email" id="email" x-model="email" placeholder="Enter your email address" required class="premium-input-field" @keydown.enter.prevent="submitEmail()">
+                            <input type="email" id="email" x-model="email" placeholder="Enter your email address" class="premium-input-field" @keydown.enter.prevent="submitEmail()">
                         </div>
                     </div>
 
-                    <button type="button" class="auth-button premium-continue-button" @click="submitEmail()" :disabled="loading" style="display: flex;">
-                        <span x-show="!loading">Continue with Email</span>
+                    <button type="button" class="auth-button premium-continue-button" @click="submitEmail()" :disabled="loading" style="display: none;">
+                        <span x-show="!loading">Continue</span>
                         <span x-show="loading" class="premium-spinner"></span>
                     </button>
                 </div>
