@@ -375,19 +375,39 @@ class EnrollmentController extends Controller
     public function submitEnrollment(SubmitEnrollmentRequest $request)
     {
         $user = $request->user();
-        $result = $this->applications->submit($user, $request, $request->enrollmentData());
 
-        if (is_array($result) && ($result['duplicate'] ?? false)) {
-            if ($request->wantsJson()) {
+        try {
+            $result = $this->applications->submit($user, $request, $request->enrollmentData());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $msg = collect($e->errors())->flatten()->first() ?? 'Duplicate or invalid application detected.';
+            if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'duplicate' => true,
+                    'code' => 'DUPLICATE_ENROLLMENT',
+                    'message' => $msg,
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
+        }
+
+        if (is_array($result) && ($result['duplicate'] ?? false)) {
+            if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'duplicate' => true,
+                    'code' => 'DUPLICATE_ENROLLMENT',
                     'message' => $result['message'],
                 ], 422);
             }
 
-            return redirect()->route('enrollment.dashboard')
-                ->with('error', $result['message']);
+            return redirect()->back()
+                ->withErrors(['duplicate' => $result['message']])
+                ->withInput();
         }
 
         $applicant = $result;
@@ -691,7 +711,7 @@ class EnrollmentController extends Controller
             'amount' => 'required|numeric|min:1|max:999999',
             'remarks' => 'nullable|string|max:1000',
             'receipts' => $receiptRule . '|array',
-            'receipts.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'receipts.*' => 'file|mimes:png,jpg,jpeg',
         ]);
 
         // Access raw receipt_url using getRawOriginal if possible, or fallback to direct attribute

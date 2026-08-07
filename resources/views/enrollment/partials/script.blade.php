@@ -91,6 +91,9 @@ function enrollmentForm() {
         toasts: [],
         hasAttemptedNext: false,
         _toastTimeout: null,
+        submittingEnrollmentOverlay: false,
+        submitProgressTitle: 'Submitting Enrollment',
+        submitProgressStatus: 'Saving application...',
 
         openSubmitConfirmModal() {
             this.error = '';
@@ -103,21 +106,72 @@ function enrollmentForm() {
             this.showSubmitConfirmModal = true;
         },
 
-        confirmAndSubmitForm(event) {
+        async confirmAndSubmitForm(event) {
             if (this._submitted || this.loading) return;
             this._submitted = true;
             this.loading = true;
             this.showSubmitConfirmModal = false;
-            clearTimeout(this._debounceTimer);
 
-            const btn = event?.target?.closest('button');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerText = 'Submitting...';
+            // Stop/clear autosave timers and wait for inflight request
+            clearTimeout(this._debounceTimer);
+            while (this._savingInflight) {
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
 
-            const formEl = event?.target?.closest('form') || document.querySelector('[data-no-browser-autofill]');
-            if (formEl) formEl.submit();
+            // Display loading overlay
+            this.submittingEnrollmentOverlay = true;
+            this.submitProgressTitle = 'Submitting Enrollment';
+            this.submitProgressStatus = 'Saving application...';
+
+            const formEl = document.querySelector('[data-no-browser-autofill]');
+            const formData = formEl ? new FormData(formEl) : new FormData();
+
+            // Progress status stages
+            setTimeout(() => { if (this.submittingEnrollmentOverlay) this.submitProgressStatus = 'Validating information...'; }, 500);
+            setTimeout(() => { if (this.submittingEnrollmentOverlay) this.submitProgressStatus = 'Checking duplicate enrollment...'; }, 1000);
+            setTimeout(() => { if (this.submittingEnrollmentOverlay) this.submitProgressStatus = 'Finalizing submission...'; }, 1500);
+
+            try {
+                const response = await fetch('{{ route("enrollment.submit") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success !== false) {
+                    this.submitProgressTitle = '✓ Enrollment Submitted';
+                    this.submitProgressStatus = 'Enrollment submitted successfully. Redirecting...';
+                    this.clearLocalDraft();
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '{{ route("enrollment.dashboard") }}';
+                    }, 600);
+                } else {
+                    // Hide loading overlay and re-enable submission controls on validation/duplicate failure
+                    this.submittingEnrollmentOverlay = false;
+                    this._submitted = false;
+                    this.loading = false;
+
+                    const errMsg = data.message || (data.errors ? Object.values(data.errors).flat()[0] : null) || 'A validation error occurred.';
+                    this.error = errMsg;
+                    this.showToast(errMsg, 'error');
+                    this.highlightInvalidFields();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (err) {
+                // Hide loading overlay and re-enable controls on server error
+                this.submittingEnrollmentOverlay = false;
+                this._submitted = false;
+                this.loading = false;
+
+                const networkMsg = 'A network error occurred. Your draft remains safe. Please try again.';
+                this.error = networkMsg;
+                this.showToast(networkMsg, 'error');
+            }
         },
 
         showToast(message, type = 'error') {

@@ -669,10 +669,10 @@
                             </svg>
                             <span class="payment-upload-text">Click to upload files</span>
                             <div style="margin-top:0.35rem; display:flex; flex-direction:column; align-items:center; gap:0.125rem; font-size:11px; font-weight:500; color:#6b7280;">
-                                <span>Accepted Formats: <strong style="color:#374151;">JPG, JPEG, PNG, PDF</strong></span>
+                                <span>Accepted Formats: <strong style="color:#374151;">JPG, JPEG, PNG</strong></span>
                                 <span style="color:#059669; font-weight:600; margin-top:0.25rem;">(Multiple files supported, large images compressed)</span>
                             </div>
-                            <input x-ref="receiptInput" type="file" name="receipts[]" multiple accept="image/jpeg,image/jpg,image/png,application/pdf" style="display:none;" {{ !$payment?->receipt_url ? 'required' : '' }}
+                            <input x-ref="receiptInput" type="file" name="receipts[]" multiple accept=".png,.jpg,.jpeg,image/png,image/jpeg" style="display:none;" {{ !$payment?->receipt_url ? 'required' : '' }}
                                 @change="handleReceiptChange($event)">
                         </label>
                     </div>

@@ -45,6 +45,19 @@
         .enrollment-page textarea::placeholder {
             text-transform: none !important;
         }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes indeterminate-bar {
+            0% { transform: translateX(-100%) scaleX(0.2); }
+            50% { transform: translateX(0%) scaleX(0.6); }
+            100% { transform: translateX(100%) scaleX(0.2); }
+        }
+        .indeterminate-progress-bar {
+            animation: indeterminate-bar 1.5s ease-in-out infinite;
+            transform-origin: left;
+        }
     </style>
     <!-- Full Page Loading Skeleton -->
     <div x-show="initialLoading" x-cloak>
@@ -256,6 +269,22 @@
                             <button type="button" class="btn-secondary" @click="showSubmitConfirmModal = false">Edit Application</button>
                             <button type="button" class="btn-primary" style="background-color:#059669 !important;" @click="confirmAndSubmitForm($event)">Yes, Submit Enrollment Now</button>
                         </div>
+                {{-- Submitting Enrollment Full-Screen Overlay --}}
+                <div x-show="submittingEnrollmentOverlay" x-cloak class="confirm-overlay" style="z-index: 200000; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);">
+                    <div class="confirm-dialog" style="max-width: 440px; text-align: center; padding: 2.5rem 2rem; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.1);">
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="width: 56px; height: 56px; margin: 0 auto 1.25rem; border: 4px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                            <h3 style="margin: 0; font-size: 1.35rem; color: #0f172a; font-weight: 900;" x-text="submitProgressTitle || 'Submitting Enrollment'"></h3>
+                            <p style="margin: 0.5rem 0 0; font-size: 0.88rem; color: #475569; font-weight: 600;" x-text="submitProgressStatus || 'Saving application...'"></p>
+                        </div>
+
+                        <div style="width: 100%; height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-bottom: 1.5rem; position: relative;">
+                            <div class="indeterminate-progress-bar" style="height: 100%; background: linear-gradient(90deg, #059669, #10b981); border-radius: 999px;"></div>
+                        </div>
+
+                        <p style="margin: 0; font-size: 0.8rem; color: #94a3b8; font-weight: 600;">
+                            Please do not close or refresh this page.
+                        </p>
                     </div>
                 </div>
             </form>

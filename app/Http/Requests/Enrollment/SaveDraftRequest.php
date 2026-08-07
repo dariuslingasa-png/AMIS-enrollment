@@ -14,12 +14,13 @@ class SaveDraftRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'photo_2x2'         => 'nullable|mimes:jpg,jpeg,png|max:5120',
-            'birth_cert'        => 'nullable|mimes:jpg,jpeg,png|max:5120',
-            'report_card'       => 'nullable|mimes:jpg,jpeg,png|max:5120',
-            'marriage_contract' => 'nullable|mimes:jpg,jpeg,png|max:5120',
-            'medical_record'    => 'nullable|mimes:jpg,jpeg,png|max:5120',
-            'affidavit'         => 'nullable|mimes:jpg,jpeg,png|max:5120',
+            'photo_2x2'         => 'nullable|file|mimes:png,jpg,jpeg',
+            'birth_cert'        => 'nullable|file|mimes:png,jpg,jpeg',
+            'report_card'       => 'nullable|file|mimes:pdf,jpg,jpeg',
+            'marriage_contract' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
+            'medical_record'    => 'nullable|file|mimes:pdf,jpg,jpeg,png',
+            'affidavit'         => 'nullable|file|mimes:pdf,jpg,jpeg,png',
+            'payment_receipt'   => 'nullable|file|mimes:png,jpg,jpeg',
         ];
     }
 

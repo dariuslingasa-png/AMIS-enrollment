@@ -109,7 +109,7 @@
             <x-form-field-label required>Upload Proof of Payment / Receipt Photo</x-form-field-label>
             
             <div class="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-5 text-center hover:border-indigo-400 transition" :class="{ 'is-invalid-field': isFieldInvalid('payment_receipt') }">
-                <input type="file" name="payment_receipt" id="payment_receipt_input" accept="image/jpeg,image/jpg,image/png,application/pdf"
+                <input type="file" name="payment_receipt" id="payment_receipt_input" accept=".png,.jpg,.jpeg,image/png,image/jpeg"
                     @change="
                         const file = $event.target.files[0];
                         if (file) {
@@ -120,7 +120,7 @@
                                 };
                                 reader.readAsDataURL(file);
                             } else {
-                                paymentReceiptPreview = 'pdf';
+                                paymentReceiptPreview = 'image';
                             }
                         }
                     "
@@ -134,7 +134,7 @@
                         </div>
                         <div>
                             <span class="text-xs font-extrabold text-indigo-700 hover:underline">Click to upload payment receipt</span>
-                            <p class="text-[11px] text-slate-500 font-medium mt-0.5">JPG, PNG, or PDF up to 5MB</p>
+                            <p class="text-[11px] text-slate-500 font-medium mt-0.5">JPG or PNG receipt photo</p>
                         </div>
                     </label>
                 </template>
