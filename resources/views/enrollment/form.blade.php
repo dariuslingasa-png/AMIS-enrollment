@@ -311,25 +311,35 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 style="margin:0; font-size:1.3rem; color:#991b1b; font-weight:900; line-height:1.2;">Duplicate Enrollment Detected</h3>
-                                <span style="font-size:0.75rem; font-weight:700; color:#b91c1c; text-transform:uppercase; tracking-wider:0.05em;">AMIS Business Validation Notice</span>
+                                <h3 style="margin:0; font-size:1.3rem; color:#9a3412; font-weight:900; line-height:1.2;">Already Enrolled / Applied</h3>
+                                <span style="font-size:0.75rem; font-weight:700; color:#c2410c; text-transform:uppercase; tracking-wider:0.05em;">Existing Student Record Found</span>
                             </div>
                         </div>
 
-                        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:14px; padding:1rem 1.15rem; margin-top:0.75rem;">
-                            <p style="font-size:0.88rem; line-height:1.55; color:#7f1d1d; font-weight:600; margin:0;" x-text="duplicateErrorMessage"></p>
+                        <p style="font-size:0.92rem; line-height:1.55; color:#334155; font-weight:600; margin:0 0 0.85rem 0;">
+                            This student already has an active application on file for the current school year. You do not need to create another application.
+                        </p>
+
+                        <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:14px; padding:1rem 1.15rem; margin-bottom:1rem;">
+                            <span style="font-size:0.75rem; font-weight:800; color:#9a3412; uppercase; display:block; margin-bottom:0.35rem;">Application Details:</span>
+                            <p style="font-size:0.88rem; line-height:1.5; color:#7c2d12; font-weight:600; margin:0;" x-text="duplicateErrorMessage"></p>
                         </div>
 
-                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.85rem 1rem; margin-top:1rem; font-size:0.82rem; line-height:1.45; color:#475569;">
-                            <strong style="color:#0f172a;">Application Safe:</strong> Your current application remains saved as a <span style="color:#059669; font-weight:700;">Draft</span>. No duplicate pending application was created.
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.85rem 1rem; font-size:0.82rem; line-height:1.45; color:#475569;">
+                            <strong style="color:#0f172a;">What happens next?</strong>
+                            <ul style="margin:0.35rem 0 0 1.15rem; padding:0; list-style-type:disc; space-y:0.2rem;">
+                                <li>Your current entry is saved as a <strong>Draft</strong> (no duplicate application was created).</li>
+                                <li>To check your existing application, click <strong>EXIT TO DASHBOARD</strong> below.</li>
+                                <li>If you made a typo in the student's name or grade, click <strong>Edit Draft</strong> to fix it.</li>
+                            </ul>
                         </div>
                     </div>
 
                     <div class="confirm-dialog-actions" style="margin-top:1.5rem; display:flex; gap:0.75rem; justify-content:flex-end; align-items:center;">
                         <button type="button" class="btn-secondary" style="padding: 0.65rem 1.25rem; font-weight: 700;" @click="showDuplicateErrorModal = false">
-                            Review / Edit Draft
+                            Edit Draft
                         </button>
-                        <a href="{{ route('enrollment.dashboard') }}" class="btn-primary" style="background-color:#dc2626 !important; border-color:#b91c1c !important; padding: 0.65rem 1.4rem; font-weight: 800; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;">
+                        <a href="{{ route('enrollment.dashboard') }}" class="btn-primary" style="background-color:#ea580c !important; border-color:#c2410c !important; padding: 0.65rem 1.4rem; font-weight: 800; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                                 <polyline points="16 17 21 12 16 7"/>

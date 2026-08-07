@@ -149,7 +149,7 @@ class UploadValidationRulesTest extends TestCase
             'code' => 'DUPLICATE_ENROLLMENT',
             'duplicate' => true,
         ]);
-        $this->assertStringContainsString('Duplicate enrollment detected', $response->json('message'));
+        $this->assertStringContainsString('An active application already exists', $response->json('message'));
 
         // Draft remains intact as draft
         $this->assertDatabaseHas('enrollment_applicants', [

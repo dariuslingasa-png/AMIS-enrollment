@@ -224,7 +224,8 @@ class EnrollmentApplicationService
                     'school_year' => $duplicateData['school_year'] ?? '',
                 ]);
 
-                $duplicateMessage = "Duplicate enrollment detected. A student with the same full name (" . trim(($activeDuplicate->first_name ?? '') . ' ' . ($activeDuplicate->last_name ?? '')) . ") and grade level ({$activeDuplicate->grade_level}) already has an active application for SY {$activeDuplicate->school_year} (Applicant #{$activeDuplicate->id}). No additional application was created.";
+                $studentFullName = trim(($activeDuplicate->first_name ?? '') . ' ' . ($activeDuplicate->last_name ?? ''));
+                $duplicateMessage = "An active application already exists for {$studentFullName} ({$activeDuplicate->grade_level}, SY {$activeDuplicate->school_year}) under Application #{$activeDuplicate->id}. You do not need to submit another application.";
 
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'duplicate' => $duplicateMessage,
