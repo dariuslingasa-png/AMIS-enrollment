@@ -1,5 +1,6 @@
 <div x-data="{ 
     showFaqModal: false, 
+    isCollapsed: false,
     activeFaqIndex: 1,
     faqs: [
         {
@@ -34,7 +35,7 @@
 }">
     <!-- Compact Desktop/Mobile FAQ Card Component -->
     <div class="faq-section-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:1.35rem 1.5rem; box-shadow:0 4px 20px -2px rgba(0,0,0,0.04); margin-top:1.5rem;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <div @click="isCollapsed = !isCollapsed" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; flex-wrap:wrap; gap:0.5rem;">
             <div style="display:flex; align-items:center; gap:0.65rem;">
                 <div style="width:38px; height:38px; border-radius:12px; background:#ecfdf5; color:#059669; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -48,10 +49,17 @@
                     <p style="margin:2px 0 0; font-size:0.8rem; color:#64748b; font-weight:500;">Quick answers to common online enrollment questions</p>
                 </div>
             </div>
-            <span style="font-size:0.75rem; font-weight:700; color:#059669; background:#ecfdf5; padding:0.25rem 0.65rem; border-radius:999px; border:1px solid #a7f3d0;">4 Topics</span>
+            <div style="display:flex; align-items:center; gap:0.65rem;">
+                <span style="font-size:0.75rem; font-weight:700; color:#059669; background:#ecfdf5; padding:0.25rem 0.65rem; border-radius:999px; border:1px solid #a7f3d0;">4 Topics</span>
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" :style="isCollapsed ? '' : 'transform: rotate(180deg);'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+            </div>
         </div>
 
-        <div class="faq-compact-grid" style="display:grid; grid-template-columns:1fr; gap:0.55rem;">
+        <div x-show="!isCollapsed" x-collapse class="faq-compact-grid" style="display:grid; grid-template-columns:1fr; gap:0.55rem; margin-top: 1rem;">
             <template x-for="faq in faqs" :key="faq.id">
                 <button type="button" @click="openFaq(faq.id)" class="faq-item-button" style="width:100%; text-align:left; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.85rem 1rem; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; cursor:pointer; transition:all 0.15s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
                     <div style="display:flex; align-items:flex-start; gap:0.75rem; flex:1; min-width:0;">
