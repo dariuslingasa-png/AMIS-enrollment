@@ -343,6 +343,30 @@
                                 <strong>Dear Parents,</strong> your enrollment {{ $totalSiblings > 1 ? 'applications have' : 'application has' }} been successfully submitted and {{ $totalSiblings > 1 ? 'are' : 'is' }} currently pending review by the school registrar and admin office. We will verify your submitted documents and transaction references shortly. <strong>Please wait 1–2 banking/business days for verification.</strong> No further action is required at this stage.
                             </div>
 
+                            <!-- Fast-Track Approval / Facebook Follow-Up Card -->
+                            <div style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 14px; padding: 0.95rem 1.15rem; margin-top: 0.85rem; backdrop-filter: blur(8px);">
+                                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                                    <div style="width: 38px; height: 38px; border-radius: 10px; background: #ffffff; color: #0f766e; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                        </svg>
+                                    </div>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="font-size: 0.75rem; font-weight: 800; color: #fde68a; text-transform: uppercase; letter-spacing: 0.05em;">Need Faster Approval?</div>
+                                        <div style="font-size: 0.88rem; color: #ffffff; font-weight: 500; margin-top: 0.15rem; line-height: 1.4;">
+                                            Message <strong>Sir Mohaymen Unos</strong> directly on Facebook to fast-track your enrollment approval.
+                                        </div>
+                                        <a href="https://web.facebook.com/sirmo.amis" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.55rem; background: #ffffff; color: #0f766e; font-size: 0.82rem; font-weight: 800; padding: 0.45rem 0.9rem; border-radius: 8px; text-decoration: none; transition: background 0.15s ease;">
+                                            <span>Message Sir Mohaymen on Facebook</span>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="7" y1="17" x2="17" y2="7"></line>
+                                                <polyline points="7 7 17 7 17 17"></polyline>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Dynamic sibling status summary --}}
                             @if ($totalSiblings > 1)
                                 <div style="margin-top:1.15rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.18); font-size:0.82rem; opacity:0.95; display:flex; flex-direction:column; gap:0.4rem;">
