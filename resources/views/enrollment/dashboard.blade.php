@@ -585,41 +585,50 @@
                 <!-- Enrollment FAQ Section -->
                 <x-enrollment-faq-modal />
 
-                <!-- Help Section -->
-                <div class="dashboard-info" style="margin-top: 1.5rem;">
-                    <h3>Need Help?</h3>
-                    <p>Choose the office that best matches your question.</p>
-                    <div class="support-card-grid">
-                        <a href="https://web.facebook.com/almunawwaraislamicschool" target="_blank" rel="noopener" class="support-card">
-                            <span class="support-card-icon">
-                                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6"/><path d="M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c2 1.6 10 1.6 12 0v-5"/></svg>
-                            </span>
-                            <span>
-                                <strong>Admissions</strong>
-                                <small>Questions about requirements, child details, or application status.</small>
-                                <em>Message the school page</em>
-                            </span>
-                        </a>
-                        <a href="mailto:amisonlinesupport@gmail.com" class="support-card">
-                            <span class="support-card-icon">
-                                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
-                            </span>
-                            <span>
-                                <strong>Technical Support</strong>
-                                <small>Help with login, uploads, email verification, or page errors.</small>
-                                <em>amisonlinesupport@gmail.com</em>
-                            </span>
-                        </a>
-                        <a href="mailto:amisfinance2324@gmail.com" class="support-card">
-                            <span class="support-card-icon">
-                                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M7 15h.01"/><path d="M11 15h2"/></svg>
-                            </span>
-                            <span>
-                                <strong>Finance</strong>
-                                <small>Payment, receipt, verification, and enrollment fee concerns.</small>
-                                <em>amisfinance2324@gmail.com</em>
-                            </span>
-                        </a>
+                <!-- Collapsible Help Section -->
+                <div class="dashboard-info" style="margin-top: 1.5rem;" x-data="{ open: false }">
+                    <div @click="open = !open" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                                Need Help?
+                            </h3>
+                            <p style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: #64748b;">
+                                Click to contact our technical support staff for assistance.
+                            </p>
+                        </div>
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" :style="open ? 'transform: rotate(180deg);' : ''">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div x-show="open" x-collapse style="margin-top: 1.15rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; display: none;">
+                        <div style="max-width: 480px;">
+                            <a href="https://web.facebook.com/sirmo.amis" target="_blank" rel="noopener" class="support-card" style="display: flex; align-items: center; gap: 1rem; padding: 1rem 1.15rem; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                                <div style="width: 44px; height: 44px; border-radius: 12px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                    </svg>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 0.75rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em;">Technical Staff</div>
+                                    <div style="font-size: 1rem; font-weight: 800; color: #0f172a; margin-top: 0.1rem;">Sir Mohaymen Unos</div>
+                                    <div style="font-size: 0.82rem; color: #1d4ed8; font-weight: 600; margin-top: 0.2rem; display: flex; align-items: center; gap: 0.35rem;">
+                                        <span>Message on Facebook</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="7" y1="17" x2="17" y2="7"></line>
+                                            <polyline points="7 7 17 7 17 17"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
