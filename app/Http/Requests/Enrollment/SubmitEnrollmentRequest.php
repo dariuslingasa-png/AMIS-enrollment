@@ -81,8 +81,8 @@ class SubmitEnrollmentRequest extends FormRequest
             'agreed_to_data_privacy'  => 'nullable',
             'school_year'             => 'required|string',
             'photo_2x2'               => ($applicant?->photo_2x2_url ? 'nullable' : 'required') . '|file|mimes:png,jpg,jpeg',
-            'birth_cert'              => 'nullable|file|mimes:png,jpg,jpeg',
-            'report_card'             => 'nullable|file|mimes:pdf,jpg,jpeg',
+            'birth_cert'              => 'nullable|file|mimes:png,jpg,jpeg,webp', // REMOVED PDF
+            'report_card'             => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp', // ADDED PNG, WEBP
             'marriage_contract'       => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'medical_record'          => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'affidavit'               => 'nullable|file|mimes:pdf,jpg,jpeg,png',
@@ -90,7 +90,7 @@ class SubmitEnrollmentRequest extends FormRequest
             'amount'                  => 'nullable|numeric',
             'reference_no'            => 'nullable|string|max:100',
             'remarks'                 => 'nullable|string|max:1000',
-            'payment_receipt'         => 'nullable|file|mimes:png,jpg,jpeg',
+            'payment_receipt'         => 'nullable|file|mimes:png,jpg,jpeg,webp,pdf',
             'agreed_final_confirmation' => 'nullable',
         ];
     }

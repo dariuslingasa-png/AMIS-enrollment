@@ -449,14 +449,23 @@ class EnrollmentController extends Controller
 
             $paymentData = [
                 'user_id' => $user->id,
+                'enrollment_applicant_id' => $applicant->id,
                 'method' => in_array($method, ['bdo', 'gcash', 'maya', 'remittance', 'other']) ? $method : 'gcash',
+                'payment_provider' => $method,
                 'amount' => $amount,
+                'reference_no' => $referenceNo,
+                'reference_number' => $referenceNo,
                 'receipt_url' => $receiptPath,
                 'status' => 'pending',
                 'remarks' => $request->input('remarks'),
                 'paid_at' => now(),
                 'verified_at' => null,
             ];
+
+            if ($receiptPath) {
+                $applicant->enrollment_fee_receipt_url = $receiptPath;
+                $applicant->save();
+            }
 
             if (Schema::hasColumn('payments', 'reference_no')) {
                 $paymentData['reference_no'] = $referenceNo;
@@ -719,7 +728,7 @@ class EnrollmentController extends Controller
             'amount' => 'required|numeric|min:1|max:999999',
             'remarks' => 'nullable|string|max:1000',
             'receipts' => $receiptRule . '|array',
-            'receipts.*' => 'file|mimes:png,jpg,jpeg',
+            'receipts.*' => 'file|mimes:png,jpg,jpeg,webp,pdf',
         ]);
 
         // Access raw receipt_url using getRawOriginal if possible, or fallback to direct attribute
@@ -754,14 +763,23 @@ class EnrollmentController extends Controller
 
         $paymentData = [
             'user_id' => $user->id,
+            'enrollment_applicant_id' => $applicant->id,
             'method' => in_array($validated['method'], ['bdo', 'gcash', 'maya', 'remittance', 'other']) ? $validated['method'] : 'gcash',
+            'payment_provider' => $validated['method'],
             'amount' => $validated['amount'],
+            'reference_no' => $validated['reference_no'] ?? null,
+            'reference_number' => $validated['reference_no'] ?? null,
             'receipt_url' => $receiptPath,
             'status' => 'pending',
             'remarks' => $validated['remarks'] ?? null,
             'paid_at' => now(),
             'verified_at' => null,
         ];
+
+        if ($receiptPath) {
+            $applicant->proof_of_payment = $receiptPath;
+            $applicant->save();
+        }
 
         if (Schema::hasColumn('payments', 'reference_no')) {
             $paymentData['reference_no'] = $validated['reference_no'] ?? null;

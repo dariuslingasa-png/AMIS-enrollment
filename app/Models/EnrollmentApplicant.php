@@ -4,34 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EnrollmentApplicant extends Model
 {
+    use SoftDeletes;
     protected static function booted()
     {
-        static::saving(function ($applicant) {
-            if ($applicant->isDirty('medical_has_concern') && $applicant->medical_has_concern === 'No') {
-                if ($applicant->medical_record_url) {
-                    Storage::disk('public')->delete($applicant->medical_record_url);
-                    if (str_contains($applicant->medical_record_url, '/optimized/')) {
-                        Storage::disk('public')->delete(str_replace('/optimized/', '/original/', $applicant->medical_record_url));
-                        Storage::disk('public')->delete(str_replace('/optimized/', '/thumbnails/small/', $applicant->medical_record_url));
-                        Storage::disk('public')->delete(str_replace('/optimized/', '/thumbnails/medium/', $applicant->medical_record_url));
-                        Storage::disk('public')->delete(str_replace('/optimized/', '/thumbnails/large/', $applicant->medical_record_url));
-                    }
-                    $applicant->medical_record_url = null;
-                }
-                
-                // Clear document_statuses medical_record
-                $docStatuses = $applicant->document_statuses ?? [];
-                if (isset($docStatuses['medical_record'])) {
-                    unset($docStatuses['medical_record']);
-                    $applicant->document_statuses = empty($docStatuses) ? null : $docStatuses;
-                }
-            }
-        });
-
         static::updated(function ($applicant) {
             // 1. Sync grade_level to associated Student
             if ($applicant->wasChanged('grade_level') && $applicant->student) {
@@ -48,7 +28,8 @@ class EnrollmentApplicant extends Model
             // 3. Sync name changes to student's User account name
             if (($applicant->wasChanged('first_name') || $applicant->wasChanged('middle_name') || $applicant->wasChanged('last_name') || $applicant->wasChanged('suffix')) && $applicant->student && $applicant->student->user) {
                 $user = $applicant->student->user;
-                $user->name = trim($applicant->first_name . ' ' . ($applicant->middle_name ?? '') . ' ' . $applicant->last_name . ($applicant->suffix ? ' ' . $applicant->suffix : ''));
+                $middleInitial = $applicant->middle_name ? mb_substr(trim($applicant->middle_name), 0, 1, 'UTF-8').'.' : '';
+                $user->name = preg_replace('/\s+/', ' ', trim($applicant->first_name.' '.$middleInitial.' '.$applicant->last_name.($applicant->suffix ? ' '.$applicant->suffix : '')));
                 $user->saveQuietly();
             }
         });
@@ -67,7 +48,6 @@ class EnrollmentApplicant extends Model
         'first_name',
         'last_name',
         'middle_name',
-        'suffix',
         'gender',
         'date_of_birth',
         'place_of_birth',
@@ -102,6 +82,7 @@ class EnrollmentApplicant extends Model
         'facebook',
         'whatsapp',
         'facebook_screenshot_url',
+        'enrollment_fee_receipt_url',
         'referral_source',
         // Medical & Emergency
         'psych_testing',
@@ -118,6 +99,7 @@ class EnrollmentApplicant extends Model
         'emergency_name',
         'emergency_relationship',
         'emergency_phone',
+        'emergency_address',
         // Documents
         'photo_2x2_url',
         'birth_cert_url',
@@ -136,16 +118,23 @@ class EnrollmentApplicant extends Model
         'discount_type',
         'discount_percentage',
         'discount_amount',
+        'registry_email_sent_at',
+        'onboarding_email_status',
+        'onboarding_email_sent_at',
+        'onboarding_email_error',
     ];
 
     protected $casts = [
-        'date_of_birth'      => 'date',
-        'last_step'          => 'integer',
-        'affidavit_data'     => 'array',
-        'document_statuses'  => 'array',
-        'sibling_order'      => 'integer',
-        'discount_percentage'=> 'decimal:2',
-        'discount_amount'    => 'decimal:2',
+        'date_of_birth' => 'date',
+        'family_application_id' => 'integer',
+        'last_step' => 'integer',
+        'affidavit_data' => 'array',
+        'document_statuses' => 'array',
+        'sibling_order' => 'integer',
+        'discount_percentage' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'registry_email_sent_at' => 'datetime',
+        'onboarding_email_sent_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -153,19 +142,26 @@ class EnrollmentApplicant extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function payment(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function payment(): HasOne
     {
         return $this->hasOne(Payment::class, 'enrollment_applicant_id');
     }
 
-    public function student(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function student(): HasOne
     {
-        return $this->hasOne(\App\Models\Student::class, 'enrollment_applicant_id');
+        return $this->hasOne(Student::class, 'enrollment_applicant_id');
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'family_application_id', 'family_application_id');
     }
 
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . ($this->middle_name ?? '') . ' ' . $this->last_name . ($this->suffix ? ' ' . $this->suffix : ''));
+        $middleInitial = $this->middle_name ? mb_substr(trim($this->middle_name), 0, 1, 'UTF-8').'.' : '';
+
+        return preg_replace('/\s+/', ' ', trim($this->first_name.' '.$middleInitial.' '.$this->last_name));
     }
 
     /**
@@ -174,35 +170,78 @@ class EnrollmentApplicant extends Model
     public function getCompletionPercentageAttribute(): int
     {
         $hasAcademicProof = $this->student_type === 'Old'
-            || !empty($this->report_card_url)
-            || !empty($this->affidavit_url);
+            || ! empty($this->report_card_url)
+            || ! empty($this->affidavit_url);
 
         $checks = [
             // Step 1 (weight: 5 fields)
-            !empty($this->student_type),
-            !empty($this->grade_level),
-            !empty($this->first_name),
-            !empty($this->last_name),
-            !empty($this->gender),
-            !empty($this->date_of_birth),
-            !empty($this->place_of_birth),
-            !empty($this->religion),
-            !empty($this->country),
-            !empty($this->street_address),
-            !empty($this->mobile_number),
+            ! empty($this->student_type),
+            ! empty($this->grade_level),
+            ! empty($this->first_name),
+            ! empty($this->last_name),
+            ! empty($this->gender),
+            ! empty($this->date_of_birth),
+            ! empty($this->place_of_birth),
+            ! empty($this->religion),
+            ! empty($this->country),
+            ! empty($this->street_address),
+            ! empty($this->mobile_number),
             // Step 2
-            !empty($this->parent_mobile),
+            ! empty($this->parent_mobile),
             // Step 3
-            !empty($this->emergency_name),
-            !empty($this->emergency_relationship),
-            !empty($this->emergency_phone),
+            ! empty($this->emergency_name),
+            ! empty($this->emergency_relationship),
+            ! empty($this->emergency_phone),
             // Step 5 - documents
-            !empty($this->photo_2x2_url),
+            ! empty($this->photo_2x2_url),
             $hasAcademicProof,
         ];
 
         $filled = count(array_filter($checks));
+
         return (int) round(($filled / count($checks)) * 100);
+    }
+
+    /**
+     * Get a list of incomplete/missing mandatory fields or documents.
+     */
+    public function getIncompleteFieldsAttribute(): array
+    {
+        $missing = [];
+        $labels = [
+            'student_type' => 'Student Type',
+            'grade_level' => 'Grade Level',
+            'first_name' => 'First Name',
+            'last_name' => 'Last Name',
+            'gender' => 'Gender',
+            'date_of_birth' => 'Date of Birth',
+            'place_of_birth' => 'Place of Birth',
+            'religion' => 'Religion',
+            'country' => 'Country',
+            'street_address' => 'Street Address',
+            'mobile_number' => 'Student Mobile Number',
+            'parent_mobile' => 'Parent Mobile Number',
+            'emergency_name' => 'Emergency Contact Name',
+            'emergency_relationship' => 'Emergency Contact Relationship',
+            'emergency_phone' => 'Emergency Contact Phone',
+            'photo_2x2_url' => '2x2 Photo',
+        ];
+
+        foreach ($labels as $field => $label) {
+            if (empty($this->$field)) {
+                $missing[] = $label;
+            }
+        }
+
+        $hasAcademicProof = $this->student_type === 'Old'
+            || ! empty($this->report_card_url)
+            || ! empty($this->affidavit_url);
+
+        if (! $hasAcademicProof) {
+            $missing[] = 'Academic Proof (SF9 / Report Card or Affidavit)';
+        }
+
+        return $missing;
     }
 
     public function setFirstNameAttribute($value)
@@ -212,11 +251,44 @@ class EnrollmentApplicant extends Model
 
     public function setMiddleNameAttribute($value)
     {
-        $this->attributes['middle_name'] = $value !== null ? mb_strtoupper($value, 'UTF-8') : null;
+        if ($value !== null && trim((string) $value) !== '') {
+            $trimmed = trim((string) $value);
+            $firstChar = mb_substr($trimmed, 0, 1, 'UTF-8');
+            $this->attributes['middle_name'] = mb_strtoupper(($firstChar === '.') ? '.' : $firstChar.'.', 'UTF-8');
+        } else {
+            $this->attributes['middle_name'] = null;
+        }
+    }
+
+    public function setFatherMiddleNameAttribute($value)
+    {
+        if ($value !== null && trim((string) $value) !== '') {
+            $trimmed = trim((string) $value);
+            $firstChar = mb_substr($trimmed, 0, 1, 'UTF-8');
+            $this->attributes['father_middle_name'] = mb_strtoupper(($firstChar === '.') ? '.' : $firstChar.'.', 'UTF-8');
+        } else {
+            $this->attributes['father_middle_name'] = null;
+        }
+    }
+
+    public function setMotherMiddleNameAttribute($value)
+    {
+        if ($value !== null && trim((string) $value) !== '') {
+            $trimmed = trim((string) $value);
+            $firstChar = mb_substr($trimmed, 0, 1, 'UTF-8');
+            $this->attributes['mother_middle_name'] = mb_strtoupper(($firstChar === '.') ? '.' : $firstChar.'.', 'UTF-8');
+        } else {
+            $this->attributes['mother_middle_name'] = null;
+        }
     }
 
     public function setLastNameAttribute($value)
     {
         $this->attributes['last_name'] = $value !== null ? mb_strtoupper($value, 'UTF-8') : null;
+    }
+
+    public function getGradeAbbrAttribute(): string
+    {
+        return Student::abbreviateGrade($this->grade_level);
     }
 }

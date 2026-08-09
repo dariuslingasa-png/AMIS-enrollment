@@ -1,3 +1,17 @@
+<style>
+    @keyframes amisSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .amis-spinner-icon {
+        animation: amisSpin 0.85s linear infinite;
+        flex-shrink: 0;
+    }
+    .premium-input-wrapper input#email {
+        padding-left: 3.2rem !important;
+        padding-right: 1.25rem !important;
+    }
+</style>
 <x-guest-layout :show-loader="false">
 <div id="login-page" class="login-grid login-page visible">
     {{-- Left Hero Panel --}}
@@ -58,7 +72,8 @@
             <div class="auth-entry-card" x-data="{ 
                 email: '', 
                 otp: ['', '', '', ''], 
-                step: 'email', 
+                step: 'providers',
+                showEmailForm: false, 
                 loading: false, 
                 errorMessage: '', 
                 successMessage: '',
@@ -203,22 +218,22 @@
                 <div class="auth-success-message" x-show="successMessage" x-text="successMessage" style="display:none;"></div>
                 <div class="auth-error-message" x-show="errorMessage" x-text="errorMessage" style="display:none;"></div>
 
-                <!-- Step 1: Email View -->
-                <div x-show="step === 'email'">
-                    <!-- Google Sign In Button -->
-                    <a href="{{ route('auth.google') }}" class="btn-google-auth-premium" style="margin-bottom: 0.75rem;">
-                        <svg class="auth-google-logo" width="18" height="18" viewBox="0 0 24 24" style="margin-right: 12px; flex-shrink: 0;">
-                            <path fill="#EA4335" d="M12 5.04c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 1.76 14.94 1 12 1 7.35 1 3.39 3.65 1.44 7.5l3.8 2.94c.9-2.7 3.4-4.4 6.76-4.4z"/>
-                            <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.34H12v4.44h6.44c-.28 1.48-1.12 2.73-2.38 3.58l3.69 2.87c2.16-1.99 3.4-4.93 3.4-8.55z"/>
-                            <path fill="#FBBC05" d="M5.24 14.56c-.23-.69-.36-1.43-.36-2.2s.13-1.51.36-2.2L1.44 7.22C.52 9.07 0 11.13 0 13.3c0 2.17.52 4.23 1.44 6.08l3.8-2.82z"/>
-                            <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.92l-3.69-2.87c-1.02.68-2.33 1.09-3.97 1.09-3.36 0-5.86-1.7-6.76-4.4l-3.8 2.94C3.39 20.35 7.35 23 12 23z"/>
+                <!-- Step 1: Login Providers Options -->
+                <div x-show="step === 'providers'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                    <!-- Google Sign In -->
+                    <a href="{{ route('auth.google') }}" class="auth-provider-button google-auth-button" style="margin-bottom: 0.75rem; width: 100%; min-height: 50px; border-radius: 9999px; border: 1.5px solid #e2e8f0; background: #ffffff; padding: 0.6rem 1.25rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; text-decoration: none; font-weight: 600; color: #1e293b;">
+                        <svg class="auth-google-logo" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex-shrink: 0;">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                         </svg>
                         <span>Sign in with Google</span>
                     </a>
 
-                    <!-- Microsoft Sign In Button -->
-                    <a href="{{ route('auth.microsoft') }}" class="btn-microsoft-auth-premium" style="margin-bottom: 0.75rem;">
-                        <svg class="auth-microsoft-logo" width="18" height="18" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 12px; flex-shrink: 0;">
+                    <!-- Microsoft Sign In -->
+                    <a href="{{ route('auth.microsoft') }}" class="auth-provider-button microsoft-auth-button" style="margin-bottom: 0.75rem; width: 100%; min-height: 50px; border-radius: 9999px; border: 1.5px solid #e2e8f0; background: #ffffff; padding: 0.6rem 1.25rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; text-decoration: none; font-weight: 600; color: #1e293b;">
+                        <svg class="auth-microsoft-logo" width="18" height="18" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
                             <rect width="10.5" height="10.5" fill="#F25022"/>
                             <rect x="12.5" width="10.5" height="10.5" fill="#7FBA00"/>
                             <rect y="12.5" width="10.5" height="10.5" fill="#00A4EF"/>
@@ -238,37 +253,50 @@
                         <span style="background: #fef3c7; color: #92400e; font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 999px; text-transform: uppercase;">COMING SOON</span>
                     </div>
 
-                    <!-- Email Sign In (Coming Soon) -->
-                    <div class="auth-coming-soon-option" style="margin-bottom: 0.75rem; min-height: 50px; border-radius: 9999px; border: 1.5px dashed #cbd5e1; background: #f8fafc; padding: 0.6rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 0.65rem;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" aria-hidden="true" style="flex-shrink: 0;">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                <polyline points="22,6 12,13 2,6"/>
-                            </svg>
-                            <span style="font-size: 0.9rem; font-weight: 600; color: #64748b;">Sign in with Email</span>
-                        </div>
-                        <span style="background: #fef3c7; color: #92400e; font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 999px; text-transform: uppercase;">COMING SOON</span>
-                    </div>
-
-                    <div class="auth-option-divider" style="display: none;"><span>or</span></div>
-
-                    <div class="form-group" style="display: none;">
-                        <label for="email" class="premium-input-label">Email address</label>
-                        <div class="premium-input-wrapper">
-                            <svg class="premium-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                <polyline points="22,6 12,13 2,6"/>
-                            </svg>
-                            <input type="email" id="email" x-model="email" placeholder="Enter your email address" class="premium-input-field" @keydown.enter.prevent="submitEmail()">
-                        </div>
-                    </div>
-
-                    <button type="button" class="auth-button premium-continue-button" @click="submitEmail()" :disabled="loading" style="display: none;">
-                        <span x-show="!loading">Continue</span>
-                        <span x-show="loading" class="premium-spinner"></span>
+                    <!-- Active Email Sign In Button (Transitions to Step 2 Card) -->
+                    <button type="button" @click="step = 'email'; errorMessage = ''; successMessage = '';" class="auth-provider-button email-auth-button" style="margin-bottom: 0.75rem; width: 100%; min-height: 50px; border-radius: 9999px; border: 1.5px solid #064e3b; background: #ffffff; padding: 0.6rem 1.25rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; font-weight: 600; color: #064e3b; cursor: pointer; transition: all 0.2s ease;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#064e3b" stroke-width="2" aria-hidden="true" style="flex-shrink: 0;">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        <span style="font-size: 0.9rem; font-weight: 700;">Sign in with Email</span>
                     </button>
                 </div>
 
+                <!-- Step 2: Dedicated Email Card View -->
+                <div x-show="step === 'email'" style="display:none;" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                    <div style="margin-bottom: 1.25rem;">
+                        <a href="#" @click.prevent="step = 'providers'; errorMessage = ''; successMessage = '';" style="display: inline-flex; align-items: center; gap: 0.4rem; color: #064e3b; font-size: 0.85rem; font-weight: 700; text-decoration: none;">
+                            &larr; Back to login options
+                        </a>
+                    </div>
+
+                    <h2 style="font-size: 1.35rem; font-weight: 800; color: #064e3b; margin-bottom: 0.35rem; font-family: 'Outfit', sans-serif;">Sign in with Email</h2>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem;">Enter your email address below to receive a 4-digit verification code.</p>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="email" class="premium-input-label" style="display: block; font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.4rem;">Email address</label>
+                        <div class="premium-input-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
+                            <svg class="premium-input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" aria-hidden="true" style="position: absolute; left: 1.1rem; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 10; flex-shrink: 0;">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                            <input type="email" id="email" x-model="email" placeholder="Enter your email address" class="premium-input-field" style="width: 100%; padding-left: 3.1rem !important; padding-right: 1.25rem !important; padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; border-radius: 9999px; border: 1.5px solid #cbd5e1; font-size: 0.95rem; outline: none; background: #ffffff; color: #0f172a; box-sizing: border-box;" @keydown.enter.prevent="submitEmail()">
+                        </div>
+                    </div>
+
+                    <button type="button" class="auth-button premium-continue-button" @click="submitEmail()" :disabled="loading || !email" style="width: 100%; min-height: 48px; border-radius: 9999px; background: #064e3b; color: #ffffff; font-weight: 700; font-size: 0.95rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.6rem;">
+                        <span x-show="!loading">Send OTP Code</span>
+                        <span x-show="loading" style="display: flex; align-items: center; justify-content: center; gap: 0.6rem;">
+                            <svg class="amis-spinner-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" stroke-dasharray="32" stroke-dashoffset="10" fill="none"/>
+                            </svg>
+                            <span>Sending OTP Code...</span>
+                        </span>
+                    </button>
+                </div>
+
+                
                 <!-- Step 2: OTP View -->
                 <div x-show="step === 'otp'" style="display:none;">
                     <div class="otp-inputs-row">
@@ -282,9 +310,14 @@
                                x-model="otp[3]" @input="handleOtpInput($event, 3)" @keydown="handleOtpKeydown($event, 3)" x-ref="otp3">
                     </div>
 
-                    <button type="button" class="auth-button premium-continue-button" @click="verifyOtpCode()" :disabled="loading || otp.join('').length !== 4" style="margin-top: 1.5rem;">
-                        <span x-show="!loading">Verify Code</span>
-                        <span x-show="loading" class="premium-spinner"></span>
+                    <button type="button" class="auth-button premium-continue-button" @click="verifyOtpCode()" :disabled="loading || otp.join('').length !== 4" style="width: 100%; min-height: 48px; border-radius: 9999px; background: #064e3b; color: #ffffff; font-weight: 700; font-size: 0.95rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-top: 1.5rem;">
+                        <span x-show="!loading">Verify Code & Sign In</span>
+                        <span x-show="loading" style="display: flex; align-items: center; justify-content: center; gap: 0.6rem;">
+                            <svg class="amis-spinner-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" stroke-dasharray="32" stroke-dashoffset="10" fill="none"/>
+                            </svg>
+                            <span>Verifying Code...</span>
+                        </span>
                     </button>
 
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; font-size:0.85rem;">

@@ -34,6 +34,72 @@ class EnrollmentUploadService
 
         $childFolder = $childFullNameSlug . '_' . $gradeSlug;
 
+        // 3. Process payment_receipt / receipt file if present in Step 7 form
+        if ($request->hasFile('payment_receipt') || $request->hasFile('receipt') || $request->hasFile('receipts')) {
+            $receiptFiles = [];
+            if ($request->hasFile('payment_receipt')) {
+                $receiptFiles = [$request->file('payment_receipt')];
+            } elseif ($request->hasFile('receipt')) {
+                $receiptFiles = [$request->file('receipt')];
+            } elseif ($request->hasFile('receipts')) {
+                $receiptFiles = is_array($request->file('receipts')) ? $request->file('receipts') : [$request->file('receipts')];
+            }
+
+            $dir = 'documents/' . $familyFolder . '/' . $childFolder;
+            $newPaths = [];
+            foreach ($receiptFiles as $idx => $file) {
+                if (!$file) continue;
+                $timestamp = time();
+                $ext = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg';
+                $filename = 'payment_receipt_' . $childFullNameSlug . '_' . $timestamp . '_' . $idx . '.' . $ext;
+                $path = $file->storeAs($dir, $filename, 'public');
+                if ($path) {
+                    $newPaths[] = $path;
+                }
+            }
+
+            if (!empty($newPaths)) {
+                $receiptPath = count($newPaths) === 1 ? $newPaths[0] : json_encode($newPaths);
+                
+                // SHARE PAYMENT PROOF ACROSS ALL FAMILY MEMBERS / SIBLINGS!
+                $familyId = $applicant->family_application_id ?: $applicant->id;
+                $familyMembers = EnrollmentApplicant::where(function ($query) use ($applicant, $familyId) {
+                    $query->where('user_id', $applicant->user_id)
+                        ->orWhere('family_application_id', $familyId)
+                        ->orWhere('id', $familyId);
+                })->get();
+
+                foreach ($familyMembers as $member) {
+                    $member->enrollment_fee_receipt_url = $receiptPath;
+                    $member->save();
+                }
+
+                $method = $request->input('method', 'gcash');
+                $amount = (float) $request->input('amount', 4000.00);
+                $refNo = $request->input('reference_no');
+
+                \App\Models\Payment::updateOrCreate(
+                    [
+                        'enrollment_applicant_id' => $applicant->id,
+                    ],
+                    [
+                        'user_id' => $applicant->user_id,
+                        'enrollment_applicant_id' => $applicant->id,
+                        'method' => in_array($method, ['bdo', 'gcash', 'maya', 'remittance', 'other']) ? $method : 'gcash',
+                        'payment_provider' => $method,
+                        'amount' => $amount,
+                        'reference_no' => $refNo,
+                        'reference_number' => $refNo,
+                        'receipt_url' => $receiptPath,
+                        'status' => 'pending',
+                        'remarks' => $request->input('remarks'),
+                        'paid_at' => now(),
+                    ]
+                );
+            }
+        }
+
+
         foreach (self::DOCUMENT_FIELDS as $key) {
             if (!$request->hasFile($key)) {
                 continue;
