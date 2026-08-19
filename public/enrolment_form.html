@@ -268,14 +268,32 @@
             display: none;
         }
 
-        input[type="checkbox"]:checked + .custom-checkbox::after {
-            content: "✓";
-            position: absolute;
-            top: -4px;
-            left: 3px;
-            font-size: 17px;
+        /* Modality & Shift Checkboxes Bar */
+        .modality-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 6px;
+            margin-bottom: 2px;
+        }
+
+        .modality-title {
+            font-size: 0.90rem;
             font-weight: bold;
-            color: #000;
+            text-transform: uppercase;
+        }
+
+        .modality-bar .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.88rem;
+            font-weight: bold;
+        }
+
+        .modality-bar .custom-checkbox {
+            width: 18px;
+            height: 18px;
         }
 
         /* 2x2 Photo Box */
@@ -576,6 +594,25 @@
                         <span>LRN:</span>
                         <input type="text" class="lrn-input">
                     </div>
+                </div>
+
+                <div class="modality-bar">
+                    <span class="modality-title">MODALITY:</span>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="modality" value="F2F" checked>
+                        <span class="custom-checkbox"></span>
+                        <span>F2F</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="modality" value="1st Shift">
+                        <span class="custom-checkbox"></span>
+                        <span>1ST SHIFT</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="modality" value="2nd Shift">
+                        <span class="custom-checkbox"></span>
+                        <span>2ND SHIFT</span>
+                    </label>
                 </div>
             </div>
 
