@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
-                    'Accept': 'application/json',
+                    'Accept': 'application/json, text/plain, */*',
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                 },

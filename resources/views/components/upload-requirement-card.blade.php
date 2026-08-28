@@ -213,7 +213,7 @@ function registerUploadComponent(Alpine) {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
+                        'Accept': 'application/json, text/plain, */*',
                     },
                 });
                 if (!response.ok) throw new Error('Unable to remove file');

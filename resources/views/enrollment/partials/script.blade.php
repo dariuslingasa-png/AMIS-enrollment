@@ -137,7 +137,7 @@ function enrollmentForm() {
                 const response = await fetch('{{ route("enrollment.submit") }}', {
                     method: 'POST',
                     headers: {
-                        'Accept': 'application/json',
+                        'Accept': 'application/json, text/plain, */*',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     },
                     body: formData,
@@ -835,7 +835,13 @@ function enrollmentForm() {
                         uploadedNames.push(name);
                     }
                 });
-                const response = await fetch('{{ route("enrollment.draft") }}', { method: 'POST', body: fd });
+                const response = await fetch('{{ route("enrollment.draft") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json, text/plain, */*',
+                    },
+                    body: fd
+                });
                 if (response.status === 409) {
                     await response.json().catch(() => ({}));
                     this.error = '';
@@ -1387,7 +1393,7 @@ function enrollmentForm() {
             }
             try {
                 const response = await fetch('/enroll/shifts/' + encodeURIComponent(this.form.grade_level), {
-                    headers: { 'Accept': 'application/json' },
+                    headers: { 'Accept': 'application/json, text/plain, */*' },
                 });
                 if (response.ok) {
                     this.gradeShifts = await response.json();
@@ -1406,7 +1412,7 @@ function enrollmentForm() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json',
+                        'Accept': 'application/json, text/plain, */*',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
                     body: JSON.stringify({

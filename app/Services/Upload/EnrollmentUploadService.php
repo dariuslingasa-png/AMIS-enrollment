@@ -154,8 +154,30 @@ class EnrollmentUploadService
                 $absoluteOriginal = Storage::disk('public')->path("{$dir}/original/{$originalName}");
                 $absoluteOptimized = Storage::disk('public')->path("{$dir}/optimized/{$webpName}");
 
-                $resultCode = -1;
-                if (function_exists('exec')) {
+                $convertedWithGd = false;
+                if (extension_loaded('gd') && function_exists('imagewebp')) {
+                    try {
+                        $info = @getimagesize($absoluteOriginal);
+                        if ($info) {
+                            $src = match ($info[2]) {
+                                IMAGETYPE_JPEG => @imagecreatefromjpeg($absoluteOriginal),
+                                IMAGETYPE_PNG => @imagecreatefrompng($absoluteOriginal),
+                                IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($absoluteOriginal) : null,
+                                default => null,
+                            };
+                            if ($src) {
+                                @imagewebp($src, $absoluteOptimized, 85);
+                                imagedestroy($src);
+                                $convertedWithGd = file_exists($absoluteOptimized);
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        $convertedWithGd = false;
+                    }
+                }
+
+                $resultCode = $convertedWithGd ? 0 : -1;
+                if (!$convertedWithGd && function_exists('exec')) {
                     try {
                         static $imBinary = null;
                         if ($imBinary === null) {
@@ -176,7 +198,7 @@ class EnrollmentUploadService
 
                 $optimizedPath = "{$dir}/optimized/{$webpName}";
                 $applicant->update([
-                    $key . '_url' => $resultCode === 0 && Storage::disk('public')->exists($optimizedPath)
+                    $key . '_url' => ($resultCode === 0 && Storage::disk('public')->exists($optimizedPath))
                         ? $optimizedPath
                         : $originalPath,
                 ]);

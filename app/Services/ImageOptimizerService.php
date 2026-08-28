@@ -59,44 +59,53 @@ class ImageOptimizerService
         $absoluteMedium = Storage::disk($disk)->path($thumbMediumPath);
         $absoluteLarge = Storage::disk($disk)->path($thumbLargePath);
 
-        // 1. Convert and compress optimized main image
-        $optimizedCreated = $this->runCommand([
-            'magick',
-            $absoluteOriginal,
-            '-quality', '85',
-            $absoluteOptimized
-        ]) && Storage::disk($disk)->exists($optimizedPath);
+        // Try fast native PHP GD optimization first
+        $gdSuccess = $this->optimizeWithGd($absoluteOriginal, $absoluteOptimized, $absoluteSmall, $absoluteMedium, $absoluteLarge);
 
-        // 2. Generate Thumbnails (crop center to ensure square profiles)
-        $smallCreated = $this->runCommand([
-            'magick',
-            $absoluteOriginal,
-            '-thumbnail', '150x150^',
-            '-gravity', 'center',
-            '-extent', '150x150',
-            '-quality', '80',
-            $absoluteSmall
-        ]) && Storage::disk($disk)->exists($thumbSmallPath);
+        if ($gdSuccess) {
+            $optimizedCreated = Storage::disk($disk)->exists($optimizedPath);
+            $smallCreated = Storage::disk($disk)->exists($thumbSmallPath);
+            $mediumCreated = Storage::disk($disk)->exists($thumbMediumPath);
+            $largeCreated = Storage::disk($disk)->exists($thumbLargePath);
+        } else {
+            // Fallback to ImageMagick if GD is not available
+            $optimizedCreated = $this->runCommand([
+                'magick',
+                $absoluteOriginal,
+                '-quality', '85',
+                $absoluteOptimized
+            ]) && Storage::disk($disk)->exists($optimizedPath);
 
-        $mediumCreated = $this->runCommand([
-            'magick',
-            $absoluteOriginal,
-            '-thumbnail', '300x300^',
-            '-gravity', 'center',
-            '-extent', '300x300',
-            '-quality', '80',
-            $absoluteMedium
-        ]) && Storage::disk($disk)->exists($thumbMediumPath);
+            $smallCreated = $this->runCommand([
+                'magick',
+                $absoluteOriginal,
+                '-thumbnail', '150x150^',
+                '-gravity', 'center',
+                '-extent', '150x150',
+                '-quality', '80',
+                $absoluteSmall
+            ]) && Storage::disk($disk)->exists($thumbSmallPath);
 
-        $largeCreated = $this->runCommand([
-            'magick',
-            $absoluteOriginal,
-            '-thumbnail', '600x600^',
-            '-gravity', 'center',
-            '-extent', '600x600',
-            '-quality', '80',
-            $absoluteLarge
-        ]) && Storage::disk($disk)->exists($thumbLargePath);
+            $mediumCreated = $this->runCommand([
+                'magick',
+                $absoluteOriginal,
+                '-thumbnail', '300x300^',
+                '-gravity', 'center',
+                '-extent', '300x300',
+                '-quality', '80',
+                $absoluteMedium
+            ]) && Storage::disk($disk)->exists($thumbMediumPath);
+
+            $largeCreated = $this->runCommand([
+                'magick',
+                $absoluteOriginal,
+                '-thumbnail', '600x600^',
+                '-gravity', 'center',
+                '-extent', '600x600',
+                '-quality', '80',
+                $absoluteLarge
+            ]) && Storage::disk($disk)->exists($thumbLargePath);
+        }
 
         $displayPath = $optimizedCreated ? $optimizedPath : $originalPath;
 
@@ -107,6 +116,65 @@ class ImageOptimizerService
             'medium' => $mediumCreated ? $thumbMediumPath : $displayPath,
             'large' => $largeCreated ? $thumbLargePath : $displayPath,
         ];
+    }
+
+    /**
+     * Native GD WebP optimization and thumbnail generator.
+     */
+    private function optimizeWithGd(string $sourcePath, string $optimizedPath, string $smallPath, string $mediumPath, string $largePath): bool
+    {
+        if (!extension_loaded('gd') || !function_exists('imagewebp')) {
+            return false;
+        }
+
+        try {
+            $info = @getimagesize($sourcePath);
+            if (!$info) {
+                return false;
+            }
+
+            $src = match ($info[2]) {
+                IMAGETYPE_JPEG => @imagecreatefromjpeg($sourcePath),
+                IMAGETYPE_PNG => @imagecreatefrompng($sourcePath),
+                IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($sourcePath) : null,
+                default => null,
+            };
+
+            if (!$src) {
+                return false;
+            }
+
+            $w = imagesx($src);
+            $h = imagesy($src);
+
+            // 1. Optimized main image
+            @imagewebp($src, $optimizedPath, 85);
+
+            // 2. Helper to create square cropped thumbnail
+            $makeThumb = function ($size, $targetPath) use ($src, $w, $h) {
+                $thumb = imagecreatetruecolor($size, $size);
+                imagealphablending($thumb, false);
+                imagesavealpha($thumb, true);
+
+                $min = min($w, $h);
+                $srcX = (int)(($w - $min) / 2);
+                $srcY = (int)(($h - $min) / 2);
+
+                imagecopyresampled($thumb, $src, 0, 0, $srcX, $srcY, $size, $size, $min, $min);
+                @imagewebp($thumb, $targetPath, 80);
+                imagedestroy($thumb);
+            };
+
+            $makeThumb(150, $smallPath);
+            $makeThumb(300, $mediumPath);
+            $makeThumb(600, $largePath);
+
+            imagedestroy($src);
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning("GD Image optimization skipped: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**

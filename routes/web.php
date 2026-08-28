@@ -97,14 +97,16 @@ Route::prefix('workflow')->name('workflow.')->group(function () {
 });
 
 // ─── AMIS Document Generation & Export System ──────────────────────────────
-Route::prefix('admin/documents')->name('admin.documents.')->group(function () {
-    Route::get('/preview/{id}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'previewHtml'])->name('preview');
-    Route::get('/pdf/{id}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'exportPdf'])->name('pdf');
-    Route::get('/docx/{id}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'exportDocx'])->name('docx');
-    Route::post('/batch-export', [\App\Http\Controllers\Admin\DocumentExportController::class, 'batchExport'])->name('batch-export');
-    Route::get('/batch-status/{batchId}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'batchStatus'])->name('batch-status');
-    Route::get('/download-zip/{filename}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'downloadZip'])->name('download-zip');
-});
+if (class_exists(\App\Http\Controllers\Admin\DocumentExportController::class)) {
+    Route::prefix('admin/documents')->name('admin.documents.')->group(function () {
+        Route::get('/preview/{id}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'previewHtml'])->name('preview');
+        Route::get('/pdf/{id}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'exportPdf'])->name('pdf');
+        Route::get('/docx/{id}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'exportDocx'])->name('docx');
+        Route::post('/batch-export', [\App\Http\Controllers\Admin\DocumentExportController::class, 'batchExport'])->name('batch-export');
+        Route::get('/batch-status/{batchId}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'batchStatus'])->name('batch-status');
+        Route::get('/download-zip/{filename}', [\App\Http\Controllers\Admin\DocumentExportController::class, 'downloadZip'])->name('download-zip');
+    });
+}
 
 if (app()->environment('local')) {
     Route::get('/test-errors/{code}', function ($code) {

@@ -89,6 +89,7 @@
                     fetch('{{ route('auth.send-otp') }}', {
                         method: 'POST',
                         headers: {
+                            'Accept': 'application/json, text/plain, */*',
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
                         },
@@ -143,6 +144,7 @@
                     fetch('{{ route('auth.verify-otp') }}', {
                         method: 'POST',
                         headers: {
+                            'Accept': 'application/json, text/plain, */*',
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
                         },
@@ -174,6 +176,7 @@
                     fetch('{{ route('auth.send-otp') }}', {
                         method: 'POST',
                         headers: {
+                            'Accept': 'application/json, text/plain, */*',
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
                         },
