@@ -303,7 +303,7 @@
                     </button>
                     <div class="confirm-dialog-copy">
                         <div style="display:flex; align-items:center; gap:0.85rem; margin-bottom:1rem;">
-                            <div style="width:44px; height:44px; border-radius:12px; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <div :style="isDuplicateRecord ? 'background:#fee2e2; color:#dc2626;' : 'background:#fef3c7; color:#d97706;'" style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="10"/>
                                     <line x1="12" y1="8" x2="12" y2="12"/>
@@ -311,42 +311,50 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 style="margin:0; font-size:1.3rem; color:#9a3412; font-weight:900; line-height:1.2;">Already Enrolled / Applied</h3>
-                                <span style="font-size:0.75rem; font-weight:700; color:#c2410c; text-transform:uppercase; tracking-wider:0.05em;">Existing Student Record Found</span>
+                                <h3 style="margin:0; font-size:1.3rem; color:#9a3412; font-weight:900; line-height:1.2;" x-text="isDuplicateRecord ? 'Already Enrolled / Applied' : 'Submission Incomplete'"></h3>
+                                <span style="font-size:0.75rem; font-weight:700; color:#c2410c; text-transform:uppercase; tracking-wider:0.05em;" x-text="isDuplicateRecord ? 'Existing Student Record Found' : 'Please Check Requirements'"></span>
                             </div>
                         </div>
 
-                        <p style="font-size:0.92rem; line-height:1.55; color:#334155; font-weight:600; margin:0 0 0.85rem 0;">
-                            This student already has an active application on file for the current school year. You do not need to create another application.
+                        <p style="font-size:0.92rem; line-height:1.55; color:#334155; font-weight:600; margin:0 0 0.85rem 0;" x-text="isDuplicateRecord ? 'This student already has an active application on file for the current school year. You do not need to create another application.' : 'Some required fields or uploaded files need your attention before your application can be finalized.'">
                         </p>
 
                         <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:14px; padding:1rem 1.15rem; margin-bottom:1rem;">
-                            <span style="font-size:0.75rem; font-weight:800; color:#9a3412; uppercase; display:block; margin-bottom:0.35rem;">Application Details:</span>
+                            <span style="font-size:0.75rem; font-weight:800; color:#9a3412; text-transform:uppercase; display:block; margin-bottom:0.35rem;" x-text="isDuplicateRecord ? 'Application Details:' : 'Requirement / Issue Details:'"></span>
                             <p style="font-size:0.88rem; line-height:1.5; color:#7c2d12; font-weight:600; margin:0;" x-text="duplicateErrorMessage"></p>
                         </div>
 
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.85rem 1rem; font-size:0.82rem; line-height:1.45; color:#475569;">
                             <strong style="color:#0f172a;">What happens next?</strong>
-                            <ul style="margin:0.35rem 0 0 1.15rem; padding:0; list-style-type:disc; space-y:0.2rem;">
-                                <li>Your current entry is saved as a <strong>Draft</strong> (no duplicate application was created).</li>
-                                <li>To check your existing application, click <strong>EXIT TO DASHBOARD</strong> below.</li>
-                                <li>If you made a typo in the student's name or grade, click <strong>Edit Draft</strong> to fix it.</li>
-                            </ul>
+                            <template x-if="isDuplicateRecord">
+                                <ul style="margin:0.35rem 0 0 1.15rem; padding:0; list-style-type:disc; space-y:0.2rem;">
+                                    <li>Your current entry is saved as a <strong>Draft</strong> (no duplicate application was created).</li>
+                                    <li>To check your existing application, click <strong>EXIT TO DASHBOARD</strong> below.</li>
+                                    <li>If you made a typo in the student's name or grade, click <strong>Edit Draft</strong> to fix it.</li>
+                                </ul>
+                            </template>
+                            <template x-if="!isDuplicateRecord">
+                                <ul style="margin:0.35rem 0 0 1.15rem; padding:0; list-style-type:disc; space-y:0.2rem;">
+                                    <li>Your current progress remains safely saved as a <strong>Draft</strong>.</li>
+                                    <li>Click <strong>Review & Fix</strong> below to correct the indicated fields or re-upload files.</li>
+                                </ul>
+                            </template>
                         </div>
                     </div>
 
                     <div class="confirm-dialog-actions" style="margin-top:1.5rem; display:flex; gap:0.75rem; justify-content:flex-end; align-items:center;">
-                        <button type="button" class="btn-secondary" style="padding: 0.65rem 1.25rem; font-weight: 700;" @click="showDuplicateErrorModal = false">
-                            Edit Draft
+                        <button type="button" class="btn-secondary" style="padding: 0.65rem 1.25rem; font-weight: 700;" @click="showDuplicateErrorModal = false" x-text="isDuplicateRecord ? 'Edit Draft' : 'Review & Fix'">
                         </button>
-                        <a href="{{ route('enrollment.dashboard') }}" class="btn-primary" style="background-color:#ea580c !important; border-color:#c2410c !important; padding: 0.65rem 1.4rem; font-weight: 800; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                                <polyline points="16 17 21 12 16 7"/>
-                                <line x1="21" y1="12" x2="9" y2="12"/>
-                            </svg>
-                            <span>EXIT TO DASHBOARD</span>
-                        </a>
+                        <template x-if="isDuplicateRecord">
+                            <a href="{{ route('enrollment.dashboard') }}" class="btn-primary" style="background-color:#ea580c !important; border-color:#c2410c !important; padding: 0.65rem 1.4rem; font-weight: 800; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                    <polyline points="16 17 21 12 16 7"/>
+                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                                </svg>
+                                <span>EXIT TO DASHBOARD</span>
+                            </a>
+                        </template>
                     </div>
                 </div>
             </div>

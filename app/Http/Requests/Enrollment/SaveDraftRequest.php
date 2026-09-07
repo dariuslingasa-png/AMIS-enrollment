@@ -15,12 +15,12 @@ class SaveDraftRequest extends FormRequest
     {
         return [
             'photo_2x2'         => 'nullable|file|mimes:png,jpg,jpeg',
-            'birth_cert'        => 'nullable|file|mimes:png,jpg,jpeg',
-            'report_card'       => 'nullable|file|mimes:pdf,jpg,jpeg',
+            'birth_cert'        => 'nullable|file|mimes:png,jpg,jpeg,webp,pdf',
+            'report_card'       => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp',
             'marriage_contract' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'medical_record'    => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'affidavit'         => 'nullable|file|mimes:pdf,jpg,jpeg,png',
-            'payment_receipt'   => 'nullable|file|mimes:png,jpg,jpeg',
+            'payment_receipt'   => 'nullable|file|mimes:png,jpg,jpeg,webp,pdf',
         ];
     }
 

@@ -95,6 +95,7 @@ function enrollmentForm() {
         submitProgressTitle: 'Submitting Enrollment',
         submitProgressStatus: 'Saving application...',
         showDuplicateErrorModal: false,
+        isDuplicateRecord: false,
         duplicateErrorMessage: '',
 
         openSubmitConfirmModal() {
@@ -161,6 +162,7 @@ function enrollmentForm() {
                     const errMsg = data.message || (data.errors ? Object.values(data.errors).flat()[0] : null) || 'A validation error occurred.';
                     this.error = errMsg;
                     this.duplicateErrorMessage = errMsg;
+                    this.isDuplicateRecord = !!data.duplicate;
                     this.showDuplicateErrorModal = true;
                     this.highlightInvalidFields();
                 }
@@ -173,6 +175,7 @@ function enrollmentForm() {
                 const networkMsg = 'A network error occurred. Your draft remains safe. Please try again.';
                 this.error = networkMsg;
                 this.duplicateErrorMessage = networkMsg;
+                this.isDuplicateRecord = false;
                 this.showDuplicateErrorModal = true;
             }
         },
@@ -1599,9 +1602,11 @@ function enrollmentForm() {
             // If there are server-side validation errors, pop up the dedicated error modal
             @if ($errors->has('duplicate'))
                 this.duplicateErrorMessage = @json($errors->first('duplicate'));
+                this.isDuplicateRecord = true;
                 this.showDuplicateErrorModal = true;
             @elseif ($errors->any())
                 this.duplicateErrorMessage = @json($errors->first());
+                this.isDuplicateRecord = false;
                 this.showDuplicateErrorModal = true;
             @endif
 

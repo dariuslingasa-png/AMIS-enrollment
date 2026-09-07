@@ -81,7 +81,7 @@ class SubmitEnrollmentRequest extends FormRequest
             'agreed_to_data_privacy'  => 'nullable',
             'school_year'             => 'required|string',
             'photo_2x2'               => ($applicant?->photo_2x2_url ? 'nullable' : 'required') . '|file|mimes:png,jpg,jpeg',
-            'birth_cert'              => 'nullable|file|mimes:png,jpg,jpeg,webp', // REMOVED PDF
+            'birth_cert'              => 'nullable|file|mimes:png,jpg,jpeg,webp,pdf',
             'report_card'             => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp', // ADDED PNG, WEBP
             'marriage_contract'       => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'medical_record'          => 'nullable|file|mimes:pdf,jpg,jpeg,png',

@@ -379,12 +379,13 @@ class EnrollmentController extends Controller
         try {
             $result = $this->applications->submit($user, $request, $request->enrollmentData());
         } catch (\Illuminate\Validation\ValidationException $e) {
-            $msg = collect($e->errors())->flatten()->first() ?? 'Duplicate or invalid application detected.';
+            $isDuplicate = isset($e->errors()['duplicate']);
+            $msg = collect($e->errors())->flatten()->first() ?? 'Please review your application details.';
             if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'duplicate' => true,
-                    'code' => 'DUPLICATE_ENROLLMENT',
+                    'duplicate' => $isDuplicate,
+                    'code' => $isDuplicate ? 'DUPLICATE_ENROLLMENT' : 'VALIDATION_ERROR',
                     'message' => $msg,
                     'errors' => $e->errors(),
                 ], 422);
